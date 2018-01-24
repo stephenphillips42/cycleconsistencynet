@@ -18,8 +18,8 @@ k = 3 # Number of nearest neighbors
 sz = 8
 scale = 3
 pts_scale = 0.1
-N_poses = 5
-N_pts = 9
+N_poses = 7
+N_pts = 12
 n_iters = 1000
 eye = np.eye(N_poses)
 
@@ -37,7 +37,7 @@ class PoseGraph(object):
     # Create variables
     self.cmap = plt.cm.get_cmap('hsv',N_poses)
     self.pts_w = pts_scale*np.random.randn(N_pts,3)
-    self.g_cw = [ Pose(R=rot[i],T=trans[i])
+    self.g_cw = [ Pose(R=rot[i],T=-np.dot(rot[i],trans[i]))
                   for i in range(N_poses) ]
     # Create graph
     dist_mat = 2 - 2*np.dot(sph, sph.T) + 3*eye
@@ -55,21 +55,38 @@ class PoseGraph(object):
       self.adj_list.append(pose_edges)
 
   def get_proj(self, i):
-    return planer_proj(np.dot(self.pts_w - self.g_cw[i].T,self.g_cw[i].R.T))
+    return planer_proj(np.dot(self.pts_w,self.g_cw[i].R.T) + self.g_cw[i].T)
+
+  def plot_poses(self, fig_num=1):
+    fig = plt.figure(num=fig_num, figsize=(sz,sz))
+    ax = fig.add_subplot(111, projection='3d')
+    arr = np.array([0., 0.2])
+    for i in range(self.n_poses):
+      Ri = self.g_cw[i].R
+      Ti = -np.dot(Ri.T,self.g_cw[i].T)
+      for j in range(3):
+        axis_line_j = (Ti[k] + Ri[j,k]*arr for k in range(3))
+        ax.plot(*axis_line_j, c=self.cmap(i))
+      for e in self.adj_list[i]:
+        Tj = -np.dot(self.g_cw[e.idx].R.T,self.g_cw[e.idx].T)
+        edge_line_k = ([Ti[k], Tj[k]] for k in range(3))
+        ax.plot(*edge_line_k, c='k')
+    ax.scatter(self.pts_w[:,0], self.pts_w[:,1], self.pts_w[:,2])
+    return fig, ax
 
   def plot_index(self, idx, fig_num=1):
     fig = plt.figure(num=fig_num, figsize=(3*sz+0.2, sz))
     ax = fig.add_subplot(131, projection='3d')
     Ri = self.g_cw[idx].R
-    Ti = self.g_cw[idx].T
+    Ti = -np.dot(Ri.T,self.g_cw[idx].T)
     arr = np.array([0., 0.8])
-    ax.plot(Ti[0] + Ri[0,0]*arr, Ti[1] + Ri[0,1]*arr, Ti[2] + Ri[0,2]*arr, c='r')
-    ax.plot(Ti[0] + Ri[1,0]*arr, Ti[1] + Ri[1,1]*arr, Ti[2] + Ri[1,2]*arr, c='g')
-    ax.plot(Ti[0] + Ri[2,0]*arr, Ti[1] + Ri[2,1]*arr, Ti[2] + Ri[2,2]*arr, c='b')
+    clrs = [ 'r', 'g', 'b' ]
+    for j in range(3):
+      axes_line_j = ( Ti[k] + Ri[j,k]*arr for k in range(3) )
+      ax.plot(*axes_line_j, c=clrs[j])
     for j in range(self.n_pts):
-      ax.plot([Ti[0], self.pts_w[j,0]],
-              [Ti[1], self.pts_w[j,1]],
-              [Ti[2], self.pts_w[j,2]], c='k')
+      pt_line_j = ( [Ti[k], self.pts_w[j,k]] for k in range(3) )
+      ax.plot(*pt_line_j, c='k')
     ax.scatter(scale*np.array([-1., -1., -1., -1., +1., +1., +1., +1.]),
                scale*np.array([-1., -1., +1., +1., -1., -1., +1., +1.]),
                scale*np.array([-1., +1., -1., +1., -1., +1., -1., +1.]))
@@ -90,24 +107,6 @@ class PoseGraph(object):
     ax.scatter(self.get_proj(idx)[:,0], self.get_proj(idx)[:,1])
     ax.scatter(0.3*np.array([-1., -1., +1., +1.]),
                0.3*np.array([-1., +1., -1., +1.]))
-
-
-  def plot_poses(self, fig_num=1):
-    fig = plt.figure(num=fig_num, figsize=(sz,sz))
-    ax = fig.add_subplot(111, projection='3d')
-    arr = np.array([0., 0.2])
-    for i in range(self.n_poses):
-      Ri = self.g_cw[i].R
-      Ti = self.g_cw[i].T
-      for k in range(3):
-        ax.plot(*(Ti[j] + Ri[k,j]*arr for j in range(3)), c=self.cmap(i))
-      for e in self.adj_list[i]:
-        j = e.idx
-        edge_lines = ([self.g_cw[i].T[k], self.g_cw[j].T[k]] for k in range(3))
-        ax.plot(*edge_lines, c='k')
-    ax.scatter(self.pts_w[:,0], self.pts_w[:,1], self.pts_w[:,2])
-    return fig, ax
-
 
   def plot_planar_points(self, use_perm=False, perm=None, fig_num=1):
     fig = plt.figure(num=fig_num, figsize=(sz,sz))
@@ -147,17 +146,20 @@ class PoseGraph(object):
 
 if __name__ == '__main__':
   print("Synthetic Pose Graphs")
-  # if full_plot:
-  if True:
-    pose_graph = PoseGraph(N_poses, N_pts)
+  plot_level = 1
+  pose_graph = PoseGraph(N_poses, N_pts)
+  print(pose_graph.adj_mat)
+  if plot_level > 0:
     pose_graph.plot_poses()
     plt.show()
+  if plot_level > 1:
+    pose_graph.plot_planar_points()
+    pose_graph.plot_planar_points(fig_num=2,use_perm=True)
+    plt.show()
+  if plot_level > 2:
     for i in range(pose_graph.n_poses):
       pose_graph.plot_index(i)
       plt.show()
-    pose_graph.plot_planar_points()
-    pose_graph.plot_planar_points(fig_num=2)
-    plt.show()
 
 
 
