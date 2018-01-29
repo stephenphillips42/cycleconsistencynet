@@ -1,2 +1,4 @@
 # Ignore compiled files
 *.pyc
+# Ignore log folders
+save/*

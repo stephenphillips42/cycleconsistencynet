@@ -24,13 +24,15 @@ loss_fn = torch.nn.MSELoss(size_average=False)
 # optimizer which Variables it should update.
 learning_rate = 1e-4
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+plt_data = []
 for t in range(500):
     # Forward pass: compute predicted y by passing x to the model.
     y_pred = model(x)
 
     # Compute and print loss.
     loss = loss_fn(y_pred, y)
-    print(t, loss.data[0])
+    # print(t, loss.data[0])
+    plt_data.append(loss.data[0])
 
     # Before the backward pass, use the optimizer object to zero all of the
     # gradients for the variables it will update (which are the learnable
@@ -46,4 +48,16 @@ for t in range(500):
     # Calling the step function on an Optimizer makes an update to its
     # parameters
     optimizer.step()
+
+import matplotlib.pyplot as plt
+fig = plt.figure(num=1, figsize=(7,7*2+0.2))
+ax = fig.add_subplot(2,1,1)
+ax.plot(plt_data)
+ax.set_ylabel('Loss')
+ax.set_xlabel('Iterations')
+ax = fig.add_subplot(2,1,2)
+ax.semilogy(plt_data)
+ax.set_ylabel('Loss')
+ax.set_xlabel('Iterations')
+plt.show()
 
