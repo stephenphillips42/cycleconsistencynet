@@ -12,7 +12,7 @@ import options
 import nputils
 import sim_graphs
 
-def generate_graph():
+def generate_graph(opts):
   pose_graph = sim_graphs.PoseGraph(opts)
   perms = [ np.eye(pose_graph.n_pts)[:, pose_graph.get_perm(i)]
             for i in range(pose_graph.n_poses) ]
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     if not os.path.exists(os.path.join(opts.data_dir,t)):
       os.makedirs(os.path.join(opts.data_dir, t))
     for i in tqdm.tqdm(range(sz)):
-      data = generate_graph()
+      data = generate_graph(opts)
       name = "{:09d}.npz".format(i)
       np.savez(os.path.join(opts.data_dir,t,name), *data)
 
