@@ -29,6 +29,17 @@ def get_opts():
                       default='/mount/data/graphs',
                       help='Directory for saving/loading numpy data')
   # Dataset options
+  parser.add_argument('--num_gen_train',
+                      default=8000,
+                      type=int,
+                      help='Number of training samples to generate.')
+  parser.add_argument('--num_gen_test',
+                      default=2000,
+                      type=int,
+                      help='Number of testing samples to generate.')
+  parser.add_argument('--np_type',
+                      default='float32',
+                      help='Numpy type to save dataset as')
   parser.add_argument('--min_views',
                       default=25,
                       type=int,
