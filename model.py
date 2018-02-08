@@ -10,6 +10,7 @@ import scipy.linalg as la
 from tqdm import tqdm
 
 import torch
+from torch.autograd import Variable
 
 import nputils
 import options
@@ -38,6 +39,39 @@ class DenseGraphLayer(torch.nn.Module):
     self._linear = torch.nn.Linear(self._out)
     return self._activ(torch.mm(self._lapl, self._linear(inputs)))
 
+def pairwise_distances(x, y=None):
+    '''
+    Input: x is a Nxd matrix
+           y is an optional Mxd matirx
+    Output: dist is a NxM matrix where dist[i,j] is the square norm between x[i,:] and y[j,:]
+            if y is not given then use 'y=x'.
+    i.e. dist[i,j] = ||x[i,:]-y[j,:]||^2
+    '''
+    x_norm = (x**2).sum(1).view(-1, 1)
+    if y is not None:
+        y_norm = (y**2).sum(1).view(1, -1)
+    else:
+        y = x
+        y_norm = x_norm.view(1, -1)
+
+    dist = x_norm + y_norm - 2.0 * torch.mm(x, torch.transpose(y, 0, 1))
+    return dist
+
+def build_alt_lap(opts, data):
+  Adj = data['graph']
+  Adj_alt = Adj + np.eye(Adj.shape[0]).astype(opts.np_type)
+  D_h_inv = np.diag(1./np.sqrt(np.sum(Adj_alt,1)))
+  alt_lap_np = np.dot(D_h_inv, np.dot(Adj_alt, D_h_inv))
+  return Variable(torch.from_numpy(alt_lap_np))
+
+def build_weight_mask(opts, data):
+  Adj = data['graph']
+  n_pts = data['n_pts']
+  n_poses = data['n_poses']
+  D_sqrt_inv = np.diag(1./np.sqrt(np.sum(Adj,1)))
+  nm_ = np.eye(n_pts) - np.ones((n_pts,n_pts))
+  neg_mask_np = (np.kron(np.eye(n_poses),nm_)).astype(opts.np_type)
+  return Variable(torch.from_numpy(neg_mask_np + Adj))
 
 if __name__ == "__main__":
   import gen_data
@@ -47,21 +81,36 @@ if __name__ == "__main__":
   # Test
   # Build network
   linear0 = torch.nn.Linear(opts.descriptor_dim, nout)
-  activ0 = torch.nn.ReLU
+  activ0 = torch.nn.ReLU()
   linear1 = torch.nn.Linear(nout, nout)
-  activ1 = torch.nn.ReLU
+  activ1 = torch.nn.ReLU()
   # Get data
   i = 0
   data = gen_data.generate_graph(opts)
-  A = data['graph'] + np.eye(data['graph'].shape[0])
-  D_h_inv = np.diag(1./np.sqrt(np.sum(A,1)))
-  alt_lap = torch.autograd.Variable(np.dot(D_h_inv, np.dot(A, D_h_inv)))
-  x = torch.autograd.Variable(data['embeddings'])
+  alt_lap = build_alt_lap(opts, data)
+  x = Variable(torch.from_numpy(data['embeddings']))
   # Run network
   out0 = activ0(torch.mm(alt_lap, linear0(x)))
+  print(out0)
   out1 = activ1(torch.mm(alt_lap, linear1(out0)))
+  print(out1)
+  print("Computing dists")
+  dists = pairwise_distances(out1)
+  weight_mask = build_weight_mask(opts, data)
+  weighted_dists = dists*weight_mask
+  print("Done")
+  print(dists.size())
+  total_weight = torch.sum(weighted_dists)
+  print(total_weight)
+  total_weight.backward()
 
-  print("{}: {}".format(i, 0))
+  print("{}: {}".format(i, out1.size()))
+  print("{}: {}".format(i, dists.size()))
+  print("{}: {}".format(i, dists.size()))
+
+
+
+
 
 
 
