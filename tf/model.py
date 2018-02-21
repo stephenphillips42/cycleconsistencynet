@@ -41,7 +41,7 @@ class DenseGraphLayer(snt.AbstractModule):
 
 
 if __name__ == "__main__":
-  import gen_data
+  import data_util
   opts = options.get_opts()
   nsteps = 10
   nout = 15
@@ -56,7 +56,7 @@ if __name__ == "__main__":
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     for i in range(nsteps):
-      data = gen_data.generate_graph(opts)
+      data = data_util.generate_graph(opts)
       A = data['graph'] + np.eye(data['graph'].shape[0])
       D_h_inv = np.diag(1./np.sqrt(np.sum(A,1)))
       alt_lap = np.dot(D_h_inv, np.dot(A, D_h_inv))

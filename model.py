@@ -74,7 +74,7 @@ def build_weight_mask(opts, data):
   return Variable(torch.from_numpy(neg_mask_np + Adj))
 
 if __name__ == "__main__":
-  import gen_data
+  import data_util
   opts = options.get_opts()
   nsteps = 10
   nout = 15
@@ -86,7 +86,7 @@ if __name__ == "__main__":
   activ1 = torch.nn.ReLU()
   # Get data
   i = 0
-  data = gen_data.generate_graph(opts)
+  data = data_util.generate_graph(opts)
   alt_lap = build_alt_lap(opts, data)
   x = Variable(torch.from_numpy(data['embeddings']))
   # Run network

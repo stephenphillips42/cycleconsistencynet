@@ -86,10 +86,10 @@ def get_opts():
 
   ## TODO: Implement these for graphs
   # Architecture parameters
-  parser.add_argument('--network_type',
-                      default='heading_network',
-                      choices=['heading_network'],
-                      help='Network architecture to use')
+  # parser.add_argument('--network_type',
+  #                     default='heading_network',
+  #                     choices=['heading_network'],
+  #                     help='Network architecture to use')
   parser.add_argument('--nlayers',
                       default=4,
                       type=int,
