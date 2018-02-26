@@ -16,6 +16,10 @@ def get_opts():
                       default=False,
                       type=bool,
                       help='Run in debug mode')
+  parser.add_argument('--print_freq',
+                      default=5,
+                      type=int,
+                      help='Print every n batches')
   parser.add_argument('--viewer_size',
                       default=8,
                       type=int,
@@ -128,13 +132,17 @@ def get_opts():
                       type=int,
                       help='Number of epochs to run training')
   parser.add_argument('--batch_size',
-                      default=128,
+                      default=32,
                       type=int,
                       help='Size for batches')
-  parser.add_argument('--noise_level',
-                      default=1e-2,
-                      type=float,
-                      help='Standard devation of white noise to add to input')
+  # parser.add_argument('--noise_level',
+  #                     default=1e-2,
+  #                     type=float,
+  #                     help='Standard devation of white noise to add to input')
+  parser.add_argument('--embedding_offset',
+                      default=10,
+                      type=int,
+                      help='Offset used for computing the loss on negative examples')
   parser.add_argument('--weight_decay',
                       default=4e-5,
                       type=float,
