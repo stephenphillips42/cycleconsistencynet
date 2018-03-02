@@ -1,4 +1,6 @@
 # Ignore compiled files
 *.pyc
+stdout.log
 # Ignore log folders
 save/*
+__pycache__/

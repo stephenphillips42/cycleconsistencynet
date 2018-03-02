@@ -21,10 +21,16 @@ Points = collections.namedtuple("Points", ["p","d"]) # position and descriptor
 Pose = collections.namedtuple("Pose", ["R","T"])
 PoseEdge = collections.namedtuple("PoseEdge", ["idx", "g_ij"])
 class PoseGraph(object):
-  def __init__(self, opts):
+  def __init__(self, opts, n_poses=None, n_pts=None):
     self.opts = opts
-    self.n_poses = np.random.randint(opts.min_views, opts.max_views+1)
-    self.n_pts = np.random.randint(opts.min_points, opts.max_points+1)
+    if n_poses is None:
+      self.n_poses = np.random.randint(opts.min_views, opts.max_views+1)
+    else:
+      self.n_poses = n_poses
+    if n_pts is None:
+      self.n_pts = np.random.randint(opts.min_points, opts.max_points+1)
+    else:
+      self.n_pts = n_pts
     # Generate poses
     sph = dim_normalize(np.random.randn(self.n_poses,3))
     rot = [ sph_rot(-sph[i]) for i in range(self.n_poses) ]
@@ -74,7 +80,9 @@ class PoseGraph(object):
     s = self.get_random_state(pts_c)
     return s.permutation(self.n_pts)
 
-  # TODO: Make this sparse
+  def get_all_permutations(self):
+    return [ self.get_perm(i) for i in range(self.n_poses) ]
+
   def get_feature_matching_mat(self):
     n = self.n_pts
     m = self.n_poses

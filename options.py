@@ -8,13 +8,21 @@ import argparse
 import collections
 import yaml
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def get_opts():
   """Parse arguments from command line and get all options for training."""
   parser = argparse.ArgumentParser(description='Train motion estimator')
   # Logging options
   parser.add_argument('--debug',
                       default=False,
-                      type=bool,
+                      type=str2bool,
                       help='Run in debug mode')
   parser.add_argument('--print_freq',
                       default=5,
@@ -52,10 +60,6 @@ def get_opts():
                       default=30,
                       type=int,
                       help='Maximum number of viewpoints in the graph')
-  parser.add_argument('--scale',
-                      default=3,
-                      type=float,
-                      help='Scale of the viewpoints')
   parser.add_argument('--min_points',
                       default=9,
                       type=int,
@@ -74,6 +78,18 @@ def get_opts():
                       default=8,
                       type=int,
                       help='number of neighbors used in graph')
+  parser.add_argument('--scale',
+                      default=3,
+                      type=int,
+                      help='Distance from center of sphere to cameras')
+  parser.add_argument('--sparse',
+                      default=False,
+                      type=str2bool,
+                      help='Use full graph')
+  parser.add_argument('--soft_edges',
+                      default=False,
+                      type=str2bool,
+                      help='Use soft or hard correspondences')
   parser.add_argument('--descriptor_dim',
                       default=12,
                       type=int,
@@ -83,7 +99,7 @@ def get_opts():
                       type=float,
                       help='Variance of the true descriptors')
   parser.add_argument('--descriptor_noise_var',
-                      default=1.0,
+                      default=0,
                       type=float,
                       help='Variance of the noise of the descriptors '
                            'of the projected points')
@@ -112,7 +128,7 @@ def get_opts():
                       help='What type of activation to use')
   parser.add_argument('--use_fully_connected',
                       default=False,
-                      type=bool,
+                      type=str2bool,
                       help='Use fully connected layer at the end')
   parser.add_argument('--fully_connected_size',
                       default=1024,
@@ -120,7 +136,7 @@ def get_opts():
                       help='Size of the last fully connected layer')
   parser.add_argument('--use_batch_norm',
                       default=True,
-                      type=bool,
+                      type=str2bool,
                       help='Decision whether to use batch norm or not')
   parser.add_argument('--architecture',
                       default=None,
