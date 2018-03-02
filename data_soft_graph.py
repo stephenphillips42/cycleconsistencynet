@@ -16,7 +16,7 @@ import options
 import nputils
 import sim_graphs
 
-def generate_soft_graph(opts):
+def generate_graph(opts):
   pose_graph = sim_graphs.PoseGraph(opts)
   n_pts = pose_graph.n_pts
   n_poses = pose_graph.n_poses

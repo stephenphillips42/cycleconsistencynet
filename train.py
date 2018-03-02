@@ -30,20 +30,46 @@ class MyLogger(object):
     self.logfile.close()
 
 
-# TODO: Make this opts independent...
-class MyModel(torch.nn.Module):
-  # def __init__(self, opts):
-  #   super(MyModel, self).__init__()
-  #   lens = [ opts.descriptor_dim ] + \
-  #          [ 15, 20, 25, 20 ] + \
-  #          [ opts.final_embedding_dim ]
-  #   self._linear = [ torch.nn.Linear(lens[i], lens[i+1])
-  #                    for i in range(len(lens)-1) ]
-  #   self._activ = [ torch.nn.ReLU() 
-  #                   for i in range(len(lens)-2) ]
+# class GCNNModel(torch.nn.Module):
+#   # def __init__(self, opts):
+#   #   super(MyModel, self).__init__()
+#   #   lens = [ opts.descriptor_dim ] + \
+#   #          [ 15, 20, 25, 20 ] + \
+#   #          [ opts.final_embedding_dim ]
+#   #   self._linear = [ torch.nn.Linear(lens[i], lens[i+1])
+#   #                    for i in range(len(lens)-1) ]
+#   #   self._activ = [ torch.nn.ReLU() 
+#   #                   for i in range(len(lens)-2) ]
+# 
+#   def __init__(self, opts):
+#     super(GCNModel, self).__init__()
+#     lens = [ opts.descriptor_dim ] + \
+#            [ 2**5, 2**6, 2**7, 2**8 ] + \
+#            [ opts.final_embedding_dim ]
+#     self._linear0 = torch.nn.Linear(lens[0], lens[1])
+#     self._linear1 = torch.nn.Linear(lens[1], lens[2])
+#     self._linear2 = torch.nn.Linear(lens[2], lens[3])
+#     self._linear3 = torch.nn.Linear(lens[3], lens[4])
+#     self._linear4 = torch.nn.Linear(lens[4], lens[5])
+#     self._linear = [ 
+#         self._linear0,
+#         self._linear1,
+#         self._linear2,
+#         self._linear3,
+#         self._linear4,
+#     ]
+# 
+#   def forward(self, x):
+#     out = Variable(x[0])
+#     lap = Variable(x[1])
+#     for i in range(len(self._linear)-1):
+#       out = torch.matmul(lap, self._linear[i](out)).clamp(min=0)
+#     return self._linear[-1](out)
 
+# TODO: Make this opts independent...
+class GCNModel(torch.nn.Module):
   def __init__(self, opts):
-    super(MyModel, self).__init__()
+    super(GCNModel, self).__init__()
     lens = [ opts.descriptor_dim ] + \
            [ 2**5, 2**6, 2**7, 2**8 ] + \
            [ opts.final_embedding_dim ]
@@ -96,7 +122,7 @@ def pairwise_distances(x, y=None):
     return dist
 
 def train(opts):
-  log = MyLogger('stdout.log')
+  logger = MyLogger('stdout.log')
   # Get data
   train_dir = os.path.join(opts.data_dir, 'train')
   test_dir = os.path.join(opts.data_dir, 'test')
@@ -105,18 +131,24 @@ def train(opts):
   testset = data_util.CycleConsitencyGraphDataset(test_dir)
   test_loader = tdata.DataLoader(testset, batch_size=1,shuffle=True)
   # Get model and optimizer
-  model = MyModel(opts)
+  model = GCNModel(opts)
   criterion = Criterion(opts)
   optimizer = torch.optim.Adam(model.parameters(), lr=opts.learning_rate)
   optimizer.zero_grad()
   l = 0
   for epoch in range(opts.num_epochs):
+    for idx, sample in enumerate(loader):
+      print(sample)
+      break
+    break
     l = 0
-    for idx, sample in enumerate(test_loader):
-      output = model.forward((sample['embeddings'][0], sample['alt_lap'][0]))
-      loss_ = criterion.eval(output,sample)
-      l += loss_.data[0]
-    log.log("\n\nTest Loss: {}\n\n".format(l / len(test_loader)))
+    with tqdm(total=len(test_loader),ncols=79) as pbar:
+      for idx, sample in enumerate(test_loader):
+        pbar.update(1)
+        output = model.forward((sample['embeddings'][0], sample['alt_lap'][0]))
+        loss_ = criterion.eval(output,sample)
+        l += loss_.data[0]
+    logger.log("\n\nTest Loss: {}\n\n".format(l / len(test_loader)))
     l = 0
     for idx, sample in enumerate(loader):
       output = model.forward((sample['embeddings'][0], sample['alt_lap'][0]))
@@ -125,7 +157,7 @@ def train(opts):
       l += loss_.data[0]
       if (idx % opts.batch_size) == 0:
         if ((idx // opts.batch_size) % opts.print_freq) == 0:
-          log.log("Loss {:08d}: {}".format(idx, l / opts.batch_size))
+          logger.log("Loss {:08d}: {}".format(idx, l / opts.batch_size))
         optimizer.step()
         optimizer.zero_grad()
         l = 0
