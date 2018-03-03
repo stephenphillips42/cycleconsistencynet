@@ -200,7 +200,6 @@ if __name__ == '__main__':
   perms = [ np.eye(pose_graph.n_pts)[:, pose_graph.get_perm(i)]
             for i in range(pose_graph.n_poses) ]
   perms_ = np.concatenate(perms, 0)
-  print(perms_.shape)
   graph0 = pose_graph.get_feature_matching_mat()
   aug_adj = np.eye(pose_graph.n_poses) + pose_graph.adj_mat
   mask = np.kron(aug_adj, np.ones((pose_graph.n_pts, pose_graph.n_pts)))
@@ -216,8 +215,6 @@ if __name__ == '__main__':
   plt.show()
   _, sv_true, _ = np.linalg.svd(graph_true)
   u, sv, v = np.linalg.svd(graph0)
-  # print(sv_true)
-  # print(sv)
   plt.plot(sv_true)
   plt.plot(sv)
   plt.show()

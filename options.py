@@ -90,6 +90,10 @@ def get_opts():
                       default=False,
                       type=str2bool,
                       help='Use soft or hard correspondences')
+  parser.add_argument('--use_descriptors',
+                      default=True,
+                      type=str2bool,
+                      help='Dimention of the descriptors of the points')
   parser.add_argument('--descriptor_dim',
                       default=12,
                       type=int,

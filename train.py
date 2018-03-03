@@ -67,9 +67,9 @@ class MyLogger(object):
 #     return self._linear[-1](out)
 
 # TODO: Make this opts independent...
-class GCNModel(torch.nn.Module):
+class GCNModelOld(torch.nn.Module):
   def __init__(self, opts):
-    super(GCNModel, self).__init__()
+    super(GCNModelOld, self).__init__()
     lens = [ opts.descriptor_dim ] + \
            [ 2**5, 2**6, 2**7, 2**8 ] + \
            [ opts.final_embedding_dim ]
@@ -93,15 +93,36 @@ class GCNModel(torch.nn.Module):
       out = torch.matmul(lap, self._linear[i](out)).clamp(min=0)
     return self._linear[-1](out)
 
+class GCNModel(torch.nn.Module):
+  def __init__(self, opts):
+    super(GCNModel, self).__init__()
+    lens = [ opts.descriptor_dim ] + \
+           [ 2**5, 2**6, 2**7, 2**8 ] + \
+           [ opts.final_embedding_dim ]
+    self._linear = []
+    for i in range(len(lens)-1):
+      name = '_linear{:02d}'.format(i)
+      layer = torch.nn.Linear(lens[i], lens[i+1])
+      self.__setattr__(name, layer)
+      self._linear.append(layer)
+
+  def forward(self, x):
+    out = Variable(x[0])
+    lap = Variable(x[1])
+    for i in range(len(self._linear)-1):
+      out = torch.matmul(lap, self._linear[i](out)).clamp(min=0)
+    return self._linear[-1](out)
+
 class Criterion(object):
   def __init__(self, opts):
     self.offset = opts.embedding_offset
 
   def eval(self, output, sample):
     dists = pairwise_distances(output)
-    weight_mask = Variable(sample['weight_mask'])
-    weight_offset = Variable(sample['weight_offset'])
-    return torch.sum((self.offset*weight_offset + dists*weight_mask).clamp(min=0))
+    weight_mask = Variable(sample['Mask'][0])
+    weight_offset = Variable(sample['MaskOffset'][0])
+    err = self.offset*weight_offset + dists*weight_mask
+    return torch.sum(err.clamp(min=0))/(len(weight_mask)**2)
 
 def pairwise_distances(x, y=None):
     '''
@@ -126,32 +147,36 @@ def train(opts):
   # Get data
   train_dir = os.path.join(opts.data_dir, 'train')
   test_dir = os.path.join(opts.data_dir, 'test')
-  dataset = data_util.CycleConsitencyGraphDataset(train_dir)
+  # dataset = data_util.CycleConsitencyGraphDataset(train_dir)
+  dataset = data_util.GraphSimDataset(opts, opts.num_gen_train, n_pts=15, n_poses=30)
   loader = tdata.DataLoader(dataset, batch_size=1,shuffle=True)
-  testset = data_util.CycleConsitencyGraphDataset(test_dir)
+  # testset = data_util.CycleConsitencyGraphDataset(test_dir)
+  testset = data_util.GraphSimDataset(opts, opts.num_gen_test, n_pts=15, n_poses=30)
   test_loader = tdata.DataLoader(testset, batch_size=1,shuffle=True)
   # Get model and optimizer
+  # model = GCNModel(opts)
   model = GCNModel(opts)
   criterion = Criterion(opts)
+  # print([ x for x in model.parameters()])
   optimizer = torch.optim.Adam(model.parameters(), lr=opts.learning_rate)
   optimizer.zero_grad()
   l = 0
   for epoch in range(opts.num_epochs):
-    for idx, sample in enumerate(loader):
-      print(sample)
-      break
-    break
     l = 0
     with tqdm(total=len(test_loader),ncols=79) as pbar:
       for idx, sample in enumerate(test_loader):
         pbar.update(1)
-        output = model.forward((sample['embeddings'][0], sample['alt_lap'][0]))
+        lap = torch.eye(len(sample['Degrees'][0])) + \
+              torch.diag(sample['Degrees'][0]) - sample['AdjMat'][0]
+        output = model.forward((sample['InitEmbeddings'][0], lap))
         loss_ = criterion.eval(output,sample)
         l += loss_.data[0]
     logger.log("\n\nTest Loss: {}\n\n".format(l / len(test_loader)))
     l = 0
     for idx, sample in enumerate(loader):
-      output = model.forward((sample['embeddings'][0], sample['alt_lap'][0]))
+      lap = torch.eye(len(sample['Degrees'][0])) + \
+            torch.diag(sample['Degrees'][0]) - sample['AdjMat'][0]
+      output = model.forward((sample['InitEmbeddings'][0], lap))
       loss_ = criterion.eval(output,sample)
       loss_.backward()
       l += loss_.data[0]
