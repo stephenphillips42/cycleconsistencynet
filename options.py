@@ -66,7 +66,7 @@ def get_opts():
                       help='Minimum number of points in the world seen in '
                            'the images')
   parser.add_argument('--max_points',
-                      default=15,
+                      default=12,
                       type=int,
                       help='Maximum number of points in the world seen in '
                            'the images')
@@ -99,7 +99,7 @@ def get_opts():
                       type=int,
                       help='Dimention of the descriptors of the points')
   parser.add_argument('--descriptor_var',
-                      default=1.0,
+                      default=4.0,
                       type=float,
                       help='Variance of the true descriptors')
   parser.add_argument('--descriptor_noise_var',

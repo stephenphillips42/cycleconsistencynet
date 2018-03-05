@@ -12,6 +12,7 @@ from tqdm import tqdm
 import torch
 import torch.utils.data as tdata
 from torch.autograd import Variable
+import torch.nn.functional as F
 
 import nputils
 import options
@@ -29,6 +30,8 @@ class MyLogger(object):
   def __del__(self):
     self.logfile.close()
 
+def meanstd(x):
+  return (np.mean(x), np.std(x))
 
 # class GCNNModel(torch.nn.Module):
 #   # def __init__(self, opts):
@@ -94,11 +97,12 @@ class GCNModelOld(torch.nn.Module):
     return self._linear[-1](out)
 
 class GCNModel(torch.nn.Module):
-  def __init__(self, opts):
+  def __init__(self, opts, layer_lens=None, use_normalization=False):
     super(GCNModel, self).__init__()
-    lens = [ opts.descriptor_dim ] + \
-           [ 2**5, 2**6, 2**7, 2**8 ] + \
-           [ opts.final_embedding_dim ]
+    if layer_lens is None:
+      layer_lens = [ 2**5, 2**6, 2**7, 2**8 ]
+    lens = [ opts.descriptor_dim ] + layer_lens + [ opts.final_embedding_dim ]
+    self._use_normalization = use_normalization
     self._linear = []
     for i in range(len(lens)-1):
       name = '_linear{:02d}'.format(i)
@@ -111,7 +115,11 @@ class GCNModel(torch.nn.Module):
     lap = Variable(x[1])
     for i in range(len(self._linear)-1):
       out = torch.matmul(lap, self._linear[i](out)).clamp(min=0)
-    return self._linear[-1](out)
+    final_out = self._linear[-1](out)
+    if self._use_normalization:
+      return F.normalize(final_out,dim=-1)
+    else:
+      return final_out
 
 class Criterion(object):
   def __init__(self, opts):
@@ -124,7 +132,7 @@ class Criterion(object):
     err = self.offset*weight_offset + dists*weight_mask
     return torch.sum(err.clamp(min=0))/(len(weight_mask)**2)
 
-def pairwise_distances(x, y=None):
+def pairwise_distances(x, y=None, normalized=False):
     '''
     Input: x is a Nxd matrix
            y is an optional Mxd matirx
@@ -132,11 +140,16 @@ def pairwise_distances(x, y=None):
             if y is not given then use 'y=x'.
     i.e. dist[i,j] = ||x[i,:]-y[j,:]||^2
     '''
-    x_norm = (x**2).sum(1).view(-1, 1)
-    if y is not None:
-        y_norm = (y**2).sum(1).view(1, -1)
+    if y is None:
+      y = x
+    if normalized:
+      x_norm = 1
+      y_norm = 1
     else:
-        y = x
+      x_norm = (x**2).sum(1).view(-1, 1)
+      if y is not None:
+        y_norm = (y**2).sum(1).view(1, -1)
+      else:
         y_norm = x_norm.view(1, -1)
 
     dist = x_norm + y_norm - 2.0 * torch.mm(x, torch.transpose(y, 0, 1))
@@ -148,14 +161,14 @@ def train(opts):
   train_dir = os.path.join(opts.data_dir, 'train')
   test_dir = os.path.join(opts.data_dir, 'test')
   # dataset = data_util.CycleConsitencyGraphDataset(train_dir)
-  dataset = data_util.GraphSimDataset(opts, opts.num_gen_train, n_pts=15, n_poses=30)
+  dataset = data_util.GraphSimDataset(opts, opts.num_gen_train, n_pts=12, n_poses=25)
   loader = tdata.DataLoader(dataset, batch_size=1,shuffle=True)
   # testset = data_util.CycleConsitencyGraphDataset(test_dir)
-  testset = data_util.GraphSimDataset(opts, opts.num_gen_test, n_pts=15, n_poses=30)
+  testset = data_util.GraphSimDataset(opts, opts.num_gen_test, n_pts=12, n_poses=25)
   test_loader = tdata.DataLoader(testset, batch_size=1,shuffle=True)
   # Get model and optimizer
   # model = GCNModel(opts)
-  model = GCNModel(opts)
+  model = GCNModel(opts, use_normalization=True)
   criterion = Criterion(opts)
   # print([ x for x in model.parameters()])
   optimizer = torch.optim.Adam(model.parameters(), lr=opts.learning_rate)
