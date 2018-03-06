@@ -124,6 +124,7 @@ class GCNModel(torch.nn.Module):
 class Criterion(object):
   def __init__(self, opts):
     self.offset = opts.embedding_offset
+    print('Embedding offset: {}'.format(self.offset))
 
   def eval(self, output, sample):
     dists = pairwise_distances(output)

@@ -78,9 +78,9 @@ class GraphSimDataset(tdata.Dataset):
     sz = (pose_graph.n_pts, pose_graph.n_pts)
     sz2 = (pose_graph.n_poses, pose_graph.n_poses)
     if self.opts.sparse:
-      mask = np.kron(pose_graph.adj_mat,np.ones(sz))
+      sparsity_mask = np.kron(pose_graph.adj_mat,np.ones(sz))
     else:
-      mask = np.kron(np.ones(sz2)-np.eye(sz2[0]),np.ones(sz))
+      sparsity_mask = np.kron(np.ones(sz2)-np.eye(sz2[0]),np.ones(sz))
 
     perms_ = [ np.eye(pose_graph.n_pts)[:,pose_graph.get_perm(i)]
                for i in range(pose_graph.n_poses) ]
@@ -89,7 +89,7 @@ class GraphSimDataset(tdata.Dataset):
       if self.opts.descriptor_noise_var == 0:
         AdjMat = np.dot(TrueEmbedding,TrueEmbedding.T)
         if self.opts.sparse:
-          AdjMat = AdjMat * mask
+          AdjMat = AdjMat * sparsity_mask
         else:
           AdjMat = AdjMat - np.eye(len(AdjMat))
         Degrees = np.sum(AdjMat,0)
@@ -99,7 +99,8 @@ class GraphSimDataset(tdata.Dataset):
         Degrees = np.sum(AdjMat,0)
 
     neg_offset = np.kron(np.eye(sz2[0]),np.ones(sz)-np.eye(sz[0]))
-    Mask = mask - neg_offset
+    # Mask = AdjMat - neg_offset
+    Mask = sparsity_mask - neg_offset
     MaskOffset = neg_offset
     return {
       'things': pose_graph.pts_w.d, # TODO: Erase

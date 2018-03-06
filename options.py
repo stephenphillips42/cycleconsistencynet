@@ -40,7 +40,7 @@ def get_opts():
   parser.add_argument('--data_dir',
                       default='/mount/data/graphs',
                       help='Directory for saving/loading numpy data')
-  # Dataset options
+  # Dataset generation options
   parser.add_argument('--num_gen_train',
                       default=8000,
                       type=int,
@@ -108,7 +108,6 @@ def get_opts():
                       help='Variance of the noise of the descriptors '
                            'of the projected points')
 
-  ## TODO: Implement these for graphs
   # Architecture parameters
   # parser.add_argument('--network_type',
   #                     default='heading_network',
@@ -122,6 +121,10 @@ def get_opts():
                       default=12,
                       type=int,
                       help='Dimensionality of the output')
+  parser.add_argument('--normalize_embedding',
+                      type=str2bool,
+                      default=False,
+                      help='Normalize embedding to norm 1 or not')
   parser.add_argument('--nclasses',
                       default=24,
                       type=int,
@@ -145,6 +148,14 @@ def get_opts():
   parser.add_argument('--architecture',
                       default=None,
                       help='Helper variable for building the architecture type from network_type')
+  parser.add_argument('--poly_degree',
+                      default=2,
+                      type=int,
+                      help='Degree of polynomials for laplacians')
+  parser.add_argument('--poly_init',
+                      default=1,
+                      type=float,
+                      help='Initialization of coefficients of laplacian polylnomial')
 
   # Machine learning parameters
   parser.add_argument('--num_epochs',
@@ -155,12 +166,8 @@ def get_opts():
                       default=32,
                       type=int,
                       help='Size for batches')
-  # parser.add_argument('--noise_level',
-  #                     default=1e-2,
-  #                     type=float,
-  #                     help='Standard devation of white noise to add to input')
   parser.add_argument('--embedding_offset',
-                      default=10,
+                      default=5,
                       type=int,
                       help='Offset used for computing the loss on negative examples')
   parser.add_argument('--weight_decay',
@@ -197,6 +204,8 @@ def get_opts():
                       help='Number of epochs before learning rate decay')
 
   opts = parser.parse_args()
+  if opts.normalize_embedding:
+    opts.embedding_offset = 1
 
   # Post processing
   # Save out options
