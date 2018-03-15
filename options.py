@@ -167,6 +167,10 @@ def get_opts():
                       default=10,
                       type=int,
                       help='Offset used for computing the loss on negative examples')
+  parser.add_argument('--embedding_distance_weight',
+                      default=0.01,
+                      type=float,
+                      help='Weight put on embedding distance')
   parser.add_argument('--weight_decay',
                       default=4e-5,
                       type=float,
