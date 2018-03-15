@@ -50,8 +50,14 @@ class GraphSimDataset(tdata.Dataset):
     self._dataset_len = dataset_len
     self.n_pts = n_pts
     self.n_poses = n_poses
+    if n_pts is None:
+      assert(opts.max_points >= opts.final_embedding_dim, \
+             "Insufficient capacity")
+    else:
+      assert(n_pts >= opts.final_embedding_dim, "Insufficient capacity")
     self.dtype = opts.np_type
     self.keys = [
+      'things', # TODO: Erase
       'InitEmbeddings',
       'AdjMat',
       'Degrees'
@@ -72,9 +78,9 @@ class GraphSimDataset(tdata.Dataset):
     sz = (pose_graph.n_pts, pose_graph.n_pts)
     sz2 = (pose_graph.n_poses, pose_graph.n_poses)
     if self.opts.sparse:
-      mask = np.kron(pose_graph.adj_mat,np.ones(sz))
+      sparsity_mask = np.kron(pose_graph.adj_mat,np.ones(sz))
     else:
-      mask = np.kron(np.ones(sz2)-np.eye(sz2[0]),np.ones(sz))
+      sparsity_mask = np.kron(np.ones(sz2)-np.eye(sz2[0]),np.ones(sz))
 
     perms_ = [ np.eye(pose_graph.n_pts)[:,pose_graph.get_perm(i)]
                for i in range(pose_graph.n_poses) ]
@@ -83,7 +89,7 @@ class GraphSimDataset(tdata.Dataset):
       if self.opts.descriptor_noise_var == 0:
         AdjMat = np.dot(TrueEmbedding,TrueEmbedding.T)
         if self.opts.sparse:
-          AdjMat = AdjMat * mask
+          AdjMat = AdjMat * sparsity_mask
         else:
           AdjMat = AdjMat - np.eye(len(AdjMat))
         Degrees = np.sum(AdjMat,0)
@@ -96,6 +102,7 @@ class GraphSimDataset(tdata.Dataset):
     Mask = AdjMat - neg_offset
     MaskOffset = neg_offset
     return {
+      'things': pose_graph.pts_w.d, # TODO: Erase
       'InitEmbeddings': InitEmbeddings.astype(self.dtype),
       'AdjMat': AdjMat.astype(self.dtype),
       'Degrees': Degrees.astype(self.dtype),
