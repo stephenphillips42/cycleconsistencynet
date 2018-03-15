@@ -145,6 +145,10 @@ def get_opts():
   parser.add_argument('--architecture',
                       default=None,
                       help='Helper variable for building the architecture type from network_type')
+  parser.add_argument('--normalize_embedding',
+                      default=False,
+                      type=str2bool,
+                      help='Helper variable for building the architecture type from network_type')
 
   # Machine learning parameters
   parser.add_argument('--num_epochs',
@@ -199,6 +203,8 @@ def get_opts():
   opts = parser.parse_args()
 
   # Post processing
+  if opts.normalize_embedding:
+    opts.embedding_offset = 1
   # Save out options
   if not os.path.exists(opts.save_dir):
     os.makedirs(opts.save_dir)

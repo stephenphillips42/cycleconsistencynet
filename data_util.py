@@ -76,11 +76,11 @@ class GraphSimDataset(tdata.Dataset):
     else:
       mask = np.kron(np.ones(sz2)-np.eye(sz2[0]),np.ones(sz))
 
+    perms_ = [ np.eye(pose_graph.n_pts)[:,pose_graph.get_perm(i)]
+               for i in range(pose_graph.n_poses) ]
+    TrueEmbedding = np.concatenate(perms_, 0)
     if not self.opts.soft_edges:
       if self.opts.descriptor_noise_var == 0:
-        perms_ = [ np.eye(pose_graph.n_pts)[:,pose_graph.get_perm(i)]
-                   for i in range(pose_graph.n_poses) ]
-        TrueEmbedding = np.concatenate(perms_, 0)
         AdjMat = np.dot(TrueEmbedding,TrueEmbedding.T)
         if self.opts.sparse:
           AdjMat = AdjMat * mask
@@ -91,10 +91,9 @@ class GraphSimDataset(tdata.Dataset):
       if self.opts.sparse and self.opts.descriptor_noise_var > 0:
         AdjMat = pose_graph.get_feature_matching_mat()
         Degrees = np.sum(AdjMat,0)
-        TrueEmbedding = 0
 
     neg_offset = np.kron(np.eye(sz2[0]),np.ones(sz)-np.eye(sz[0]))
-    Mask = mask - neg_offset
+    Mask = AdjMat - neg_offset
     MaskOffset = neg_offset
     return {
       'InitEmbeddings': InitEmbeddings.astype(self.dtype),
