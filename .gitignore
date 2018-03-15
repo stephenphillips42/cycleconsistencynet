@@ -4,3 +4,4 @@ stdout.log
 # Ignore log folders
 save/*
 __pycache__/
+figs/*
