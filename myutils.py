@@ -1,9 +1,13 @@
+import os
+import sys
 import numpy as np 
 import matplotlib.pyplot as plt
 from matplotlib.patches import ConnectionPatch
 from mpl_toolkits.mplot3d import Axes3D
 import scipy.linalg as la
+import torch
 
+# Numpy
 def axes3d():
   fig = plt.figure()
   return fig, fig.add_subplot(111, projection='3d')
@@ -74,4 +78,34 @@ def dim_normalize(X):
 
 def planer_proj(X):
   return X / np.expand_dims(X[...,-1], axis=-1)
+
+# Torch
+def pairwise_distances(x, y=None):
+    """
+    Input: x is a Nxd matrix
+           y is an optional Mxd matirx
+    Output: dist is a NxM matrix where dist[i,j] is the square norm between x[i,:] and y[j,:]
+            if y is not given then use 'y=x'.
+    i.e. dist[i,j] = ||x[i,:]-y[j,:]||^2
+    """
+    x_norm = (x**2).sum(1).view(-1, 1)
+    if y is not None:
+        y_norm = (y**2).sum(1).view(1, -1)
+    else:
+        y = x
+        y_norm = x_norm.view(1, -1)
+
+    dist = x_norm + y_norm - 2.0 * torch.mm(x, torch.transpose(y, 0, 1))
+    return dist
+
+# Miscellaneous
+def next_debug_dir(prefix="figs"):
+  fidx = 1
+  while os.path.exists("{}/run{:03d}".format(prefix,fidx)):
+    fidx += 1
+  debug_dir = "{}/run{:03d}".format(prefix,fidx)
+  os.makedirs(debug_dir)
+  return debug_dir
+
+
 
