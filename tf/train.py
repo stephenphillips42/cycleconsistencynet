@@ -12,7 +12,7 @@ from tqdm import tqdm
 import tensorflow as tf
 import sonnet as snt
 
-import nputils
+import myutils
 import options
 import model
 

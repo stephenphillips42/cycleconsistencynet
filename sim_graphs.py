@@ -9,7 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import scipy.linalg as la
 from tqdm import tqdm
 
-from nputils import *
+from myutils import *
 import options
 
 # Parameters

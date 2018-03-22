@@ -14,7 +14,7 @@ import torch.utils.data as tdata
 from torch.autograd import Variable
 import torch.nn.functional as functional
 
-import nputils
+import myutils
 import options
 import data_util
 # import model
@@ -55,45 +55,6 @@ class GCNModel(torch.nn.Module):
     else:
       return out
 
-class SimilarityCriterion(object):
-  def __init__(self, opts):
-    self.loss = torch.nn.MSELoss()
-
-  def eval(self, output, sample):
-    sims_est = torch.mm(output, torch.transpose(output, 0, 1))
-    sims_ = sample['AdjMat'][0] + torch.eye(len(sample['AdjMat'][0]))
-    sims = Variable(sims_)
-    err = self.loss(sims_est, sims)
-    ### DEBUG
-    if 'go for it' in sample:
-      prefix = sample['prefix']
-      emb = output.data.numpy()
-      errnp = err.data.numpy()
-      print((np.mean(nputils.dim_norm(emb)-1), np.std(nputils.dim_norm(emb)-1)))
-      sim = sims.data.numpy()
-      tt = sample['TrueEmbedding'][0].numpy()
-      ts = np.dot(tt,tt.T)
-      initemb = sample['InitEmbeddings'][0]
-      import matplotlib.pyplot as plt
-      plt.imshow(sim); plt.savefig("{}_sim.png".format(prefix))
-      np.save("{}_sim.npy".format(prefix),sim)
-      plt.imshow(ts); plt.savefig("{}_true_sim.png".format(prefix))
-      np.save("{}_true_sim.npy".format(prefix),ts)
-      plt.imshow(tt); plt.savefig("{}_true_emb.png".format(prefix))
-      np.save("{}_true_emb.npy".format(prefix),tt)
-      plt.imshow(emb); plt.savefig("{}_embedding.png".format(prefix))
-      np.save("{}_embedding.npy".format(prefix),emb)
-      plt.imshow(initemb); plt.savefig("{}_initemb.png".format(prefix))
-      np.save("{}_initemb.npy".format(prefix),initemb)
-      print(np.sum(np.abs(errnp)))
-      if 'exit' in sample:
-        sys.exit()
-    ### END DEBUG
-    return err
-
-  def eval_true(self, sample):
-    return 0
-
 class Criterion(object):
   def __init__(self, opts):
     self.offset = opts.embedding_offset
@@ -111,7 +72,7 @@ class Criterion(object):
       wm = weight_mask.data.numpy()
       wo = weight_offset.data.numpy()
       emb = output.data.numpy()
-      print((np.mean(nputils.dim_norm(emb)-1), np.std(nputils.dim_norm(emb)-1)))
+      print((np.mean(myutils.dim_norm(emb)-1), np.std(myutils.dim_norm(emb)-1)))
       d = dists.data.numpy()
       tt = sample['TrueEmbedding'][0].numpy()
       td = 2*(1-np.dot(tt,tt.T))
@@ -144,6 +105,45 @@ class Criterion(object):
     if self.normalize: # DEBUG - remove eventually
       normalizer = 1.0
     return torch.sum(err.clamp(min=0))/normalizer
+
+  def eval_true(self, sample):
+    return 0
+
+class SimilarityCriterion(object):
+  def __init__(self, opts):
+    self.loss = torch.nn.MSELoss()
+
+  def eval(self, output, sample):
+    sims_est = torch.mm(output, torch.transpose(output, 0, 1))
+    sims_ = sample['AdjMat'][0] + torch.eye(len(sample['AdjMat'][0]))
+    sims = Variable(sims_)
+    err = self.loss(sims_est, sims)
+    ### DEBUG
+    if 'go for it' in sample:
+      prefix = sample['prefix']
+      emb = output.data.numpy()
+      errnp = err.data.numpy()
+      print((np.mean(myutils.dim_norm(emb)-1), np.std(myutils.dim_norm(emb)-1)))
+      sim = sims.data.numpy()
+      tt = sample['TrueEmbedding'][0].numpy()
+      ts = np.dot(tt,tt.T)
+      initemb = sample['InitEmbeddings'][0]
+      import matplotlib.pyplot as plt
+      plt.imshow(sim); plt.savefig("{}_sim.png".format(prefix))
+      np.save("{}_sim.npy".format(prefix),sim)
+      plt.imshow(ts); plt.savefig("{}_true_sim.png".format(prefix))
+      np.save("{}_true_sim.npy".format(prefix),ts)
+      plt.imshow(tt); plt.savefig("{}_true_emb.png".format(prefix))
+      np.save("{}_true_emb.npy".format(prefix),tt)
+      plt.imshow(emb); plt.savefig("{}_embedding.png".format(prefix))
+      np.save("{}_embedding.npy".format(prefix),emb)
+      plt.imshow(initemb); plt.savefig("{}_initemb.png".format(prefix))
+      np.save("{}_initemb.npy".format(prefix),initemb)
+      print(np.sum(np.abs(errnp)))
+      if 'exit' in sample:
+        sys.exit()
+    ### END DEBUG
+    return err
 
   def eval_true(self, sample):
     return 0

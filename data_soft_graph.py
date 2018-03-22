@@ -13,7 +13,7 @@ import torch
 import torch.utils.data as tdata
 
 import options
-import nputils
+import myutils
 import sim_graphs
 
 def generate_graph(opts):
