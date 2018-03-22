@@ -126,8 +126,6 @@ class SimilarityCriterion(object):
 
   def debug(self, output, sample):
     emb = output.data.numpy()
-    sims = sample['AdjMat'][0] + torch.eye(len(sample['AdjMat'][0]))
-    sim = sims.numpy()
     tt = sample['TrueEmbedding'][0].numpy()
     ts = np.dot(tt,tt.T)
     initemb = sample['InitEmbeddings'][0]
@@ -137,8 +135,6 @@ class SimilarityCriterion(object):
       plt.savefig(os.path.join(self.debug_dir,
                   "{}_{}.png".format(self.prefix, name)))
       np.save("{}_{}.npy".format(self.prefix,name), x)
-    debug_out("sim", sim)
-    debug_out("true_sim", ts)
     debug_out("true_emb", tt)
     debug_out("embedding", emb)
     debug_out("initemb", initemb)
@@ -150,9 +146,15 @@ def train(opts):
   # Get data
   train_dir = os.path.join(opts.data_dir, 'train')
   test_dir = os.path.join(opts.data_dir, 'test')
-  dataset = data_util.GraphSimDataset(opts, opts.num_gen_train, n_pts=10, n_poses=10)
+  dataset = data_util.GraphSimDataset(opts,
+                                      opts.num_gen_train,
+                                      n_pts=opts.min_points,
+                                      n_poses=opts.min_views)
   loader = tdata.DataLoader(dataset, batch_size=1,shuffle=True)
-  testset = data_util.GraphSimDataset(opts, opts.num_gen_test, n_pts=10, n_poses=10)
+  testset = data_util.GraphSimDataset(opts,
+                                      opts.num_gen_test,
+                                      n_pts=opts.min_points,
+                                      n_poses=opts.min_views)
   test_loader = tdata.DataLoader(testset, batch_size=1,shuffle=True)
   # Get model and optimizer
   # model = GCNModel(opts)

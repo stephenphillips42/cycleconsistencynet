@@ -1,4 +1,5 @@
 # Ignore compiled files
+*.sh
 *.pyc
 stdout.log
 # Ignore log folders
