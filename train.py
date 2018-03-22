@@ -30,70 +30,6 @@ class MyLogger(object):
   def __del__(self):
     self.logfile.close()
 
-
-# class GCNNModel(torch.nn.Module):
-#   # def __init__(self, opts):
-#   #   super(MyModel, self).__init__()
-#   #   lens = [ opts.descriptor_dim ] + \
-#   #          [ 15, 20, 25, 20 ] + \
-#   #          [ opts.final_embedding_dim ]
-#   #   self._linear = [ torch.nn.Linear(lens[i], lens[i+1])
-#   #                    for i in range(len(lens)-1) ]
-#   #   self._activ = [ torch.nn.ReLU() 
-#   #                   for i in range(len(lens)-2) ]
-# 
-#   def __init__(self, opts):
-#     super(GCNModel, self).__init__()
-#     lens = [ opts.descriptor_dim ] + \
-#            [ 2**5, 2**6, 2**7, 2**8 ] + \
-#            [ opts.final_embedding_dim ]
-#     self._linear0 = torch.nn.Linear(lens[0], lens[1])
-#     self._linear1 = torch.nn.Linear(lens[1], lens[2])
-#     self._linear2 = torch.nn.Linear(lens[2], lens[3])
-#     self._linear3 = torch.nn.Linear(lens[3], lens[4])
-#     self._linear4 = torch.nn.Linear(lens[4], lens[5])
-#     self._linear = [ 
-#         self._linear0,
-#         self._linear1,
-#         self._linear2,
-#         self._linear3,
-#         self._linear4,
-#     ]
-# 
-#   def forward(self, x):
-#     out = Variable(x[0])
-#     lap = Variable(x[1])
-#     for i in range(len(self._linear)-1):
-#       out = torch.matmul(lap, self._linear[i](out)).clamp(min=0)
-#     return self._linear[-1](out)
-
-# TODO: Make this opts independent...
-class GCNModelOld(torch.nn.Module):
-  def __init__(self, opts):
-    super(GCNModelOld, self).__init__()
-    lens = [ opts.descriptor_dim ] + \
-           [ 2**5, 2**6, 2**7, 2**8 ] + \
-           [ opts.final_embedding_dim ]
-    self._linear0 = torch.nn.Linear(lens[0], lens[1])
-    self._linear1 = torch.nn.Linear(lens[1], lens[2])
-    self._linear2 = torch.nn.Linear(lens[2], lens[3])
-    self._linear3 = torch.nn.Linear(lens[3], lens[4])
-    self._linear4 = torch.nn.Linear(lens[4], lens[5])
-    self._linear = [ 
-        self._linear0,
-        self._linear1,
-        self._linear2,
-        self._linear3,
-        self._linear4,
-    ]
-
-  def forward(self, x):
-    out = Variable(x[0])
-    lap = Variable(x[1])
-    for i in range(len(self._linear)-1):
-      out = torch.matmul(lap, self._linear[i](out)).clamp(min=0)
-    return self._linear[-1](out)
-
 class GCNModel(torch.nn.Module):
   def __init__(self, opts):
     super(GCNModel, self).__init__()
@@ -119,6 +55,45 @@ class GCNModel(torch.nn.Module):
     else:
       return out
 
+class SimilarityCriterion(object):
+  def __init__(self, opts):
+    self.loss = torch.nn.MSELoss()
+
+  def eval(self, output, sample):
+    sims_est = torch.mm(output, torch.transpose(output, 0, 1))
+    sims_ = sample['AdjMat'][0] + torch.eye(len(sample['AdjMat'][0]))
+    sims = Variable(sims_)
+    err = self.loss(sims_est, sims)
+    ### DEBUG
+    if 'go for it' in sample:
+      prefix = sample['prefix']
+      emb = output.data.numpy()
+      errnp = err.data.numpy()
+      print((np.mean(nputils.dim_norm(emb)-1), np.std(nputils.dim_norm(emb)-1)))
+      sim = sims.data.numpy()
+      tt = sample['TrueEmbedding'][0].numpy()
+      ts = np.dot(tt,tt.T)
+      initemb = sample['InitEmbeddings'][0]
+      import matplotlib.pyplot as plt
+      plt.imshow(sim); plt.savefig("{}_sim.png".format(prefix))
+      np.save("{}_sim.npy".format(prefix),sim)
+      plt.imshow(ts); plt.savefig("{}_true_sim.png".format(prefix))
+      np.save("{}_true_sim.npy".format(prefix),ts)
+      plt.imshow(tt); plt.savefig("{}_true_emb.png".format(prefix))
+      np.save("{}_true_emb.npy".format(prefix),tt)
+      plt.imshow(emb); plt.savefig("{}_embedding.png".format(prefix))
+      np.save("{}_embedding.npy".format(prefix),emb)
+      plt.imshow(initemb); plt.savefig("{}_initemb.png".format(prefix))
+      np.save("{}_initemb.npy".format(prefix),initemb)
+      print(np.sum(np.abs(errnp)))
+      if 'exit' in sample:
+        sys.exit()
+    ### END DEBUG
+    return err
+
+  def eval_true(self, sample):
+    return 0
+
 class Criterion(object):
   def __init__(self, opts):
     self.offset = opts.embedding_offset
@@ -142,14 +117,23 @@ class Criterion(object):
       td = 2*(1-np.dot(tt,tt.T))
       import matplotlib.pyplot as plt
       plt.imshow(wm); plt.savefig("{}_weight_mask.png".format(prefix))
+      np.save("{}_weight_mask.npy".format(prefix),wm)
       plt.imshow(wo); plt.savefig("{}_weight_offset.png".format(prefix))
+      np.save("{}_weight_offset.npy".format(prefix),wo)
       plt.imshow(d); plt.savefig("{}_dists.png".format(prefix))
+      np.save("{}_dists.npy".format(prefix),d)
       plt.imshow(td); plt.savefig("{}_true_dists.png".format(prefix))
+      np.save("{}_true_dists.npy".format(prefix),td)
       plt.imshow(np.dot(tt.T,tt)); plt.savefig("{}_true_sims.png".format(prefix))
+      np.save("{}_true_sims.npy".format(prefix),np.dot(tt.T,tt))
       plt.imshow(np.dot(emb.T,emb)); plt.savefig("{}_embedding.png".format(prefix))
+      np.save("{}_embedding.npy".format(prefix),np.dot(emb.T,emb))
       plt.imshow(np.dot(tt.T,emb)); plt.savefig("{}_true_embed_corr.png".format(prefix))
+      np.save("{}_true_embed_corr.npy".format(prefix),np.dot(tt.T,emb))
       plt.imshow(tt); plt.savefig("{}_true_emb.png".format(prefix))
+      np.save("{}_true_emb.npy".format(prefix),tt)
       plt.imshow(emb); plt.savefig("{}_embedding.png".format(prefix))
+      np.save("{}_embedding.npy".format(prefix),emb)
       print(self.offset)
       print(np.sum(np.clip(self.offset*wo+self.dist_w*wm*d,0,10)))
       print(np.sum(np.clip(self.offset*wo+self.dist_w*wm*td,0,10)))
@@ -196,7 +180,7 @@ def train(opts):
   # Get model and optimizer
   # model = GCNModel(opts)
   model = GCNModel(opts)
-  criterion = Criterion(opts)
+  criterion = SimilarityCriterion(opts)
   # print([ x for x in model.parameters()])
   optimizer = torch.optim.Adam(model.parameters(), lr=opts.learning_rate)
   optimizer.zero_grad()
@@ -218,7 +202,8 @@ def train(opts):
     for idx, sample in enumerate(loader):
       if (epoch == 0 and idx == 3) or (epoch == 2 and idx == len(loader)-2):
         sample['go for it'] = 11
-        sample['prefix'] = 'e{}i{}'.format(epoch,idx)
+        prefix = 'e{}i{}'.format(epoch,idx)
+        sample['prefix'] = prefix
         if idx == len(loader)-2:
           sample['exit'] = 11
         print(model._linear[0]._parameters['weight'])
@@ -230,6 +215,7 @@ def train(opts):
           print(bi.shape)
           print(bi)
           plt.imshow(wi); plt.show()
+          np.save("{}_w{:02d}.npy".format(prefix,i), wi)
       lap = torch.eye(len(sample['Degrees'][0])) + \
             torch.diag(sample['Degrees'][0]) - sample['AdjMat'][0]
       output = model.forward((sample['InitEmbeddings'][0], lap))
