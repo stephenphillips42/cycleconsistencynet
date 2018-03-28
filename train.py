@@ -160,7 +160,7 @@ def train(opts):
   # model = GCNModel(opts)
   model = GCNModel(opts)
   criterion = SimilarityCriterion(opts,
-                                  debug_dir=myutils.next_debug_dir(),
+                                  debug_dir=opts.save_dir,
                                   debug_exit=False, debug_show=False)
   optimizer = torch.optim.Adam(model.parameters(), lr=opts.learning_rate)
   optimizer.zero_grad()
