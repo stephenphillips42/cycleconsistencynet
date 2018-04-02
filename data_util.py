@@ -7,41 +7,9 @@ import glob
 import tqdm
 from enum import Enum
 
-import torch
-import torch.utils.data as tdata
-
 import options
 import myutils
 import sim_graphs
-
-class GraphDataset(tdata.Dataset):
-  """Dataset for Cycle Consistency graphs"""
-  def __init__(self, root_dir):
-    self._root_dir = root_dir
-    self.keys = [
-      'AdjMat',
-      'Degrees'
-      'TrueEmbedding',
-    ]
-
-  def __len__(self):
-    return len(glob.glob(os.path.join(self._root_dir,'*.npz')))
-
-  def __getitem__(self, idx):
-    fname = os.path.join(self._root_dir,'{:09d}.npz'.format(idx))
-    ld = np.load(fname)
-    sample = dict(zip(self.keys, [torch.from_numpy(ld[k]) for k in self.keys]))
-    # TODO: Add augmentation here??
-    return sample
-
-  def generate_graph(self, n_points, n_pts, opts):
-    pass
-
-  def generate_data(self, sz):
-    for i in tqdm.tqdm(range(sz)):
-      data = generate_graph(opts)
-      name = '{:09d}.npz'.format(i)
-      np.savez(os.path.join(self._root_dir,name), **data)
 
 class GraphSimDataset(tdata.Dataset):
   """Dataset for Cycle Consistency graphs"""

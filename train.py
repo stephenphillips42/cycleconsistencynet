@@ -3,6 +3,8 @@ import numpy as np
 import os
 import sys
 import collections
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.patches import ConnectionPatch
 from mpl_toolkits.mplot3d import Axes3D
@@ -14,7 +16,18 @@ import sonnet as snt
 
 import myutils
 import options
-import model
+# import model
+
+class MyLogger(object):
+  def __init__(self, logfile_name):
+    self.logfile = open(logfile_name, 'w')
+
+  def log(self, message):
+    print(message)
+    self.logfile.write(message + '\n')
+
+  def __del__(self):
+    self.logfile.close()
 
 def build_optimizer(opts, global_step):
   # Learning parameters post-processing
@@ -52,8 +65,34 @@ def build_optimizer(opts, global_step):
 
   return optimizer
 
+class DenseGraphLayerWeights(object):
+  def __init__(self, opts, layer_lens=None, nlayers=None, activ=tf.nn.relu):
+    super(DenseGraphLayerWeights, self).__init__()
+    self._nlayers = 5
+    if layer_lens is not None:
+      self._nlayers = len(layer_lens)
+      self._layer_lens = layer_lens
+    else:
+      if nlayers is not None:
+        self._nlayers = nlayers
+      self._layer_lens = \
+          [ opts.descriptor_dim ] + \
+          [ 2**min(5+k,9) for k in range(self._nlayers) ] + \
+          [ opts.final_embedding_dim ]
+    # Build layers
+    with tf.variable_scope("gnn_weights"):
+      self._layers = []
+      for i in range(len(self._layer_lens)-1):
+        layer = tf.get_variable("weight_{:02d}".format(i),
+                                [ self._layer_lens[i], self._layer_lens[i+1] ],
+                                initializer=tf.random_normal_initializer())
+        self._layers.append(layer)
+      
+
+
 def train(opts):
-  pass
+  weights = DenseGraphLayerWeights(opts, nlayers=5)
+  print(weights._layers)
 
 if __name__ == "__main__":
   opts = options.get_opts()
