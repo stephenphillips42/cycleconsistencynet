@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import ConnectionPatch
 from mpl_toolkits.mplot3d import Axes3D
 import scipy.linalg as la
-import torch
 
 # Numpy
 def axes3d():
