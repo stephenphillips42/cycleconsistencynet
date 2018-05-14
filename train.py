@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 import tensorflow as tf
 
+import data_util
 import myutils
 import options
 
@@ -108,12 +109,15 @@ class DenseGraphLayerWeights(object):
                                 [ self._layer_lens[i], self._layer_lens[i+1] ],
                                 initializer=tf.random_normal_initializer())
         self._layers.append(layer)
-      
 
 
 def train(opts):
   weights = DenseGraphLayerWeights(opts, nlayers=5)
-  print(weights._layers)
+  # print(weights._layers)
+  dataset = data_util.get_dataset(opts)
+  sample = dataset.load_batch('train')
+  print(sample)
+  
 
 if __name__ == "__main__":
   opts = options.get_opts()

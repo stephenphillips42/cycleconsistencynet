@@ -37,7 +37,7 @@ class Int64Feature(slim.tfexample_decoder.ItemHandler):
 
   def tensors_to_item(self, keys_to_tensors):
     tensor = keys_to_tensors[self._key]
-    return tf.cast(tensor, out_type=tf.int64)
+    return tf.cast(tensor, dtype=tf.int64)
 
 class TensorFeature(slim.tfexample_decoder.ItemHandler):
   """Custom class used for decoding serialized tensors."""
@@ -64,10 +64,9 @@ class GraphSimDataset(object):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
-  def __init__(self, opts, dataset_len, n_pts=None, n_poses=None):
+  def __init__(self, opts, mode, n_pts=None, n_poses=None):
     self.opts = opts
     self.data_dir = opts.data_dir
-    self._dataset_len = dataset_len
     self.n_pts = n_pts
     self.n_poses = n_poses
     self.dtype = opts.dtype
@@ -198,15 +197,12 @@ class GraphSimDataset(object):
     with open(os.path.join(out_dir, timestamp_file), 'w') as date_file:
       date_file.write('TFrecord created {}'.format(str(datetime.datetime.now())))
 
-  def __len__(self):
-    return self._dataset_len
-
   def load_batch(self, mode):
     """Return batch loaded from this dataset"""
     assert mode in self.opts.sample_sizes, "Mode {} not supported".format(mode)
     batch_size = self.opts.batch_size
     data_source_name = mode + '-[0-9][0-9].tfrecords'
-    data_sources = glob.glob(os.path.join(self.data_dir, data_source_name))
+    data_sources = glob.glob(os.path.join(self.data_dir, mode, data_source_name))
     # Build dataset provider
     keys_to_features = { k: v.get_feature_read()
                          for k, v in self.features.items() }
@@ -227,7 +223,8 @@ class GraphSimDataset(object):
                 common_queue_min=10 * batch_size,
                 shuffle=self.opts.shuffle_data)
     # Extract features
-    keys = self.features.keys()
+    keys = list(self.features.keys())
+    print(keys)
     values = provider.get(keys)
     keys, values = self.augment(keys, values)
     # Flow preprocessing here?
@@ -238,11 +235,17 @@ class GraphSimDataset(object):
                 capacity=5 * batch_size)
     return dict(zip(keys, values))
 
-  def __getitem__(self, idx):
-    return self.gen_sample()
 
-
-
+def get_dataset(opts):
+  """Getting the dataset with all the correct attributes"""
+  if opts.fixed_size:
+    n_pts = opts.max_points
+    n_views = opts.max_views
+  else:
+    n_pts = None
+    n_views = None
+  return GraphSimDataset(opts, n_pts, n_views)
+ 
 if __name__ == '__main__':
   opts = options.get_opts()
   if opts.fixed_size:

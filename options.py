@@ -37,13 +37,13 @@ def get_opts():
   parser.add_argument('--save_dir',
                       default='save/',
                       help='Directory to save out logs and checkpoints')
-  parser.add_argument('--load',
-                      default=False,
-                      type=str2bool,
-                      help='Load dataset or generate samples on the fly?')
   parser.add_argument('--data_dir',
-                      default='/NAS/data/stephen/cycle/',
-                      help='Directory for saving/loading numpy data')
+                      default='/NAS/data/stephen/',
+                      help='Directory for saving/loading dataset')
+  parser.add_argument('--dataset',
+                      default=True,
+                      choices=['cycle_small', 'cycle_large', 'custom'],
+                      help='Choose which dataset to use')
 
   # Dataset options
   parser.add_argument('--num_gen_train',
@@ -213,8 +213,42 @@ def get_opts():
                       type=int,
                       help='Number of epochs before learning rate decay')
 
+  # Tensorflow technical options
+  parser.add_argument('--num_readers',
+                      default=4,
+                      type=int,
+                      help='Number of parallel threads to read in the dataset')
+  parser.add_argument('--num_preprocessing_threads',
+                      default=1,
+                      type=int,
+                      help='How many threads to preprocess data i.e. data augmentation')
+  parser.add_argument('--shuffle_data',
+                      default=True,
+                      type=str2bool,
+                      help='Shuffle the dataset or no?')
+
   opts = parser.parse_args()
 
+  # Determine dataset
+  setattr(opts, 'load', True)
+  if opts.dataset == 'cycle_large':
+    opts.fixed_size=True
+    opts.max_views=25
+    opts.max_points=15
+    opts.num_gen_test=3000
+    opts.num_gen_train=40000
+    opts.data_dir = '/NAS/data/stephen/cycle_large'
+  elif opts.dataset == 'cycle_small':
+    opts.fixed_size=True
+    opts.max_views=25
+    opts.max_points=15
+    opts.num_gen_test=300
+    opts.num_gen_train=400
+    opts.data_dir = '/NAS/data/stephen/cycle_small'
+  elif opts.dataset == 'custom':
+    opts.load = False
+  setattr(opts, 'sample_sizes', {'train': opts.num_gen_train,
+                                 'test': opts.num_gen_test})
   # Post processing
   if opts.normalize_embedding:
     opts.embedding_offset = 1
