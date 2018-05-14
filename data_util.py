@@ -4,29 +4,123 @@ import scipy.io as sio
 import os
 import sys
 import glob
+import datetime
 import tqdm
-from enum import Enum
+
+import tensorflow as tf
+import tensorflow.contrib.slim as slim
 
 import options
 import myutils
 import sim_graphs
 
-class GraphSimDataset(tdata.Dataset):
+# Tensorflow features
+def _bytes_feature(value):
+  """Create arbitrary tensor Tensorflow feature."""
+  return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
+
+def _int64_feature(value):
+  return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
+class Int64Feature(slim.tfexample_decoder.ItemHandler):
+  """Custom class used for decoding serialized tensors."""
+  def __init__(self, key, description):
+    super(Int64Feature, self).__init__(key)
+    self._key = key
+    self._description = description
+
+  def get_feature_write(self, value):
+    return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
+  def get_feature_read(self):
+    return tf.FixedLenFeature([], tf.int64)
+
+  def tensors_to_item(self, keys_to_tensors):
+    tensor = keys_to_tensors[self._key]
+    return tf.cast(tensor, out_type=tf.int64)
+
+class TensorFeature(slim.tfexample_decoder.ItemHandler):
+  """Custom class used for decoding serialized tensors."""
+  def __init__(self, key, shape, dtype, description):
+    super(TensorFeature, self).__init__(key)
+    self._key = key
+    self._shape = shape
+    self._dtype = dtype
+    self._description = description
+
+  def get_feature_write(self, value):
+    v = value.astype(self._dtype).tobytes()
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[v]))
+
+  def get_feature_read(self):
+    return tf.FixedLenFeature([], tf.string)
+
+  def tensors_to_item(self, keys_to_tensors):
+    tensor = keys_to_tensors[self._key]
+    tensor = tf.decode_raw(tensor, out_type=self._dtype)
+    return tf.reshape(tensor, self._shape)
+
+class GraphSimDataset(object):
   """Dataset for Cycle Consistency graphs"""
+  MAX_IDX=7000
+
   def __init__(self, opts, dataset_len, n_pts=None, n_poses=None):
     self.opts = opts
+    self.data_dir = opts.data_dir
     self._dataset_len = dataset_len
     self.n_pts = n_pts
     self.n_poses = n_poses
-    self.dtype = opts.np_type
-    self.keys = [
-      'InitEmbeddings',
-      'AdjMat',
-      'Degrees'
-      'Mask',
-      'MaskOffset',
-      'TrueEmbedding',
-    ]
+    self.dtype = opts.dtype
+    d = opts.max_views*opts.max_points
+    e = opts.descriptor_dim
+    f = opts.final_embedding_dim
+    self.features = {
+      'InitEmbeddings':
+           TensorFeature(key='InitEmbeddings',
+                         shape=[d, e],
+                         dtype=self.dtype,
+                         description='Initial embeddings for optimization'),
+      'AdjMat':
+           TensorFeature(key='AdjMat',
+                         shape=[d, d],
+                         dtype=self.dtype,
+                         description='Adjacency matrix for graph'),
+      'Degrees':
+           TensorFeature(key='Degrees',
+                         shape=[d, d],
+                         dtype=self.dtype,
+                         description='Degree matrix for graph'),
+      'Mask':
+           TensorFeature(key='Mask',
+                         shape=[d, d],
+                         dtype=self.dtype,
+                         description='Mask for valid values of matrix'),
+      'MaskOffset':
+           TensorFeature(key='MaskOffset',
+                         shape=[d, d],
+                         dtype=self.dtype,
+                         description='Mask offset for loss'),
+      'TrueEmbedding':
+           TensorFeature(key='TrueEmbedding',
+                         shape=[d, e],
+                         dtype=self.dtype,
+                         description='True values for the low dimensional embedding'),
+      'NumViews':
+           Int64Feature(key='NumViews',
+                         description='Number of views used in this example'),
+      'NumPoints':
+           Int64Feature(key='NumPoints',
+                         description='Number of points used in this example'),
+    }
+
+  def process_features(self, loaded_features):
+    features = {}
+    for k, feat in self.features.items():
+      features[k] = feat.get_feature_write(loaded_features[k])
+    return features
+
+  def augment(self, keys, values):
+    return keys, values
 
   def gen_sample(self):
     pose_graph = sim_graphs.PoseGraph(self.opts,
@@ -70,12 +164,80 @@ class GraphSimDataset(tdata.Dataset):
       'Mask': Mask.astype(self.dtype),
       'MaskOffset': MaskOffset.astype(self.dtype),
       'TrueEmbedding': TrueEmbedding.astype(self.dtype),
+      'NumViews': pose_graph.n_poses,
+      'NumPoints': pose_graph.n_pts,
     }
     
+  def convert_dataset(self, out_dir, mode):
+    """Writes synthetic flow data in .mat format to a TF record file."""
+    fname = '{}-{:02d}.tfrecords'
+    outfile = lambda idx: os.path.join(out_dir, fname.format(mode, idx))
+    if not os.path.isdir(out_dir):
+      os.makedirs(out_dir)
+    matfiles = glob.glob(os.path.join(self.data_dir, mode, "[0-9]*.mat"))
+
+    print('Writing dataset to {}/{}'.format(out_dir, mode))
+    writer = None
+    record_idx = 0
+    file_idx = self.MAX_IDX + 1
+    for index in tqdm.tqdm(range(self._dataset_len)):
+      if file_idx > self.MAX_IDX:
+        file_idx = 0
+        if writer: writer.close()
+        writer = tf.python_io.TFRecordWriter(outfile(record_idx))
+        record_idx += 1
+      loaded_features = self.gen_sample()
+      features = self.process_features(loaded_features)
+      example = tf.train.Example(features=tf.train.Features(feature=features))
+      writer.write(example.SerializeToString())
+      file_idx += 1
+
+    if writer: writer.close()
+    # And save out a file with the creation time for versioning
+    timestamp_file = '{}_timestamp.txt'.format(mode)
+    with open(os.path.join(out_dir, timestamp_file), 'w') as date_file:
+      date_file.write('TFrecord created {}'.format(str(datetime.datetime.now())))
+
   def __len__(self):
     return self._dataset_len
 
-  # TODO: Add load sample
+  def load_batch(self, mode):
+    """Return batch loaded from this dataset"""
+    assert mode in self.opts.sample_sizes, "Mode {} not supported".format(mode)
+    batch_size = self.opts.batch_size
+    data_source_name = mode + '-[0-9][0-9].tfrecords'
+    data_sources = glob.glob(os.path.join(self.data_dir, data_source_name))
+    # Build dataset provider
+    keys_to_features = { k: v.get_feature_read()
+                         for k, v in self.features.items() }
+    decoder = slim.tfexample_decoder.TFExampleDecoder(keys_to_features,
+                                                      self.features)
+    items_to_descriptions = { k: v._description
+                              for k, v in self.features.items() }
+    dataset = slim.dataset.Dataset(
+                data_sources=data_sources,
+                reader=tf.TFRecordReader,
+                decoder=decoder,
+                num_samples=self.opts.sample_sizes[mode],
+                items_to_descriptions=items_to_descriptions)
+    provider = slim.dataset_data_provider.DatasetDataProvider(
+                dataset,
+                num_readers=self.opts.num_readers,
+                common_queue_capacity=20 * batch_size,
+                common_queue_min=10 * batch_size,
+                shuffle=self.opts.shuffle_data)
+    # Extract features
+    keys = self.features.keys()
+    values = provider.get(keys)
+    keys, values = self.augment(keys, values)
+    # Flow preprocessing here?
+    values = tf.train.batch(
+                values,
+                batch_size=batch_size,
+                num_threads=self.opts.num_preprocessing_threads,
+                capacity=5 * batch_size)
+    return dict(zip(keys, values))
+
   def __getitem__(self, idx):
     return self.gen_sample()
 
@@ -83,6 +245,12 @@ class GraphSimDataset(tdata.Dataset):
 
 if __name__ == '__main__':
   opts = options.get_opts()
+  if opts.fixed_size:
+    n_pts = opts.max_points
+    n_views = opts.max_views
+  else:
+    n_pts = None
+    n_views = None
   print("Generating Pose Graphs")
   if not os.path.exists(opts.data_dir):
     os.makedirs(opts.data_dir)
@@ -91,12 +259,12 @@ if __name__ == '__main__':
     'train' : opts.num_gen_train,
     'test' : opts.num_gen_test
   }
-  for t, sz in sizes.iteritems():
+  for t, sz in sizes.items():
     dname = os.path.join(opts.data_dir,t)
     if not os.path.exists(dname):
       os.makedirs(dname)
-    dataset = CycleConsitencyGraphDataset(dname)
-    dataset.generate_data(sz)
+    dataset = GraphSimDataset(opts, sz, n_pts, n_views)
+    dataset.convert_dataset(dname, t)
 
 
 

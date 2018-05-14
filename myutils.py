@@ -1,16 +1,8 @@
 import os
 import sys
 import numpy as np 
-import matplotlib.pyplot as plt
-from matplotlib.patches import ConnectionPatch
-from mpl_toolkits.mplot3d import Axes3D
-import scipy.linalg as la
 
 # Numpy
-def axes3d():
-  fig = plt.figure()
-  return fig, fig.add_subplot(111, projection='3d')
-
 def mysincf(x):
   """Numerically stable sinc function (sin(x)/x)"""
   z = x if x != 0 else 1e-16

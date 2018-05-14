@@ -37,9 +37,14 @@ def get_opts():
   parser.add_argument('--save_dir',
                       default='save/',
                       help='Directory to save out logs and checkpoints')
+  parser.add_argument('--load',
+                      default=False,
+                      type=str2bool,
+                      help='Load dataset or generate samples on the fly?')
   parser.add_argument('--data_dir',
-                      default='/mount/data/graphs',
+                      default='/NAS/data/stephen/cycle/',
                       help='Directory for saving/loading numpy data')
+
   # Dataset options
   parser.add_argument('--num_gen_train',
                       default=8000,
@@ -49,9 +54,13 @@ def get_opts():
                       default=2000,
                       type=int,
                       help='Number of testing samples to generate.')
-  parser.add_argument('--np_type',
+  parser.add_argument('--dtype',
                       default='float32',
-                      help='Numpy type to save dataset as')
+                      help='dtype to save dataset as (float{16,32,64})')
+  parser.add_argument('--fixed_size',
+                      default=True,
+                      type=str2bool,
+                      help='Determine weather or not dataset has fixed or stochastic size')
   parser.add_argument('--min_views',
                       default=25,
                       type=int,

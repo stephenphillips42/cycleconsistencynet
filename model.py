@@ -59,7 +59,7 @@ def pairwise_distances(x, y=None):
 
 def build_alt_lap(opts, data):
   Adj = data['graph']
-  Adj_alt = Adj + np.eye(Adj.shape[0]).astype(opts.np_type)
+  Adj_alt = Adj + np.eye(Adj.shape[0]).astype(opts.dtype)
   D_h_inv = np.diag(1./np.sqrt(np.sum(Adj_alt,1)))
   alt_lap_np = np.dot(D_h_inv, np.dot(Adj_alt, D_h_inv))
   return Variable(torch.from_numpy(alt_lap_np))
@@ -70,7 +70,7 @@ def build_weight_mask(opts, data):
   n_poses = data['n_poses']
   D_sqrt_inv = np.diag(1./np.sqrt(np.sum(Adj,1)))
   nm_ = np.eye(n_pts) - np.ones((n_pts,n_pts))
-  neg_mask_np = (np.kron(np.eye(n_poses),nm_)).astype(opts.np_type)
+  neg_mask_np = (np.kron(np.eye(n_poses),nm_)).astype(opts.dtype)
   return Variable(torch.from_numpy(neg_mask_np + Adj))
 
 if __name__ == "__main__":
