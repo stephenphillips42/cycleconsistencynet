@@ -10,11 +10,44 @@ import scipy.linalg as la
 from tqdm import tqdm
 
 import tensorflow as tf
-import sonnet as snt
 
 import myutils
 import options
-import model
+
+class MyLogger(object):
+  def __init__(self, logfile_name):
+    self.logfile = open(logfile_name, 'w')
+
+  def log(self, message):
+    print(message)
+    self.logfile.write(message + '\n')
+
+  def __del__(self):
+    self.logfile.close()
+
+class DenseGraphLayerWeights(object):
+  def __init__(self, opts, layer_lens=None, nlayers=None, activ=tf.nn.relu):
+    super(DenseGraphLayerWeights, self).__init__()
+    self._nlayers = 5
+    if layer_lens is not None:
+      self._nlayers = len(layer_lens)
+      self._layer_lens = layer_lens
+    else:
+      if nlayers is not None:
+        self._nlayers = nlayers
+      self._layers_lens = \
+          [ 2**max(5+k,9) for k in range(self._nlayers) ] \
+          [ opts.final_embedding_dim ]
+    # Build layers
+    with tf.variable_scope("gnn_weights"):
+      self._layers = []
+      for i in range(len(self._layer_lens)-1):
+        layer = tf.get_variable("weight_{:02d}".format(i),
+                                [ self._layer_lens[i], self._layer_lens[i+1] ],
+                                initializer=stuff)
+        self._layers.append(layer)
+      
+
 
 def build_optimizer(opts, global_step):
   # Learning parameters post-processing
