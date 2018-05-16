@@ -32,11 +32,6 @@ def logm(R):
   """Matrix logarithm of rotation matrix"""
   tt = np.minimum(np.maximum((np.trace(R)-1)/2.0, -1), 1)
   theta = mysincf(np.arccos(tt))
-  if np.abs(theta) < 1e-10:
-    print("THETA")
-    print(theta)
-    print(np.arccos(tt))
-    print(tt)
   return (1.0 / (2.0*theta))*np.array([[R[2,1] - R[1,2],
                                                  R[0,2] - R[2,0],
                                                  R[1,0] - R[0,1]]]).T
@@ -57,7 +52,7 @@ def rot_rand_small(sigma):
   return r2
 
 def normalize(x):
-  return x / np.linalg.norm(x)
+  return x / (1e-16 + np.linalg.norm(x))
 
 def dim_norm(X):
   """Norms of the vectors along the last dimention of X"""

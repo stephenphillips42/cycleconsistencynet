@@ -18,19 +18,19 @@ Points = collections.namedtuple("Points", ["p","d"]) # position and descriptor
 Pose = collections.namedtuple("Pose", ["R","T"])
 PoseEdge = collections.namedtuple("PoseEdge", ["idx", "g_ij"])
 class PoseGraph(object):
-  def __init__(self, opts, n_poses=None, n_pts=None):
+  def __init__(self, opts, n_views=None, n_pts=None):
     self.opts = opts
-    if n_poses is None:
-      self.n_poses = np.random.randint(opts.min_views, opts.max_views+1)
+    if n_views is None:
+      self.n_views = np.random.randint(opts.min_views, opts.max_views+1)
     else:
-      self.n_poses = n_poses
+      self.n_views = n_views
     if n_pts is None:
       self.n_pts = np.random.randint(opts.min_points, opts.max_points+1)
     else:
       self.n_pts = n_pts
     # Generate poses
-    sph = dim_normalize(np.random.randn(self.n_poses,3))
-    rot = [ sph_rot(-sph[i]) for i in range(self.n_poses) ]
+    sph = dim_normalize(np.random.randn(self.n_views,3))
+    rot = [ sph_rot(-sph[i]) for i in range(self.n_views) ]
     trans = self.opts.scale*sph
     # Create variables
     pts = self.opts.points_scale*np.random.randn(self.n_pts,3)
@@ -38,18 +38,18 @@ class PoseGraph(object):
     self.desc_var = self.opts.descriptor_var
     desc = self.desc_var*np.random.randn(self.n_pts, self.desc_dim)
     self.pts_w = Points(p=pts,d=desc)
-    self.g_cw = [ Pose(R=rot[i],T=trans[i]) for i in range(self.n_poses) ]
+    self.g_cw = [ Pose(R=rot[i],T=trans[i]) for i in range(self.n_views) ]
     # Create graph
-    eye = np.eye(self.n_poses)
+    eye = np.eye(self.n_views)
     dist_mat = 2 - 2*np.dot(sph, sph.T) + 3*eye
     AdjList0 = [ dist_mat[i].argsort()[:self.opts.knn].tolist() 
-                 for i in range(self.n_poses) ]
+                 for i in range(self.n_views) ]
     A = np.array([ sum([ eye[j] for j in AdjList0[i] ])
-                   for i in range(self.n_poses) ])
+                   for i in range(self.n_views) ])
     self.adj_mat = np.minimum(1, A.T + A)
     get_adjs = lambda adj: np.argwhere(adj.reshape(-1) > 0).T.tolist()[0]
     self.adj_list = []
-    for i in range(self.n_poses):
+    for i in range(self.n_views):
       pose_edges = []
       for j in get_adjs(self.adj_mat[i]):
         Rij = np.dot(rot[i].T,rot[j]),
@@ -77,11 +77,11 @@ class PoseGraph(object):
     return s.permutation(self.n_pts)
 
   def get_all_permutations(self):
-    return [ self.get_perm(i) for i in range(self.n_poses) ]
+    return [ self.get_perm(i) for i in range(self.n_views) ]
 
   def get_feature_matching_mat(self):
     n = self.n_pts
-    m = self.n_poses
+    m = self.n_views
     perms = [ self.get_perm(i) for i in range(m) ]
     sigma = 2
     total_graph = np.zeros((n*m, n*m))

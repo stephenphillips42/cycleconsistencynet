@@ -64,14 +64,15 @@ class GraphSimDataset(object):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
-  def __init__(self, opts, mode, n_pts=None, n_poses=None):
+  def __init__(self, opts, n_pts=None, n_views=None):
     self.opts = opts
     self.data_dir = opts.data_dir
     self.n_pts = n_pts
-    self.n_poses = n_poses
+    self.n_views = n_views
     self.dtype = opts.dtype
-    d = opts.max_views*opts.max_points
+    d = n_pts*n_views
     e = opts.descriptor_dim
+    p = opts.max_points
     f = opts.final_embedding_dim
     self.features = {
       'InitEmbeddings':
@@ -89,6 +90,11 @@ class GraphSimDataset(object):
                          shape=[d, d],
                          dtype=self.dtype,
                          description='Degree matrix for graph'),
+      'Laplacian':
+           TensorFeature(key='Laplacian',
+                         shape=[d, d],
+                         dtype=self.dtype,
+                         description='Alternate Laplacian matrix for graph'),
       'Mask':
            TensorFeature(key='Mask',
                          shape=[d, d],
@@ -101,7 +107,7 @@ class GraphSimDataset(object):
                          description='Mask offset for loss'),
       'TrueEmbedding':
            TensorFeature(key='TrueEmbedding',
-                         shape=[d, e],
+                         shape=[d, p],
                          dtype=self.dtype,
                          description='True values for the low dimensional embedding'),
       'NumViews':
@@ -122,24 +128,28 @@ class GraphSimDataset(object):
     return keys, values
 
   def gen_sample(self):
+    # Pose graph and related objects
     pose_graph = sim_graphs.PoseGraph(self.opts,
                                       n_pts=self.n_pts,
-                                      n_poses=self.n_poses)
-    InitEmbeddings = np.ones((pose_graph.n_pts*pose_graph.n_poses, \
-                              self.opts.descriptor_dim))
-    if self.opts.use_descriptors:
-      InitEmbeddings = np.concatenate([ pose_graph.get_proj(i).d
-                                        for i in range(pose_graph.n_poses) ], 0)
+                                      n_views=self.n_views)
     sz = (pose_graph.n_pts, pose_graph.n_pts)
-    sz2 = (pose_graph.n_poses, pose_graph.n_poses)
+    sz2 = (pose_graph.n_views, pose_graph.n_views)
     if self.opts.sparse:
       mask = np.kron(pose_graph.adj_mat,np.ones(sz))
     else:
       mask = np.kron(np.ones(sz2)-np.eye(sz2[0]),np.ones(sz))
 
     perms_ = [ np.eye(pose_graph.n_pts)[:,pose_graph.get_perm(i)]
-               for i in range(pose_graph.n_poses) ]
+               for i in range(pose_graph.n_views) ]
+    # Embedding objects
     TrueEmbedding = np.concatenate(perms_, 0)
+    InitEmbeddings = np.ones((pose_graph.n_pts*pose_graph.n_views, \
+                              self.opts.descriptor_dim))
+    if self.opts.use_descriptors:
+      InitEmbeddings = np.concatenate([ pose_graph.get_proj(i).d
+                                        for i in range(pose_graph.n_views) ], 0)
+
+    # Graph objects
     if not self.opts.soft_edges:
       if self.opts.descriptor_noise_var == 0:
         AdjMat = np.dot(TrueEmbedding,TrueEmbedding.T)
@@ -147,12 +157,18 @@ class GraphSimDataset(object):
           AdjMat = AdjMat * mask
         else:
           AdjMat = AdjMat - np.eye(len(AdjMat))
-        Degrees = np.sum(AdjMat,0)
+        Degrees = np.diag(np.sum(AdjMat,0))
     else:
       if self.opts.sparse and self.opts.descriptor_noise_var > 0:
         AdjMat = pose_graph.get_feature_matching_mat()
-        Degrees = np.sum(AdjMat,0)
+        Degrees = np.diag(np.sum(AdjMat,0))
 
+    # Laplacian objects
+    Ahat = AdjMat + np.eye(*AdjMat.shape)
+    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
+    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
+
+    # Mask objects
     neg_offset = np.kron(np.eye(sz2[0]),np.ones(sz)-np.eye(sz[0]))
     Mask = AdjMat - neg_offset
     MaskOffset = neg_offset
@@ -160,10 +176,11 @@ class GraphSimDataset(object):
       'InitEmbeddings': InitEmbeddings.astype(self.dtype),
       'AdjMat': AdjMat.astype(self.dtype),
       'Degrees': Degrees.astype(self.dtype),
+      'Laplacian': Laplacian.astype(self.dtype),
       'Mask': Mask.astype(self.dtype),
       'MaskOffset': MaskOffset.astype(self.dtype),
       'TrueEmbedding': TrueEmbedding.astype(self.dtype),
-      'NumViews': pose_graph.n_poses,
+      'NumViews': pose_graph.n_views,
       'NumPoints': pose_graph.n_pts,
     }
     
@@ -179,7 +196,7 @@ class GraphSimDataset(object):
     writer = None
     record_idx = 0
     file_idx = self.MAX_IDX + 1
-    for index in tqdm.tqdm(range(self._dataset_len)):
+    for index in tqdm.tqdm(range(self.opts.sample_sizes[mode])):
       if file_idx > self.MAX_IDX:
         file_idx = 0
         if writer: writer.close()
@@ -224,7 +241,6 @@ class GraphSimDataset(object):
                 shuffle=self.opts.shuffle_data)
     # Extract features
     keys = list(self.features.keys())
-    print(keys)
     values = provider.get(keys)
     keys, values = self.augment(keys, values)
     # Flow preprocessing here?
@@ -244,7 +260,7 @@ def get_dataset(opts):
   else:
     n_pts = None
     n_views = None
-  return GraphSimDataset(opts, n_pts, n_views)
+  return GraphSimDataset(opts, n_pts=n_pts, n_views=n_views)
  
 if __name__ == '__main__':
   opts = options.get_opts()
@@ -266,7 +282,7 @@ if __name__ == '__main__':
     dname = os.path.join(opts.data_dir,t)
     if not os.path.exists(dname):
       os.makedirs(dname)
-    dataset = GraphSimDataset(opts, sz, n_pts, n_views)
+    dataset = GraphSimDataset(opts, n_pts, n_views)
     dataset.convert_dataset(dname, t)
 
 

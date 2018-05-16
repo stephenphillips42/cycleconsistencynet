@@ -3,15 +3,11 @@ import numpy as np
 import os
 import sys
 import collections
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-from matplotlib.patches import ConnectionPatch
-from mpl_toolkits.mplot3d import Axes3D
 import scipy.linalg as la
 from tqdm import tqdm
 
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 
 import data_util
 import myutils
@@ -28,28 +24,6 @@ class MyLogger(object):
   def __del__(self):
     self.logfile.close()
 
-class DenseGraphLayerWeights(object):
-  def __init__(self, opts, layer_lens=None, nlayers=None, activ=tf.nn.relu):
-    super(DenseGraphLayerWeights, self).__init__()
-    self._nlayers = 5
-    if layer_lens is not None:
-      self._nlayers = len(layer_lens)
-      self._layer_lens = layer_lens
-    else:
-      if nlayers is not None:
-        self._nlayers = nlayers
-      self._layers_lens = \
-          [ 2**max(5+k,9) for k in range(self._nlayers) ] \
-          [ opts.final_embedding_dim ]
-    # Build layers
-    with tf.variable_scope("gnn_weights"):
-      self._layers = []
-      for i in range(len(self._layer_lens)-1):
-        layer = tf.get_variable("weight_{:02d}".format(i),
-                                [ self._layer_lens[i], self._layer_lens[i+1] ],
-                                initializer=stuff)
-        self._layers.append(layer)
-      
 
 def build_optimizer(opts, global_step):
   # Learning parameters post-processing
@@ -87,9 +61,16 @@ def build_optimizer(opts, global_step):
 
   return optimizer
 
+def matmul(x,y):
+  return tf.einsum('bik,kj->bij', x, y)
+
+def batch_matmul(x,y):
+  return tf.einsum('bik,bkj->bij', x, y)
+
 class DenseGraphLayerWeights(object):
   def __init__(self, opts, layer_lens=None, nlayers=None, activ=tf.nn.relu):
     super(DenseGraphLayerWeights, self).__init__()
+    self._activ = activ
     self._nlayers = 5
     if layer_lens is not None:
       self._nlayers = len(layer_lens)
@@ -110,14 +91,61 @@ class DenseGraphLayerWeights(object):
                                 initializer=tf.random_normal_initializer())
         self._layers.append(layer)
 
+  def apply(self, sample):
+    """Applying this graph network to sample"""
+    print
+    lap = sample['Laplacian']
+    init_emb = sample['InitEmbeddings']
+    print(lap)
+    print(init_emb)
+    output = init_emb
+    for l in range(self._nlayers):
+      lin = matmul(output, self._layers[l])
+      lin_graph = batch_matmul(lap, lin)
+      output = self._activ(lin_graph)
+    output = matmul(output, self._layers[-1])
+    output = tf.nn.l2_normalize(output, axis=2)
+    return output
+
 
 def train(opts):
-  weights = DenseGraphLayerWeights(opts, nlayers=5)
-  # print(weights._layers)
+  # Get data
   dataset = data_util.get_dataset(opts)
   sample = dataset.load_batch('train')
-  print(sample)
-  
+  emb = sample['TrueEmbedding']
+
+  # Get network
+  network = DenseGraphLayerWeights(opts) # Just use default options
+  output = network.apply(sample)
+
+  # Get loss
+  output_T = tf.transpose(output, perm=[0, 2, 1])
+  output_sim = batch_matmul(output, output_T)
+  emb_T = tf.transpose(emb, perm=[0, 2, 1])
+  emb_sim = batch_matmul(emb, emb_T)
+  tf.losses.mean_squared_error(emb_sim,output_sim)
+  loss = tf.losses.get_total_loss()
+
+  # Training
+  global_step = tf.train.get_or_create_global_step()
+  optimizer = build_optimizer(opts, global_step)
+  train_op = slim.learning.create_train_op(total_loss=loss,
+                                           optimizer=optimizer,
+                                           global_step=global_step,
+																					 clip_gradient_norm=5)
+
+  tf.logging.set_verbosity(tf.logging.INFO)
+  num_batches = 1.0 * opts.sample_sizes['train'] / opts.batch_size
+  max_steps = int(num_batches * opts.num_epochs)
+  # TODO: Implement this: init_fn=_get_init_fn(),
+  slim.learning.train(
+          train_op=train_op,
+          logdir=opts.save_dir,
+          number_of_steps=max_steps,
+          log_every_n_steps=opts.log_steps,
+          save_summaries_secs=opts.save_summaries_secs,
+          save_interval_secs=opts.save_interval_secs)
+
 
 if __name__ == "__main__":
   opts = options.get_opts()

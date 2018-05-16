@@ -214,6 +214,10 @@ def get_opts():
                       help='Number of epochs before learning rate decay')
 
   # Tensorflow technical options
+  parser.add_argument('--full_tensorboard',
+                      default=False,
+                      type=str2bool,
+                      help='Display everything on tensorboard?')
   parser.add_argument('--num_readers',
                       default=4,
                       type=int,
@@ -222,6 +226,18 @@ def get_opts():
                       default=1,
                       type=int,
                       help='How many threads to preprocess data i.e. data augmentation')
+  parser.add_argument('--save_summaries_secs',
+                      default=300,
+                      type=int,
+                      help='How frequently we save our model while training')
+  parser.add_argument('--save_interval_secs',
+                      default=600,
+                      type=int,
+                      help='How frequently we save our model while training')
+  parser.add_argument('--log_steps',
+                      default=1,
+                      type=int,
+                      help='How frequently we save our model while training')
   parser.add_argument('--shuffle_data',
                       default=True,
                       type=str2bool,
