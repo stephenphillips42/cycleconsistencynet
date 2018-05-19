@@ -218,8 +218,12 @@ def get_opts():
                       default=False,
                       type=str2bool,
                       help='Display everything on tensorboard?')
+  parser.add_argument('--test_check_freq',
+                      default=4000,
+                      type=int,
+                      help='Number of steps between running loss on test set')
   parser.add_argument('--num_readers',
-                      default=4,
+                      default=3,
                       type=int,
                       help='Number of parallel threads to read in the dataset')
   parser.add_argument('--num_preprocessing_threads',

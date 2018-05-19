@@ -8,6 +8,7 @@ from tqdm import tqdm
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
+from tensorflow.contrib.slim.python.slim.learning import train_step
 
 import data_util
 import myutils
@@ -107,26 +108,31 @@ class DenseGraphLayerWeights(object):
     output = tf.nn.l2_normalize(output, axis=2)
     return output
 
+def get_sim(x):
+  x_T = tf.transpose(x, perm=[0, 2, 1])
+  return batch_matmul(x, x_T)
 
 def train(opts):
   # Get data
   dataset = data_util.get_dataset(opts)
   sample = dataset.load_batch('train')
-  emb = sample['TrueEmbedding']
+  # test_sample = dataset.load_batch('test')
 
   # Get network
   network = DenseGraphLayerWeights(opts) # Just use default options
-  output = network.apply(sample)
 
   # Get loss
-  output_T = tf.transpose(output, perm=[0, 2, 1])
-  output_sim = batch_matmul(output, output_T)
-  emb_T = tf.transpose(emb, perm=[0, 2, 1])
-  emb_sim = batch_matmul(emb, emb_T)
-  tf.losses.mean_squared_error(emb_sim,output_sim)
+  emb = sample['TrueEmbedding']
+  output = network.apply(sample)
+  tf.losses.mean_squared_error(get_sim(emb),get_sim(output))
   loss = tf.losses.get_total_loss()
 
-  # Training
+  # # Get evaluation loss
+  # test_emb = test_sample['TrueEmbedding']
+  # test_output = network.apply(test_sample)
+  # test_mse = tf.metrics.mean_squared_error(get_sim(test_emb),get_sim(test_output))
+
+  # Training objects
   global_step = tf.train.get_or_create_global_step()
   optimizer = build_optimizer(opts, global_step)
   train_op = slim.learning.create_train_op(total_loss=loss,
@@ -135,9 +141,11 @@ def train(opts):
 																					 clip_gradient_norm=5)
 
   tf.logging.set_verbosity(tf.logging.INFO)
+  # num_batches = int(1.0 * opts.sample_sizes['train'] / opts.batch_size)
   num_batches = 1.0 * opts.sample_sizes['train'] / opts.batch_size
   max_steps = int(num_batches * opts.num_epochs)
-  # TODO: Implement this: init_fn=_get_init_fn(),
+
+  # Train-test loop
   slim.learning.train(
           train_op=train_op,
           logdir=opts.save_dir,
@@ -145,6 +153,7 @@ def train(opts):
           log_every_n_steps=opts.log_steps,
           save_summaries_secs=opts.save_summaries_secs,
           save_interval_secs=opts.save_interval_secs)
+
 
 
 if __name__ == "__main__":
