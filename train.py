@@ -124,7 +124,10 @@ def train(opts):
   # Get loss
   emb = sample['TrueEmbedding']
   output = network.apply(sample)
-  tf.losses.mean_squared_error(get_sim(emb),get_sim(output))
+  emb_sim, output_sim = get_sim(emb), get_sim(output)
+  tf.summary.image('Output Similarity', output_sim)
+  tf.summary.image('Embedding Similarity', emb_sim)
+  tf.losses.mean_squared_error(emb_sim, output_sim)
   loss = tf.losses.get_total_loss()
 
   # # Get evaluation loss

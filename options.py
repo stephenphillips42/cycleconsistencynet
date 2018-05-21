@@ -35,7 +35,7 @@ def get_opts():
 
   # Directory and dataset options
   parser.add_argument('--save_dir',
-                      default='save/',
+                      default=None,
                       help='Directory to save out logs and checkpoints')
   parser.add_argument('--data_dir',
                       default='/NAS/data/stephen/',
@@ -249,19 +249,26 @@ def get_opts():
 
   opts = parser.parse_args()
 
+  # Get save directory default
+  if opts.save_dir is None:
+    save_idx = 0
+    while os.path.exists('save/save-{:03d}'.format(save_idx)):
+      save_idx += 1
+    opts.save_dir = 'save/save-{:03d}'.format(save_idx)
+
   # Determine dataset
   setattr(opts, 'load', True)
   if opts.dataset == 'cycle_large':
     opts.fixed_size=True
-    opts.max_views=25
-    opts.max_points=15
+    opts.max_views=3
+    opts.max_points=25
     opts.num_gen_test=3000
     opts.num_gen_train=40000
     opts.data_dir = '/NAS/data/stephen/cycle_large'
   elif opts.dataset == 'cycle_small':
     opts.fixed_size=True
-    opts.max_views=25
-    opts.max_points=15
+    opts.max_views=3
+    opts.max_points=25
     opts.num_gen_test=300
     opts.num_gen_train=400
     opts.data_dir = '/NAS/data/stephen/cycle_small'
