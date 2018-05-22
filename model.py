@@ -2,76 +2,91 @@
 import numpy as np 
 import os
 import sys
-import collections
-import matplotlib.pyplot as plt
-from matplotlib.patches import ConnectionPatch
-from mpl_toolkits.mplot3d import Axes3D
-import scipy.linalg as la
-from tqdm import tqdm
+import tensorflow as tf
 
-import torch
-from torch.autograd import Variable
-
-import nputils
+import myutils
+import tfutils
 import options
 
-# TODO: Better documentation
-class DenseGraphLayer(torch.nn.Module):
-  """Implements graph layer from GCN, using dense matrices."""
-  def __init__(self,  alternate_laplacian, input_size, output_size,
-               activation=torch.nn.ReLU, name="dense_graph_layer"):
-    """Build graph layer and specify input and output size.
-    
-    Args:
-      alternate_laplacian: Laplcian variant used for propogating nodes in
-        the graph
-      output_size: Number of outputs from the layer
-      activation: Pointwise non-linearity of the layer (default: tf.nn.relu)
-    """
-    super(DenseGraphLayer, self).__init__(name=name)
-    self._out = output_size
-    self._lapl = alternate_laplacian
-    self._activ = activation
-
-  def _build(self, inputs):
-    """Compute next layer of embeddings."""
-    print(inputs)
-    self._linear = torch.nn.Linear(self._out)
-    return self._activ(torch.mm(self._lapl, self._linear(inputs)))
-
-def pairwise_distances(x, y=None):
-    '''
-    Input: x is a Nxd matrix
-           y is an optional Mxd matirx
-    Output: dist is a NxM matrix where dist[i,j] is the square norm between x[i,:] and y[j,:]
-            if y is not given then use 'y=x'.
-    i.e. dist[i,j] = ||x[i,:]-y[j,:]||^2
-    '''
-    x_norm = (x**2).sum(1).view(-1, 1)
-    if y is not None:
-        y_norm = (y**2).sum(1).view(1, -1)
+class DenseGraphLayerWeights(object):
+  def __init__(self, opts, layer_lens=None, nlayers=None):
+    super(DenseGraphLayerWeights, self).__init__()
+    self.tf_init = False
+    self.np_init = False
+    self._activ = tf.nn.relu
+    self._nlayers = 5
+    if layer_lens is not None:
+      self._nlayers = len(layer_lens)
+      self._layer_lens = layer_lens
     else:
-        y = x
-        y_norm = x_norm.view(1, -1)
+      if nlayers is not None:
+        self._nlayers = nlayers
+      self._layer_lens = \
+          [ opts.descriptor_dim ] + \
+          [ 2**min(5+k,9) for k in range(self._nlayers) ] + \
+          [ opts.final_embedding_dim ]
+    self._np_layers = []
+    self._layers = []
 
-    dist = x_norm + y_norm - 2.0 * torch.mm(x, torch.transpose(y, 0, 1))
-    return dist
+  def build_tf_layers(self):
+    """Build layers"""
+    with tf.variable_scope("gnn_weights"):
+      for i in range(len(self._layer_lens)-1):
+        layer = tf.get_variable("weight_{:02d}".format(i),
+                                [ self._layer_lens[i], self._layer_lens[i+1] ],
+                                initializer=tf.random_normal_initializer())
+        self._layers.append(layer)
+    self.tf_init = True
 
-def build_alt_lap(opts, data):
-  Adj = data['graph']
-  Adj_alt = Adj + np.eye(Adj.shape[0]).astype(opts.dtype)
-  D_h_inv = np.diag(1./np.sqrt(np.sum(Adj_alt,1)))
-  alt_lap_np = np.dot(D_h_inv, np.dot(Adj_alt, D_h_inv))
-  return Variable(torch.from_numpy(alt_lap_np))
+  def apply(self, sample):
+    """Applying this graph network to sample"""
+    if not self.tf_init:
+      self.build_tf_layers()
+    lap = sample['Laplacian']
+    init_emb = sample['InitEmbeddings']
+    output = init_emb
+    for l in range(self._nlayers):
+      lin = tfutils.matmul(output, self._layers[l])
+      lin_graph = tfutils.batch_matmul(lap, lin)
+      output = self._activ(lin_graph)
+    output = tfutils.matmul(output, self._layers[-1])
+    output = tf.nn.l2_normalize(output, axis=2)
+    return output
 
-def build_weight_mask(opts, data):
-  Adj = data['graph']
-  n_pts = data['n_pts']
-  n_poses = data['n_poses']
-  D_sqrt_inv = np.diag(1./np.sqrt(np.sum(Adj,1)))
-  nm_ = np.eye(n_pts) - np.ones((n_pts,n_pts))
-  neg_mask_np = (np.kron(np.eye(n_poses),nm_)).astype(opts.dtype)
-  return Variable(torch.from_numpy(neg_mask_np + Adj))
+  def save_np(self, saver, save_dir):
+    checkpoint_file = tf.train.latest_checkpoint(save_dir)
+    with tf.Session() as np_sess:
+      saver.restore(np_sess, checkpoint_file)
+      for i in range(len(self._layers)):
+        self._np_layers.append(np_sess.run(self._layers[i]))
+    outdir = myutils.next_dir(os.path.join(save_dir, 'np_weights'))
+    np.savez(os.path.join(outdir, 'numpy_weights.npz'), *self._np_layers)
+
+  def load_np(self, save_dir):
+    numpy_weights = np.load(os.path.join(save_dir, 'numpy_weights.npz'))
+    self._np_layers = [ numpy_weights['arr_{}'.format(i)]
+                        for i in range(len(numpy_weights.files)) ]
+    self.np_init = True
+
+  def apply_np(self, sample):
+    """Applying this graph network to sample, using numpy input.
+    Only takes in one input at a time."""
+    if not self.tf_init:
+      self.build_tf_layers()
+    lap = sample['Laplacian']
+    init_emb = sample['InitEmbeddings']
+    output = init_emb
+    for l in range(self._nlayers):
+      lin = np.dot(output, self._layers[l])
+      lin_graph = np.dot(lap, lin)
+      output = np.maximum(0, lin_graph)
+    output = np.dot(output, self._layers[-1])
+    output = myutils.dim_normalize(output)
+    return output
+
+def get_network(opts):
+  network = DenseGraphLayerWeights(opts)
+  return network
 
 if __name__ == "__main__":
   import data_util

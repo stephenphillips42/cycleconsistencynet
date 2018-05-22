@@ -85,6 +85,14 @@ def pairwise_distances(x, y=None):
     return dist
 
 # Miscellaneous
+def next_dir(directory,prefix="_"):
+  fidx = 1
+  while os.path.exists("{}{}{:03d}".format(directory,prefix,fidx)):
+    fidx += 1
+  new_dir = "{}{}{:03d}".format(directory,prefix,fidx)
+  os.makedirs(new_dir)
+  return new_dir
+
 def next_debug_dir(prefix="figs"):
   fidx = 1
   while os.path.exists("{}/run{:03d}".format(prefix,fidx)):
