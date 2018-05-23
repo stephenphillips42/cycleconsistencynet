@@ -84,6 +84,16 @@ def pairwise_distances(x, y=None):
     dist = x_norm + y_norm - 2.0 * torch.mm(x, torch.transpose(y, 0, 1))
     return dist
 
+def get_np_activ(activ):
+  if activ == 'relu':
+    return lambda x: np.maximum(0,x)
+  elif activ == 'leakyrelu':
+    return lambda x: np.maximum(0.2*x,x)
+  elif activ == 'tanh':
+    return lambda x: np.tanh(x)
+  elif activ == 'elu':
+    return lambda x: np.where(x > 0, x, np.exp(x)-1)
+
 # Miscellaneous
 def next_dir(directory,prefix="_"):
   fidx = 1
@@ -100,6 +110,17 @@ def next_debug_dir(prefix="figs"):
   debug_dir = "{}/run{:03d}".format(prefix,fidx)
   os.makedirs(debug_dir)
   return debug_dir
+
+class MyLogger(object):
+  def __init__(self, logfile_name):
+    self.logfile = open(logfile_name, 'w')
+
+  def log(self, message):
+    print(message)
+    self.logfile.write(message + '\n')
+
+  def __del__(self):
+    self.logfile.close()
 
 
 

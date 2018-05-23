@@ -9,22 +9,15 @@ import tfutils
 import options
 
 class DenseGraphLayerWeights(object):
-  def __init__(self, opts, layer_lens=None, nlayers=None):
+  def __init__(self, opts, arch):
     super(DenseGraphLayerWeights, self).__init__()
     self.tf_init = False
     self.np_init = False
-    self._activ = tf.nn.relu
-    self._nlayers = 5
-    if layer_lens is not None:
-      self._nlayers = len(layer_lens)
-      self._layer_lens = layer_lens
-    else:
-      if nlayers is not None:
-        self._nlayers = nlayers
-      self._layer_lens = \
-          [ opts.descriptor_dim ] + \
-          [ 2**min(5+k,9) for k in range(self._nlayers) ] + \
-          [ opts.final_embedding_dim ]
+    self._activ = tfutils.get_tf_activ(arch.activ)
+    self._np_activ = myutils.get_np_activ(arch.activ)
+    self._nlayers = arch.nlayers
+    self._layer_lens = \
+        [opts.descriptor_dim] + arch.layer_lens + [opts.final_embedding_dim]
     self._np_layers = []
     self._layers = []
 
@@ -79,13 +72,13 @@ class DenseGraphLayerWeights(object):
     for l in range(self._nlayers):
       lin = np.dot(output, self._layers[l])
       lin_graph = np.dot(lap, lin)
-      output = np.maximum(0, lin_graph)
+      output = self._np_activ(lin_graph)
     output = np.dot(output, self._layers[-1])
     output = myutils.dim_normalize(output)
     return output
 
-def get_network(opts):
-  network = DenseGraphLayerWeights(opts)
+def get_network(opts, arch):
+  network = DenseGraphLayerWeights(opts, arch)
   return network
 
 if __name__ == "__main__":

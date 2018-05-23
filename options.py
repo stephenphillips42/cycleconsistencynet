@@ -8,6 +8,10 @@ import argparse
 import collections
 import yaml
 
+arch_params = collections.namedtuple('arch_params', [
+  'nlayers', 'layer_lens', 'activ', 'normalize_emb'
+])
+
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -117,47 +121,23 @@ def get_opts():
                       help='Variance of the noise of the descriptors '
                            'of the projected points')
 
-  ## TODO: Implement these for graphs
   # Architecture parameters
-  # parser.add_argument('--network_type',
-  #                     default='heading_network',
-  #                     choices=['heading_network'],
-  #                     help='Network architecture to use')
-  parser.add_argument('--nlayers',
-                      default=4,
-                      type=int,
-                      help='Number of layers in the architecture')
+  arch_choices = [
+    'vanilla', 'vanilla_0', 'vanilla_1', 
+  ]
+  #  'skip_0', 'skip_1'
+  parser.add_argument('--architecture',
+                      default='vanilla',
+                      choices=arch_choices,
+                      help='Network architecture to use')
   parser.add_argument('--final_embedding_dim',
                       default=12,
                       type=int,
                       help='Dimensionality of the output')
-  parser.add_argument('--nclasses',
-                      default=24,
-                      type=int,
-                      help='Number of classes')
   parser.add_argument('--activation_type',
                       default=None,
-                      choices=['relu','leakyrelu','tanh','relusq'],
+                      choices=['relu','leakyrelu','tanh', 'elu'],
                       help='What type of activation to use')
-  parser.add_argument('--use_fully_connected',
-                      default=False,
-                      type=str2bool,
-                      help='Use fully connected layer at the end')
-  parser.add_argument('--fully_connected_size',
-                      default=1024,
-                      type=int,
-                      help='Size of the last fully connected layer')
-  parser.add_argument('--use_batch_norm',
-                      default=True,
-                      type=str2bool,
-                      help='Decision whether to use batch norm or not')
-  parser.add_argument('--architecture',
-                      default=None,
-                      help='Helper variable for building the architecture type from network_type')
-  parser.add_argument('--normalize_embedding',
-                      default=False,
-                      type=str2bool,
-                      help='Helper variable for building the architecture type from network_type')
 
   # Machine learning parameters
   parser.add_argument('--num_epochs',
@@ -276,8 +256,31 @@ def get_opts():
     opts.load = False
   setattr(opts, 'sample_sizes', {'train': opts.num_gen_train,
                                  'test': opts.num_gen_test})
+
+  # Set up architecture
+  arch = None 
+  if opts.architecture == 'vanilla':
+    arch = arch_params(
+      nlayers=5,
+      layer_lens=[ 2**min(5+k,9) for k in range(5) ],
+      activ='relu',
+      normalize_emb=True)
+  elif opts.architecture == 'vanilla_0':
+    arch = arch_params(
+      nlayers=5,
+      layer_lens=[ 2**min(6+k,10) for k in range(5) ],
+      activ='relu',
+      normalize_emb=True)
+  elif opts.architecture == 'vanilla_1':
+    arch = arch_params(
+      nlayers=6,
+      layer_lens=[ 2**min(6+k,10) for k in range(6) ],
+      activ='relu',
+      normalize_emb=True)
+  setattr(opts, 'arch', arch)
+
   # Post processing
-  if opts.normalize_embedding:
+  if arch.normalize_emb:
     opts.embedding_offset = 1
   # Save out options
   if not os.path.exists(opts.save_dir):

@@ -16,17 +16,6 @@ import myutils
 import tfutils
 import options
 
-class MyLogger(object):
-  def __init__(self, logfile_name):
-    self.logfile = open(logfile_name, 'w')
-
-  def log(self, message):
-    print(message)
-    self.logfile.write(message + '\n')
-
-  def __del__(self):
-    self.logfile.close()
-
 
 def build_optimizer(opts, global_step):
   # Learning parameters post-processing
@@ -68,16 +57,17 @@ def train(opts):
   # Get data and network
   dataset = data_util.get_dataset(opts)
   sample = dataset.load_batch('train')
-  network = model.get_network(opts)
+  network = model.get_network(opts, opts.arch)
 
   # Get loss
   emb = sample['TrueEmbedding']
   output = network.apply(sample)
-  emb_sim, output_sim = tfutils.get_sim(emb), get_sim(output)
+  emb_sim, output_sim = tfutils.get_sim(emb), tfutils.get_sim(output)
   tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
   tf.summary.image('Embedding Similarity', tf.expand_dims(emb_sim, -1))
   tf.losses.mean_squared_error(emb_sim, output_sim)
   loss = tf.losses.get_total_loss()
+  tf.summary.scalar(loss)
 
   # Training objects
   global_step = tf.train.get_or_create_global_step()
