@@ -67,7 +67,7 @@ def train(opts):
   tf.summary.image('Embedding Similarity', tf.expand_dims(emb_sim, -1))
   tf.losses.mean_squared_error(emb_sim, output_sim)
   loss = tf.losses.get_total_loss()
-  tf.summary.scalar(loss)
+  tf.summary.scalar('Loss', loss)
 
   # Training objects
   global_step = tf.train.get_or_create_global_step()
