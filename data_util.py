@@ -190,7 +190,6 @@ class GraphSimDataset(object):
     outfile = lambda idx: os.path.join(out_dir, fname.format(mode, idx))
     if not os.path.isdir(out_dir):
       os.makedirs(out_dir)
-    matfiles = glob.glob(os.path.join(self.data_dir, mode, "[0-9]*.mat"))
 
     print('Writing dataset to {}/{}'.format(out_dir, mode))
     writer = None
@@ -213,6 +212,21 @@ class GraphSimDataset(object):
     timestamp_file = '{}_timestamp.txt'.format(mode)
     with open(os.path.join(out_dir, timestamp_file), 'w') as date_file:
       date_file.write('TFrecord created {}'.format(str(datetime.datetime.now())))
+
+  def create_np_dataset(self, out_dir, num_entries):
+    """Create npz files to store dataset"""
+    fname = 'np_test-{:04d}.npz'
+    outfile = lambda idx: os.path.join(out_dir, fname.format(idx))
+    print('Writing dataset to {}'.format(out_dir))
+    record_idx = 0
+    for index in tqdm.tqdm(range(num_entries)):
+      features = self.gen_sample()
+      np.savez(outfile(index), **features)
+
+    # And save out a file with the creation time for versioning
+    timestamp_file = 'np_test_timestamp.txt'
+    with open(os.path.join(out_dir, timestamp_file), 'w') as date_file:
+      date_file.write('Numpy Dataset created {}'.format(str(datetime.datetime.now())))
 
   def load_batch(self, mode):
     """Return batch loaded from this dataset"""
@@ -278,13 +292,18 @@ if __name__ == '__main__':
     'train' : opts.num_gen_train,
     'test' : opts.num_gen_test
   }
-  for t, sz in sizes.items():
-    dname = os.path.join(opts.data_dir,t)
-    if not os.path.exists(dname):
-      os.makedirs(dname)
-    dataset = GraphSimDataset(opts, n_pts, n_views)
-    dataset.convert_dataset(dname, t)
+  # for t, sz in sizes.items():
+  #   dname = os.path.join(opts.data_dir,t)
+  #   if not os.path.exists(dname):
+  #     os.makedirs(dname)
+  #   dataset = GraphSimDataset(opts, n_pts, n_views)
+  #   dataset.convert_dataset(dname, t)
 
-
+  # Generate numpy test
+  out_dir = os.path.join(opts.data_dir,'np_test')
+  if not os.path.exists(out_dir):
+    os.makedirs(out_dir)
+  dataset = GraphSimDataset(opts, n_pts, n_views)
+  dataset.create_np_dataset(out_dir, sizes['test'])
 
 
