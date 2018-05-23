@@ -148,10 +148,6 @@ def get_opts():
                       default=32,
                       type=int,
                       help='Size for batches')
-  # parser.add_argument('--noise_level',
-  #                     default=1e-2,
-  #                     type=float,
-  #                     help='Standard devation of white noise to add to input')
   parser.add_argument('--embedding_offset',
                       default=10,
                       type=int,
@@ -169,7 +165,7 @@ def get_opts():
                       type=float,
                       help='L1 weight decay regularization')
   parser.add_argument('--optimizer_type',
-                      default='adam',
+                      default='sgd',
                       choices=['adam','adadelta','momentum','sgd'],
                       help='Optimizer type for adaptive learning methods')
   parser.add_argument('--learning_rate',
@@ -195,7 +191,7 @@ def get_opts():
 
   # Tensorflow technical options
   parser.add_argument('--full_tensorboard',
-                      default=False,
+                      default=True,
                       type=str2bool,
                       help='Display everything on tensorboard?')
   parser.add_argument('--test_check_freq',
@@ -226,6 +222,15 @@ def get_opts():
                       default=True,
                       type=str2bool,
                       help='Shuffle the dataset or no?')
+  # Debugging options
+  parser.add_argument('--debug_index',
+                      default=1,
+                      type=int,
+                      help='Test data index to experiment with')
+  parser.add_argument('--debug_dir',
+                      default='logs',
+                      help='Test data directory to experiment with')
+
 
   opts = parser.parse_args()
 

@@ -292,12 +292,12 @@ if __name__ == '__main__':
     'train' : opts.num_gen_train,
     'test' : opts.num_gen_test
   }
-  # for t, sz in sizes.items():
-  #   dname = os.path.join(opts.data_dir,t)
-  #   if not os.path.exists(dname):
-  #     os.makedirs(dname)
-  #   dataset = GraphSimDataset(opts, n_pts, n_views)
-  #   dataset.convert_dataset(dname, t)
+  for t, sz in sizes.items():
+    dname = os.path.join(opts.data_dir,t)
+    if not os.path.exists(dname):
+      os.makedirs(dname)
+    dataset = GraphSimDataset(opts, n_pts, n_views)
+    dataset.convert_dataset(dname, t)
 
   # Generate numpy test
   out_dir = os.path.join(opts.data_dir,'np_test')

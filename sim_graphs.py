@@ -9,10 +9,6 @@ from tqdm import tqdm
 from myutils import *
 import options
 
-# Parameters
-desc_var = 1.0
-desc_noise_var = 0.4 # Somewhere between 0.7 and 0.8 seems optimal
-
 # Classes
 Points = collections.namedtuple("Points", ["p","d"]) # position and descriptor
 Pose = collections.namedtuple("Pose", ["R","T"])
