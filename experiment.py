@@ -76,16 +76,25 @@ def main(opts, index):
 
   # Printing out parts
   npts = len(np.unique(idxs))
-  mean_sims = np.zeros((npts,npts))
+  # mean_sims = np.zeros((npts,npts))
   diag = []
   off_diag = []
   for i in range(npts):
     for j in range(npts):
-      mean_sims[i,j] = np.mean(np.dot(output[idxs == i], output[idxs == j].T))
+      simsij = np.dot(output[idxs == i], output[idxs == j].T).reshape(-1)
+      # mean_sims[i,j] = np.mean(np.dot(output[idxs == i], output[idxs == j].T))
+      # if i == j:
+      #   for k in range(len(simsij)):
+      #     diag.append(np.arccos(np.minimum(1, simsij[k])))
+      # else:
+      #   for k in range(len(simsij)):
+      #     off_diag.append(np.arccos(np.maximum(-1,np.minimum(1,simsij[k]))))
       if i == j:
-        diag.append(np.abs(mean_sims[i,j]))
+        for k in range(len(simsij)):
+          diag.append(np.abs(simsij[k]))
       else:
-        off_diag.append(np.abs(mean_sims[i,j]))
+        for k in range(len(simsij)):
+          off_diag.append(np.abs(simsij[k]))
   stats = (np.mean(diag), np.std(diag), np.mean(off_diag), np.std(off_diag))
   print("Diag: {:.2e} +/- {:.2e}, Off Diag: {:.2e} +/- {:.2e}".format(*stats))
   if opts.debug_plot:
