@@ -78,7 +78,7 @@ def train(opts):
 																					 clip_gradient_norm=5)
 
   tf.logging.set_verbosity(tf.logging.INFO)
-  num_batches = 1.0 * opts.sample_sizes['train'] / opts.batch_size
+  num_batches = 1.0 * opts.dataset_params.sizes['train'] / opts.batch_size
   max_steps = int(num_batches * opts.num_epochs)
 
   # Train-test loop
