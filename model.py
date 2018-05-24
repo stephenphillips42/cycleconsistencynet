@@ -2,10 +2,16 @@
 import numpy as np 
 import os
 import sys
-import tensorflow as tf
+
+try:
+  import tensorflow as tf
+  import tfutils
+except:
+  print("ERROR: Tensorflow failed to load")
+  tf = None
+  tfutils = None
 
 import myutils
-import tfutils
 import options
 
 class DenseGraphLayerWeights(object):
@@ -13,8 +19,9 @@ class DenseGraphLayerWeights(object):
     super(DenseGraphLayerWeights, self).__init__()
     self.tf_init = False
     self.np_init = False
-    self._activ = tfutils.get_tf_activ(arch.activ)
-    self._np_activ = myutils.get_np_activ(arch.activ)
+    self.activ = arch.activ
+    self._activ = None # tfutils.get_tf_activ(arch.activ)
+    self._np_activ = None # myutils.get_np_activ(arch.activ)
     self._nlayers = arch.nlayers
     self._layer_lens = \
         [opts.descriptor_dim] + arch.layer_lens + [opts.final_embedding_dim]
@@ -23,6 +30,7 @@ class DenseGraphLayerWeights(object):
 
   def build_tf_layers(self):
     """Build layers"""
+    self._activ = tfutils.get_tf_activ(arch.activ)
     with tf.variable_scope("gnn_weights"):
       for i in range(len(self._layer_lens)-1):
         layer = tf.get_variable("weight_{:02d}".format(i),
@@ -59,21 +67,20 @@ class DenseGraphLayerWeights(object):
     numpy_weights = np.load(os.path.join(save_dir, 'numpy_weights.npz'))
     self._np_layers = [ numpy_weights['arr_{}'.format(i)]
                         for i in range(len(numpy_weights.files)) ]
+    self._np_activ = myutils.get_np_activ(self.activ)
     self.np_init = True
 
   def apply_np(self, sample):
     """Applying this graph network to sample, using numpy input.
     Only takes in one input at a time."""
-    if not self.tf_init:
-      self.build_tf_layers()
     lap = sample['Laplacian']
     init_emb = sample['InitEmbeddings']
     output = init_emb
     for l in range(self._nlayers):
-      lin = np.dot(output, self._layers[l])
+      lin = np.dot(output, self._np_layers[l])
       lin_graph = np.dot(lap, lin)
       output = self._np_activ(lin_graph)
-    output = np.dot(output, self._layers[-1])
+    output = np.dot(output, self._np_layers[-1])
     output = myutils.dim_normalize(output)
     return output
 

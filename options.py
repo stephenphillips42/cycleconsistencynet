@@ -230,6 +230,10 @@ def get_opts():
   parser.add_argument('--debug_dir',
                       default='logs',
                       help='Test data directory to experiment with')
+  parser.add_argument('--debug_plot',
+                      default=False,
+                      type=str2bool,
+                      help='Plot things in experiment')
 
 
   opts = parser.parse_args()
