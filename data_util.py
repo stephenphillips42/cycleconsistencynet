@@ -64,15 +64,20 @@ class GraphSimDataset(object):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
-  def __init__(self, opts, n_pts=None, n_views=None):
+  def __init__(self, opts, params):
     self.opts = opts
-    self.data_dir = opts.data_dir
-    self.n_pts = n_pts
-    self.n_views = n_views
-    self.dtype = opts.dtype
-    d = n_pts*n_views
-    e = opts.descriptor_dim
-    p = opts.max_points
+    self.dataset_params = params
+    self.data_dir = params.data_dir
+    self.dtype = params.dtype
+    if params.fixed_size:
+      self.n_views = params.views[-1]
+      self.n_pts = params.points[-1]
+    else:
+      self.n_views = np.random.randint(params.views[0], params.views[1]+1)
+      self.n_pts = np.random.randint(params.points[0], params.points[1]+1)
+    d = self.n_pts*self.n_views
+    e = params.descriptor_dim
+    p = params.points[-1]
     f = opts.final_embedding_dim
     self.features = {
       'InitEmbeddings':
@@ -129,12 +134,13 @@ class GraphSimDataset(object):
 
   def gen_sample(self):
     # Pose graph and related objects
+    params = self.dataset_params
     pose_graph = sim_graphs.PoseGraph(self.opts,
                                       n_pts=self.n_pts,
                                       n_views=self.n_views)
     sz = (pose_graph.n_pts, pose_graph.n_pts)
     sz2 = (pose_graph.n_views, pose_graph.n_views)
-    if self.opts.sparse:
+    if params.sparse:
       mask = np.kron(pose_graph.adj_mat,np.ones(sz))
     else:
       mask = np.kron(np.ones(sz2)-np.eye(sz2[0]),np.ones(sz))
@@ -144,22 +150,22 @@ class GraphSimDataset(object):
     # Embedding objects
     TrueEmbedding = np.concatenate(perms_, 0)
     InitEmbeddings = np.ones((pose_graph.n_pts*pose_graph.n_views, \
-                              self.opts.descriptor_dim))
-    if self.opts.use_descriptors:
+                              params.descriptor_dim))
+    if params.use_descriptors:
       InitEmbeddings = np.concatenate([ pose_graph.get_proj(i).d
                                         for i in range(pose_graph.n_views) ], 0)
 
     # Graph objects
-    if not self.opts.soft_edges:
-      if self.opts.descriptor_noise_var == 0:
+    if not params.soft_edges:
+      if params.descriptor_noise_var == 0:
         AdjMat = np.dot(TrueEmbedding,TrueEmbedding.T)
-        if self.opts.sparse:
+        if params.sparse:
           AdjMat = AdjMat * mask
         else:
           AdjMat = AdjMat - np.eye(len(AdjMat))
         Degrees = np.diag(np.sum(AdjMat,0))
     else:
-      if self.opts.sparse and self.opts.descriptor_noise_var > 0:
+      if params.sparse and params.descriptor_noise_var > 0:
         AdjMat = pose_graph.get_feature_matching_mat()
         Degrees = np.diag(np.sum(AdjMat,0))
 
@@ -186,6 +192,7 @@ class GraphSimDataset(object):
     
   def convert_dataset(self, out_dir, mode):
     """Writes synthetic flow data in .mat format to a TF record file."""
+    params = self.dataset_params
     fname = '{}-{:02d}.tfrecords'
     outfile = lambda idx: os.path.join(out_dir, fname.format(mode, idx))
     if not os.path.isdir(out_dir):
@@ -195,7 +202,7 @@ class GraphSimDataset(object):
     writer = None
     record_idx = 0
     file_idx = self.MAX_IDX + 1
-    for index in tqdm.tqdm(range(self.opts.sample_sizes[mode])):
+    for index in tqdm.tqdm(range(params.sizes[mode])):
       if file_idx > self.MAX_IDX:
         file_idx = 0
         if writer: writer.close()
@@ -230,8 +237,10 @@ class GraphSimDataset(object):
 
   def load_batch(self, mode):
     """Return batch loaded from this dataset"""
-    assert mode in self.opts.sample_sizes, "Mode {} not supported".format(mode)
-    batch_size = self.opts.batch_size
+    params = self.dataset_params
+    opts = self.opts
+    assert mode in params.sizes, "Mode {} not supported".format(mode)
+    batch_size = opts.batch_size
     data_source_name = mode + '-[0-9][0-9].tfrecords'
     data_sources = glob.glob(os.path.join(self.data_dir, mode, data_source_name))
     # Build dataset provider
@@ -245,14 +254,14 @@ class GraphSimDataset(object):
                 data_sources=data_sources,
                 reader=tf.TFRecordReader,
                 decoder=decoder,
-                num_samples=self.opts.sample_sizes[mode],
+                num_samples=params.sizes[mode],
                 items_to_descriptions=items_to_descriptions)
     provider = slim.dataset_data_provider.DatasetDataProvider(
                 dataset,
-                num_readers=self.opts.num_readers,
+                num_readers=opts.num_readers,
                 common_queue_capacity=20 * batch_size,
                 common_queue_min=10 * batch_size,
-                shuffle=self.opts.shuffle_data)
+                shuffle=opts.shuffle_data)
     # Extract features
     keys = list(self.features.keys())
     values = provider.get(keys)
@@ -261,29 +270,17 @@ class GraphSimDataset(object):
     values = tf.train.batch(
                 values,
                 batch_size=batch_size,
-                num_threads=self.opts.num_preprocessing_threads,
+                num_threads=opts.num_preprocessing_threads,
                 capacity=5 * batch_size)
     return dict(zip(keys, values))
 
 
 def get_dataset(opts):
   """Getting the dataset with all the correct attributes"""
-  if opts.fixed_size:
-    n_pts = opts.max_points
-    n_views = opts.max_views
-  else:
-    n_pts = None
-    n_views = None
-  return GraphSimDataset(opts, n_pts=n_pts, n_views=n_views)
+  return GraphSimDataset(opts, opts.dataset_params)
  
 if __name__ == '__main__':
   opts = options.get_opts()
-  if opts.fixed_size:
-    n_pts = opts.max_points
-    n_views = opts.max_views
-  else:
-    n_pts = None
-    n_views = None
   print("Generating Pose Graphs")
   if not os.path.exists(opts.data_dir):
     os.makedirs(opts.data_dir)
@@ -296,14 +293,14 @@ if __name__ == '__main__':
     dname = os.path.join(opts.data_dir,t)
     if not os.path.exists(dname):
       os.makedirs(dname)
-    dataset = GraphSimDataset(opts, n_pts, n_views)
+    dataset = GraphSimDataset(opts, opts.dataset_params)
     dataset.convert_dataset(dname, t)
 
   # Generate numpy test
   out_dir = os.path.join(opts.data_dir,'np_test')
   if not os.path.exists(out_dir):
     os.makedirs(out_dir)
-  dataset = GraphSimDataset(opts, n_pts, n_views)
-  dataset.create_np_dataset(out_dir, sizes['test'])
+  dataset = GraphSimDataset(opts, opts.dataset_params)
+  dataset.create_np_dataset(out_dir, opts.dataset_params.sizes['test'])
 
 

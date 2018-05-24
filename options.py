@@ -6,11 +6,19 @@ from __future__ import print_function
 import os
 import argparse
 import collections
+import types
 import yaml
 
 arch_params = collections.namedtuple('arch_params', [
   'nlayers', 'layer_lens', 'activ', 'normalize_emb'
 ])
+# synth_dataset_params_vars = [
+#   'data_dir', 'sizes', 'dtype', # Meta-parameters
+#   'fixed_size', 'views', 'points', # Graph
+#   'points_scale', 'knn', 'scale', 'sparse', 'soft_edges', 'use_descriptors',
+#   'descriptor_dim', 'descriptor_var', 'descriptor_noise_var', # Descriptor
+# ]
+
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -44,9 +52,13 @@ def get_opts():
   parser.add_argument('--data_dir',
                       default='/NAS/data/stephen/',
                       help='Directory for saving/loading dataset')
+  dataset_choices = [
+    'synth_small','synth_3view', 'synth_4view',
+  ]
+  # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
                       default=True,
-                      choices=['cycle_small', 'cycle_large', 'custom'],
+                      choices=dataset_choices,
                       help='Choose which dataset to use')
 
   # Dataset options
@@ -242,25 +254,42 @@ def get_opts():
     opts.save_dir = 'save/save-{:03d}'.format(save_idx)
 
   # Determine dataset
-  setattr(opts, 'load', True)
-  if opts.dataset == 'cycle_large':
-    opts.fixed_size=True
-    opts.max_views=3
-    opts.max_points=25
-    opts.num_gen_test=3000
-    opts.num_gen_train=40000
-    opts.data_dir = '/NAS/data/stephen/cycle_large'
-  elif opts.dataset == 'cycle_small':
-    opts.fixed_size=True
-    opts.max_views=3
-    opts.max_points=25
-    opts.num_gen_test=300
-    opts.num_gen_train=400
-    opts.data_dir = '/NAS/data/stephen/cycle_small'
-  elif opts.dataset == 'custom':
-    opts.load = False
-  setattr(opts, 'sample_sizes', {'train': opts.num_gen_train,
-                                 'test': opts.num_gen_test})
+  dataset_params = types.SimpleNamespace(
+    data_dir=opts.data_dir,
+    sizes={ 'train': 8000, 'test': 2000 },
+    dtype='float32',
+    fixed_size=False,
+    views=[25, 30],
+    points=[9, 15],
+    points_scale=1,
+    knn=8,
+    scale=3,
+    sparse=False,
+    soft_edges=False,
+    use_descriptors=True,
+    descriptor_dim=12,
+    descriptor_var=1.0,
+    descriptor_noise_var=0)
+  if opts.dataset == 'synth_3view':
+    dataset_params.data_dir = '/NAS/data/stephen/synth_3view'
+    dataset_params.fixed_size=True
+    dataset_params.views=[3]
+    dataset_params.points=[25]
+    dataset_params.sizes = { 'train': 40000, 'test': 3000 }
+  elif opts.dataset == 'synth_small':
+    dataset_params.data_dir = '/NAS/data/stephen/synth_small'
+    dataset_params.fixed_size=True
+    dataset_params.views=[3]
+    dataset_params.points=[25]
+    dataset_params.sizes = { 'train': 400, 'test': 300 }
+  elif opts.dataset == 'synth_4view':
+    dataset_params.data_dir = '/NAS/data/stephen/synth_4view'
+    dataset_params.fixed_size=True
+    dataset_params.views=[4]
+    dataset_params.points=[25]
+    dataset_params.sizes = { 'train': 40000, 'test': 3000 }
+  opts.data_dir = dataset_params.data_dir
+  setattr(opts, 'dataset_params', dataset_params)
 
   # Set up architecture
   arch = None 
