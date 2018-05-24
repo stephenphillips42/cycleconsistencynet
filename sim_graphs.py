@@ -14,31 +14,25 @@ Points = collections.namedtuple("Points", ["p","d"]) # position and descriptor
 Pose = collections.namedtuple("Pose", ["R","T"])
 PoseEdge = collections.namedtuple("PoseEdge", ["idx", "g_ij"])
 class PoseGraph(object):
-  def __init__(self, opts, n_views=None, n_pts=None):
-    self.opts = opts
-    if n_views is None:
-      self.n_views = np.random.randint(opts.min_views, opts.max_views+1)
-    else:
-      self.n_views = n_views
-    if n_pts is None:
-      self.n_pts = np.random.randint(opts.min_points, opts.max_points+1)
-    else:
-      self.n_pts = n_pts
+  def __init__(self, params, n_pts, n_views):
+    self.params = params
+    self.n_pts = n_pts
+    self.n_views = n_views
     # Generate poses
     sph = dim_normalize(np.random.randn(self.n_views,3))
     rot = [ sph_rot(-sph[i]) for i in range(self.n_views) ]
-    trans = self.opts.scale*sph
+    trans = params.scale*sph
     # Create variables
-    pts = self.opts.points_scale*np.random.randn(self.n_pts,3)
-    self.desc_dim = self.opts.descriptor_dim
-    self.desc_var = self.opts.descriptor_var
+    pts = params.points_scale*np.random.randn(self.n_pts,3)
+    self.desc_dim = params.descriptor_dim
+    self.desc_var = params.descriptor_var
     desc = self.desc_var*np.random.randn(self.n_pts, self.desc_dim)
     self.pts_w = Points(p=pts,d=desc)
     self.g_cw = [ Pose(R=rot[i],T=trans[i]) for i in range(self.n_views) ]
     # Create graph
     eye = np.eye(self.n_views)
     dist_mat = 2 - 2*np.dot(sph, sph.T) + 3*eye
-    AdjList0 = [ dist_mat[i].argsort()[:self.opts.knn].tolist() 
+    AdjList0 = [ dist_mat[i].argsort()[:params.knn].tolist() 
                  for i in range(self.n_views) ]
     A = np.array([ sum([ eye[j] for j in AdjList0[i] ])
                    for i in range(self.n_views) ])
@@ -62,7 +56,7 @@ class PoseGraph(object):
     s = self.get_random_state(pts_c)
     perm = s.permutation(self.n_pts)
     proj_pos = planer_proj(pts_c)[perm,:2]
-    var = self.opts.descriptor_noise_var
+    var = self.params.descriptor_noise_var
     desc_noise = var*s.randn(self.n_pts, self.desc_dim)
     descs = self.pts_w.d[perm,:] + desc_noise
     return Points(p=proj_pos, d=descs)
