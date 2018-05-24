@@ -30,9 +30,9 @@ def main(opts, index):
   sorted_idxs = np.argsort(idxs)
   slabels = labels[sorted_idxs]
   soutput = output[sorted_idxs]
+  rand = myutils.dim_normalize(sample['InitEmbeddings'][sorted_idxs]) # myutils.dim_normalize(np.random.randn(*shape))
   # Plot setup
   shape = slabels.shape
-  rand = myutils.dim_normalize(np.random.randn(*shape))
   t = list(range(shape[0]))
   xx0, yy0 = np.meshgrid(t, t)
   t = list(range(shape[1]))
@@ -76,13 +76,16 @@ def main(opts, index):
 
   # Printing out parts
   npts = len(np.unique(idxs))
-  # mean_sims = np.zeros((npts,npts))
+  mean_sims = np.zeros((npts,npts))
   diag = []
   off_diag = []
+  baseline_diag = []
+  baseline_off_diag = []
   for i in range(npts):
     for j in range(npts):
       simsij = np.dot(output[idxs == i], output[idxs == j].T).reshape(-1)
-      # mean_sims[i,j] = np.mean(np.dot(output[idxs == i], output[idxs == j].T))
+      baselineij = np.dot(rand[idxs == i], rand[idxs == j].T).reshape(-1)
+      mean_sims[i,j] = np.mean(np.dot(output[idxs == i], output[idxs == j].T))
       # if i == j:
       #   for k in range(len(simsij)):
       #     diag.append(np.arccos(np.minimum(1, simsij[k])))
@@ -92,11 +95,18 @@ def main(opts, index):
       if i == j:
         for k in range(len(simsij)):
           diag.append(np.abs(simsij[k]))
+          baseline_diag.append(np.abs(baselineij[k]))
       else:
         for k in range(len(simsij)):
           off_diag.append(np.abs(simsij[k]))
-  stats = (np.mean(diag), np.std(diag), np.mean(off_diag), np.std(off_diag))
-  print("Diag: {:.2e} +/- {:.2e}, Off Diag: {:.2e} +/- {:.2e}".format(*stats))
+          baseline_off_diag.append(np.abs(baselineij[k]))
+  stats = (np.mean(diag), np.std(diag), \
+           np.mean(off_diag), np.std(off_diag), \
+           np.mean(baseline_diag), np.std(baseline_diag), \
+           np.mean(baseline_off_diag), np.std(baseline_off_diag))
+  print("Diag: {:.2e} +/- {:.2e}, Off Diag: {:.2e} +/- {:.2e}, " \
+        "Baseline Diag: {:.2e} +/- {:.2e}, " \
+        "Baseline Off Diag: {:.2e} +/- {:.2e}".format(*stats))
   if opts.debug_plot:
     i, j, k = 0, 1, 2
     l = np.concatenate([
