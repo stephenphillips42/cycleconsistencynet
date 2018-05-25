@@ -19,11 +19,9 @@ def axes3d(nrows=1, ncols=1):
 def npload(fdir,idx):
   return dict(np.load("{}/np_test-{:04d}.npz".format(fdir,idx)))
 
-def experiment(opts, index):
+def experiment(opts, network, index):
   # Load sample
   sample = npload(os.path.join(opts.debug_dir, 'np_test'), index)
-  network = model.get_network(opts, opts.arch)
-  network.load_np(opts.save_dir)
   output = network.apply_np(sample)
   # Sort by ground truth for better visualization
   labels = sample['TrueEmbedding']
@@ -136,12 +134,18 @@ def experiment(opts, index):
 
 if __name__ == "__main__":
   opts = options.get_opts()
+  network = model.get_network(opts, opts.arch)
+  network.load_np(opts.save_dir)
   if not opts.debug_plot:
     n = opts.dataset_params.sizes['test']
     stats = np.zeros((n,8))
-    for i in tqdm.tqdm(range(n)):
-      stats[i] = experiment(opts, i)
+    if opts.verbose:
+      for i in range(n):
+        stats[i] = experiment(opts, network, i)
+    else:
+      for i in tqdm.tqdm(range(n)):
+        stats[i] = experiment(opts, network, i)
     print(np.mean(stats,0))
   else:
-    experiment(opts, opts.debug_index)
+    experiment(opts, network, opts.debug_index)
 
