@@ -38,6 +38,7 @@ class DenseGraphLayerWeights(object):
                                 [ self._layer_lens[i], self._layer_lens[i+1] ],
                                 initializer=tf.random_normal_initializer())
         self._layers.append(layer)
+        # TODO: Make this a dictionary
     self.tf_init = True
 
   def apply(self, sample):
@@ -89,8 +90,86 @@ class DenseGraphLayerWeights(object):
     output = myutils.dim_normalize(output)
     return output
 
+class SkipConnectionLayerWeights(DenseGraphLayerWeights):
+  def __init__(self, opts, arch):
+    super(SkipConnectionLayerWeights, self).__init__(opts, arch)
+    self._skips = []
+    self._np_layers = {}
+
+  def build_tf_layers(self):
+    """Build layers"""
+    self._activ = tfutils.get_tf_activ(self.activ)
+    with tf.variable_scope("gnn_weights"):
+      for i in range(len(self._layer_lens)-1):
+        layer = tf.get_variable("weight_{:02d}".format(i),
+                                [ self._layer_lens[i], self._layer_lens[i+1] ],
+                                initializer=tf.random_normal_initializer())
+        self._layers.append(layer)
+        if i == len(self._layer_lens)-2:
+          continue
+        skip = tf.get_variable("skip_{:02d}".format(i),
+                                [ self._layer_lens[i], self._layer_lens[i+1] ],
+                                initializer=tf.random_normal_initializer())
+        self._skips.append(skip)
+    self.tf_init = True
+
+  def apply(self, sample):
+    """Applying this graph network to sample"""
+    if not self.tf_init:
+      self.build_tf_layers()
+    lap = sample['Laplacian']
+    init_emb = None
+    if self.use_descriptors:
+      init_emb = sample['InitEmbeddings']
+    else:
+      init_emb = tf.ones_like(sample['InitEmbeddings'])
+    output = init_emb
+    for l in range(self._nlayers):
+      lin = tfutils.matmul(output, self._layers[l])
+      lin_graph = tfutils.batch_matmul(lap, lin)
+      skip = tfutils.matmul(output, self._skips[l])
+      output = self._activ(lin_graph) + skip
+    output = tfutils.matmul(output, self._layers[-1])
+    output = tf.nn.l2_normalize(output, axis=2)
+    return output
+
+  def save_np(self, saver, save_dir):
+    checkpoint_file = tf.train.latest_checkpoint(save_dir)
+    with tf.Session() as np_sess:
+      saver.restore(np_sess, checkpoint_file)
+      for i in range(len(self._layers)):
+        self._np_layers["weight_{:02d}".format(i)] = np_sess.run(self._layers[i])
+      for i in range(len(self._skips)):
+        self._np_layers["skip_{:02d}".format(i)] = np_sess.run(self._skips[i])
+    outdir = myutils.next_dir(os.path.join(save_dir, 'np_weights'))
+    np.savez(os.path.join(outdir, 'numpy_weights.npz'), **self._np_layers)
+
+  def load_np(self, save_dir):
+    numpy_weights = np.load(os.path.join(save_dir, 'numpy_weights.npz'))
+    self._np_layers = dict(numpy_weights)
+    self._np_activ = myutils.get_np_activ(self.activ)
+    self.np_init = True
+
+  def apply_np(self, sample):
+    """Applying this graph network to sample, using numpy input.
+    Only takes in one input at a time."""
+    lap = sample['Laplacian']
+    init_emb = sample['InitEmbeddings']
+    output = init_emb
+    for l in range(self._nlayers):
+      lin = np.dot(output, self._np_layers["weight_{:02d}".format(l)])
+      lin_graph = np.dot(lap, lin)
+      skip = np.dot(output, self._np_layers["skip_{:02d}".format(l)])
+      output = self._np_activ(lin_graph)
+    output = np.dot(output, self._np_layers[-1])
+    output = myutils.dim_normalize(output)
+    return output
+
 def get_network(opts, arch):
-  network = DenseGraphLayerWeights(opts, arch)
+  if opts.architecture in ['vanilla', 'vanilla_0', 'vanilla_1']:
+    network = DenseGraphLayerWeights(opts, arch)
+  elif opts.architecture in ['skip', 'skip_0', 'skip_1']:
+    network = SkipConnectionLayerWeights(opts, arch)
   return network
 
 if __name__ == "__main__":

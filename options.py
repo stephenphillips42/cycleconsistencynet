@@ -136,8 +136,8 @@ def get_opts():
   # Architecture parameters
   arch_choices = [
     'vanilla', 'vanilla_0', 'vanilla_1', 
+    'skip', 'skip_0', 'skip_1', 
   ]
-  #  'skip_0', 'skip_1'
   parser.add_argument('--architecture',
                       default='vanilla',
                       choices=arch_choices,
@@ -300,19 +300,19 @@ def get_opts():
 
   # Set up architecture
   arch = None 
-  if opts.architecture == 'vanilla':
+  if opts.architecture in ['vanilla', 'skip']:
     arch = arch_params(
       nlayers=5,
       layer_lens=[ 2**min(5+k,9) for k in range(5) ],
       activ='relu',
       normalize_emb=True)
-  elif opts.architecture == 'vanilla_0':
+  elif opts.architecture in ['vanilla_0', 'skip_0']:
     arch = arch_params(
       nlayers=5,
       layer_lens=[ 2**min(6+k,10) for k in range(5) ],
       activ='relu',
       normalize_emb=True)
-  elif opts.architecture == 'vanilla_1':
+  elif opts.architecture in ['vanilla_1', 'skip_1']:
     arch = arch_params(
       nlayers=6,
       layer_lens=[ 2**min(6+k,10) for k in range(6) ],
