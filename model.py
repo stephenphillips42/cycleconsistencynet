@@ -109,7 +109,7 @@ class SkipConnectionLayerWeights(DenseGraphLayerWeights):
           continue
         skip = tf.get_variable("skip_{:02d}".format(i),
                                 [ self._layer_lens[i], self._layer_lens[i+1] ],
-                                initializer=tf.random_normal_initializer())
+                                initializer=tf.zeros_initializer())
         self._skips.append(skip)
     self.tf_init = True
 
