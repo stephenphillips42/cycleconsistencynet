@@ -235,6 +235,10 @@ def get_opts():
                       type=str2bool,
                       help='Shuffle the dataset or no?')
   # Debugging options
+  parser.add_argument('--verbose',
+                      default=False,
+                      type=str2bool,
+                      help='Print out everything')
   parser.add_argument('--debug_index',
                       default=1,
                       type=int,

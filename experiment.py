@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
+import tqdm
 
 import myutils
 import options
@@ -18,7 +19,7 @@ def axes3d(nrows=1, ncols=1):
 def npload(fdir,idx):
   return dict(np.load("{}/np_test-{:04d}.npz".format(fdir,idx)))
 
-def main(opts, index):
+def experiment(opts, index):
   # Load sample
   sample = npload(os.path.join(opts.debug_dir, 'np_test'), index)
   network = model.get_network(opts, opts.arch)
@@ -30,7 +31,8 @@ def main(opts, index):
   sorted_idxs = np.argsort(idxs)
   slabels = labels[sorted_idxs]
   soutput = output[sorted_idxs]
-  rand = myutils.dim_normalize(sample['InitEmbeddings'][sorted_idxs]) # myutils.dim_normalize(np.random.randn(*shape))
+  rand = myutils.dim_normalize(sample['InitEmbeddings'][sorted_idxs])
+  # rand = myutils.dim_normalize(np.random.randn(*shape))
   # Plot setup
   shape = slabels.shape
   t = list(range(shape[0]))
@@ -43,7 +45,8 @@ def main(opts, index):
   lsim = np.abs(np.dot(slabels, slabels.T))
   osim = np.abs(np.dot(soutput, soutput.T))
   rsim = np.abs(np.dot(rand, rand.T))
-  if opts.debug_plot:
+  # if opts.debug_plot:
+  if False:
     # Plotting images
     fig, (ax0, ax1, ax2) = plt.subplots(nrows=1, ncols=3)
     im0 = ax0.imshow(slabels)
@@ -77,14 +80,15 @@ def main(opts, index):
   # Printing out parts
   npts = len(np.unique(idxs))
   mean_sims = np.zeros((npts,npts))
+
   diag = []
   off_diag = []
   baseline_diag = []
   baseline_off_diag = []
   for i in range(npts):
     for j in range(npts):
-      simsij = np.dot(output[idxs == i], output[idxs == j].T).reshape(-1)
-      baselineij = np.dot(rand[idxs == i], rand[idxs == j].T).reshape(-1)
+      simsij = np.abs(np.dot(output[idxs == i], output[idxs == j].T)).reshape(-1).tolist()
+      baselineij = np.abs(np.dot(rand[idxs == i], rand[idxs == j].T)).reshape(-1).tolist()
       mean_sims[i,j] = np.mean(np.dot(output[idxs == i], output[idxs == j].T))
       # if i == j:
       #   for k in range(len(simsij)):
@@ -93,20 +97,20 @@ def main(opts, index):
       #   for k in range(len(simsij)):
       #     off_diag.append(np.arccos(np.maximum(-1,np.minimum(1,simsij[k]))))
       if i == j:
-        for k in range(len(simsij)):
-          diag.append(np.abs(simsij[k]))
-          baseline_diag.append(np.abs(baselineij[k]))
+          diag.extend(simsij)
+          baseline_diag.extend(baselineij)
       else:
-        for k in range(len(simsij)):
-          off_diag.append(np.abs(simsij[k]))
-          baseline_off_diag.append(np.abs(baselineij[k]))
+          off_diag.extend(simsij)
+          baseline_off_diag.extend(baselineij)
   stats = (np.mean(diag), np.std(diag), \
            np.mean(off_diag), np.std(off_diag), \
            np.mean(baseline_diag), np.std(baseline_diag), \
            np.mean(baseline_off_diag), np.std(baseline_off_diag))
-  print("Diag: {:.2e} +/- {:.2e}, Off Diag: {:.2e} +/- {:.2e}, " \
-        "Baseline Diag: {:.2e} +/- {:.2e}, " \
-        "Baseline Off Diag: {:.2e} +/- {:.2e}".format(*stats))
+  if opts.verbose:
+    print("Diag: {:.2e} +/- {:.2e}, Off Diag: {:.2e} +/- {:.2e}, " \
+          "Baseline Diag: {:.2e} +/- {:.2e}, " \
+          "Baseline Off Diag: {:.2e} +/- {:.2e}".format(*stats))
+
   if opts.debug_plot:
     i, j, k = 0, 1, 2
     l = np.concatenate([
@@ -120,13 +124,24 @@ def main(opts, index):
     im2 = ax2.imshow(mean_sims)
     fig.colorbar(im0, ax=ax0)
     plt.show()
+    fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2)
+    ax0.hist([ diag, baseline_diag ], bins=20, normed=1)
+    ax0.set_title('Diagonal Similarity Rate')
+    ax1.hist([ off_diag, baseline_off_diag ], bins=20, normed=1)
+    ax1.set_title('Off Diagonal Similarity Rate')
+    plt.show()
+
+  return stats
   
 
 if __name__ == "__main__":
   opts = options.get_opts()
   if not opts.debug_plot:
-    for i in range(opts.num_gen_test):
-      main(opts, i)
+    n = opts.dataset_params.sizes['test']
+    stats = np.zeros((n,8))
+    for i in tqdm.tqdm(range(n)):
+      stats[i] = experiment(opts, i)
+    print(np.mean(stats,0))
   else:
-    main(opts, opts.debug_index)
+    experiment(opts, opts.debug_index)
 
