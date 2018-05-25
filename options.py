@@ -15,7 +15,7 @@ arch_params = collections.namedtuple('arch_params', [
 # synth_dataset_params_vars = [
 #   'data_dir', 'sizes', 'dtype', # Meta-parameters
 #   'fixed_size', 'views', 'points', # Graph
-#   'points_scale', 'knn', 'scale', 'sparse', 'soft_edges', 'use_descriptors',
+#   'points_scale', 'knn', 'scale', 'sparse', 'soft_edges',
 #   'descriptor_dim', 'descriptor_var', 'descriptor_noise_var', # Descriptor
 # ]
 
@@ -53,13 +53,17 @@ def get_opts():
                       default='/NAS/data/stephen/',
                       help='Directory for saving/loading dataset')
   dataset_choices = [
-    'synth_small','synth_3view', 'synth_4view',
+    'synth_small', 'synth_3view', 'synth_4view',
   ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
                       default=True,
                       choices=dataset_choices,
                       help='Choose which dataset to use')
+  parser.add_argument('--use_descriptors',
+                      default=True,
+                      type=str2bool,
+                      help='Dimention of the descriptors of the points')
 
   # Dataset options
   parser.add_argument('--num_gen_train',
@@ -115,10 +119,6 @@ def get_opts():
                       default=False,
                       type=str2bool,
                       help='Use soft or hard correspondences')
-  parser.add_argument('--use_descriptors',
-                      default=True,
-                      type=str2bool,
-                      help='Dimention of the descriptors of the points')
   parser.add_argument('--descriptor_dim',
                       default=12,
                       type=int,
@@ -270,7 +270,6 @@ def get_opts():
     scale=3,
     sparse=False,
     soft_edges=False,
-    use_descriptors=True,
     descriptor_dim=12,
     descriptor_var=1.0,
     descriptor_noise_var=0)

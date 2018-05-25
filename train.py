@@ -19,7 +19,7 @@ import options
 
 def build_optimizer(opts, global_step):
   # Learning parameters post-processing
-  num_batches = 1.0 * opts.sample_sizes['train'] / opts.batch_size
+  num_batches = 1.0 * opts.dataset_params.sizes['train'] / opts.batch_size
   decay_steps = int(num_batches * opts.learning_rate_decay_epochs)
   if opts.learning_rate_decay_type == 'fixed':
     learning_rate = tf.constant(opts.learning_rate, name='fixed_learning_rate')

@@ -19,6 +19,7 @@ class DenseGraphLayerWeights(object):
     super(DenseGraphLayerWeights, self).__init__()
     self.tf_init = False
     self.np_init = False
+    self.use_descriptors = opts.use_descriptors
     self.activ = arch.activ
     self._activ = None # tfutils.get_tf_activ(arch.activ)
     self._np_activ = None # myutils.get_np_activ(arch.activ)
@@ -30,7 +31,7 @@ class DenseGraphLayerWeights(object):
 
   def build_tf_layers(self):
     """Build layers"""
-    self._activ = tfutils.get_tf_activ(arch.activ)
+    self._activ = tfutils.get_tf_activ(self.activ)
     with tf.variable_scope("gnn_weights"):
       for i in range(len(self._layer_lens)-1):
         layer = tf.get_variable("weight_{:02d}".format(i),
@@ -44,7 +45,11 @@ class DenseGraphLayerWeights(object):
     if not self.tf_init:
       self.build_tf_layers()
     lap = sample['Laplacian']
-    init_emb = sample['InitEmbeddings']
+    init_emb = None
+    if self.use_descriptors:
+      init_emb = sample['InitEmbeddings']
+    else:
+      init_emb = tf.ones_like(sample['InitEmbeddings'])
     output = init_emb
     for l in range(self._nlayers):
       lin = tfutils.matmul(output, self._layers[l])
