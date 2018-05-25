@@ -161,7 +161,7 @@ class SkipConnectionLayerWeights(DenseGraphLayerWeights):
       lin_graph = np.dot(lap, lin)
       skip = np.dot(output, self._np_layers["skip_{:02d}".format(l)])
       output = self._np_activ(lin_graph)
-    output = np.dot(output, self._np_layers[-1])
+    output = np.dot(output, self._np_layers["weight_{:02d}".format(self._nlayers)])
     output = myutils.dim_normalize(output)
     return output
 
