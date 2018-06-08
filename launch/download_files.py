@@ -7,7 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def get_log(yaml_name):
-  raw = subprocess.check_output(["kubectl", "get", "pods", "--show-all"])
+  # raw = subprocess.check_output(["kubectl", "get", "pods", "--show-all"])
+  raw = subprocess.check_output(["kubectl", "get", "pods"])
   decoded = [ z.split() for z in raw.decode("utf-8").split("\n") ]
   log_names = [ w[0] for w in decoded[:-1] if os.path.splitext(yaml_name)[0] in w[0] ]
   logs_bytes = [ subprocess.check_output(["kubectl", "logs", log_name]) for log_name in log_names ]
@@ -33,9 +34,11 @@ for n in range(1,len(sys.argv)):
 
 print([ len(loss) for loss, name in losses])
 path="/home/stephen/cycleconsistencynet/save/save"
-for _, name in losses:
-  if not os.path.exists("../logs/save-{}".format(name)):
+for loss, name in losses:
+  dirpath = "../logs/save-{}".format(name)
+  if not os.path.exists(dirpath):
     subprocess.call(["scp", "-r", "stephen@kostas-ap.grasp.upenn.edu:{}-{}".format(path,name), "../logs"])
+    np.save(os.path.join(dirpath, 'loss.npy'), loss)
 
 for i in range(len(losses)):
   plt.plot(losses[i][0], label=losses[i][1])
