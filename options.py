@@ -54,6 +54,7 @@ def get_opts():
                       help='Directory for saving/loading dataset')
   dataset_choices = [
     'synth_small', 'synth_3view', 'synth_4view',
+    'noise_3view'
   ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
@@ -64,74 +65,6 @@ def get_opts():
                       default=True,
                       type=str2bool,
                       help='Dimention of the descriptors of the points')
-
-  # Dataset options
-  parser.add_argument('--num_gen_train',
-                      default=8000,
-                      type=int,
-                      help='Number of training samples to generate.')
-  parser.add_argument('--num_gen_test',
-                      default=2000,
-                      type=int,
-                      help='Number of testing samples to generate.')
-  parser.add_argument('--dtype',
-                      default='float32',
-                      help='dtype to save dataset as (float{16,32,64})')
-  parser.add_argument('--fixed_size',
-                      default=True,
-                      type=str2bool,
-                      help='Determine weather or not dataset has fixed or stochastic size')
-  parser.add_argument('--min_views',
-                      default=25,
-                      type=int,
-                      help='Minimum number of viewpoints in the graph')
-  parser.add_argument('--max_views',
-                      default=30,
-                      type=int,
-                      help='Maximum number of viewpoints in the graph')
-  parser.add_argument('--min_points',
-                      default=9,
-                      type=int,
-                      help='Minimum number of points in the world seen in '
-                           'the images')
-  parser.add_argument('--max_points',
-                      default=15,
-                      type=int,
-                      help='Maximum number of points in the world seen in '
-                           'the images')
-  parser.add_argument('--points_scale',
-                      default=1,
-                      type=float,
-                      help='Scale of the points in the world')
-  parser.add_argument('--knn',
-                      default=8,
-                      type=int,
-                      help='number of neighbors used in graph')
-  parser.add_argument('--scale',
-                      default=3,
-                      type=int,
-                      help='Distance from center of sphere to cameras')
-  parser.add_argument('--sparse',
-                      default=False,
-                      type=str2bool,
-                      help='Use full graph')
-  parser.add_argument('--soft_edges',
-                      default=False,
-                      type=str2bool,
-                      help='Use soft or hard correspondences')
-  parser.add_argument('--descriptor_dim',
-                      default=12,
-                      type=int,
-                      help='Dimention of the descriptors of the points')
-  parser.add_argument('--descriptor_var',
-                      default=1.0,
-                      type=float,
-                      help='Variance of the true descriptors')
-  parser.add_argument('--descriptor_noise_var',
-                      default=0,
-                      type=float,
-                      help='Variance of the noise of the descriptors '
-                           'of the projected points')
 
   # Architecture parameters
   arch_choices = [
@@ -182,6 +115,10 @@ def get_opts():
                       help='Optimizer type for adaptive learning methods')
   parser.add_argument('--learning_rate',
                       default=1e-3,
+                      type=float,
+                      help='Learning rate for gradient descent')
+  parser.add_argument('--momentum',
+                      default=0.6,
                       type=float,
                       help='Learning rate for gradient descent')
   parser.add_argument('--learning_rate_decay_type',
@@ -276,12 +213,20 @@ def get_opts():
     soft_edges=False,
     descriptor_dim=12,
     descriptor_var=1.0,
-    descriptor_noise_var=0)
+    descriptor_noise_var=0,
+    noise_level=0.1)
   if opts.dataset == 'synth_3view':
     dataset_params.data_dir = '/NAS/data/stephen/synth_3view'
     dataset_params.fixed_size=True
     dataset_params.views=[3]
     dataset_params.points=[25]
+    dataset_params.sizes = { 'train': 40000, 'test': 3000 }
+  elif opts.dataset == 'noise_3view':
+    dataset_params.data_dir = '/NAS/data/stephen/noise_3view'
+    dataset_params.fixed_size=True
+    dataset_params.views=[3]
+    dataset_params.points=[25]
+    dataset_params.noise_level = 0.2
     dataset_params.sizes = { 'train': 40000, 'test': 3000 }
   elif opts.dataset == 'synth_small':
     dataset_params.data_dir = '/NAS/data/stephen/synth_small'

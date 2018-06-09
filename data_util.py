@@ -135,7 +135,7 @@ class GraphSimDataset(object):
   def gen_sample(self):
     # Pose graph and related objects
     params = self.dataset_params
-    pose_graph = sim_graphs.PoseGraph(self.opts,
+    pose_graph = sim_graphs.PoseGraph(self.dataset_params,
                                       n_pts=self.n_pts,
                                       n_views=self.n_views)
     sz = (pose_graph.n_pts, pose_graph.n_pts)
@@ -149,11 +149,8 @@ class GraphSimDataset(object):
                for i in range(pose_graph.n_views) ]
     # Embedding objects
     TrueEmbedding = np.concatenate(perms_, 0)
-    InitEmbeddings = np.ones((pose_graph.n_pts*pose_graph.n_views, \
-                              params.descriptor_dim))
-    if params.use_descriptors:
-      InitEmbeddings = np.concatenate([ pose_graph.get_proj(i).d
-                                        for i in range(pose_graph.n_views) ], 0)
+    InitEmbeddings = np.concatenate([ pose_graph.get_proj(i).d
+                                      for i in range(pose_graph.n_views) ], 0)
 
     # Graph objects
     if not params.soft_edges:
@@ -274,6 +271,34 @@ class GraphSimDataset(object):
                 capacity=5 * batch_size)
     return dict(zip(keys, values))
 
+class GraphSimNoisyDataset(GraphSimDataset):
+  """Dataset for Cycle Consistency graphs"""
+  MAX_IDX=7000
+
+  def __init__(self, opts, params):
+    super(GraphSimDataset, self).__init__(opts, params)
+
+  def gen_sample(self):
+    # Pose graph and related objects
+    sample = super(GraphSimDataset, self).gen_sample()
+
+    # Graph objects
+    p = self.n_pts
+    noise = self.params.noise_level
+    TEmb = sample['TrueEmbedding']
+    Noise = np.eye(p) + noise*(np.eye(p, k=-1) + np.eye(p, k=-1))
+    AdjMat = np.dot(np.dot(TEmb, Noise), TEmb)
+    Degrees = np.diag(np.sum(AdjMat,0))
+    sample['AdjMat'] = AdjMat.astype(self.dtype)
+
+    # Laplacian objects
+    Ahat = AdjMat + np.eye(*AdjMat.shape)
+    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
+    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
+    sample['Laplacian'] = Laplacian.astype(self.dtype)
+
+    return sample
+
 
 def get_dataset(opts):
   """Getting the dataset with all the correct attributes"""
@@ -285,11 +310,11 @@ if __name__ == '__main__':
   if not os.path.exists(opts.data_dir):
     os.makedirs(opts.data_dir)
 
-  sizes = {
-    'train' : opts.num_gen_train,
-    'test' : opts.num_gen_test
-  }
-  for t, sz in sizes.items():
+  types = [
+    'train',
+    'test'
+  ]
+  for t in types:
     dname = os.path.join(opts.data_dir,t)
     if not os.path.exists(dname):
       os.makedirs(dname)

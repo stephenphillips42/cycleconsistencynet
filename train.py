@@ -47,7 +47,7 @@ def build_optimizer(opts, global_step):
   elif opts.optimizer_type == 'adadelta':
     optimizer = tf.train.AdadeltaOptimizer(learning_rate)
   elif opts.optimizer_type == 'momentum':
-    optimizer = tf.train.MomentumOptimizer(learning_rate)
+    optimizer = tf.train.MomentumOptimizer(learning_rate,opts.momentum)
   elif opts.optimizer_type == 'sgd':
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 

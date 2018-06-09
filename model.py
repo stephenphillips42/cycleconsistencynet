@@ -25,7 +25,9 @@ class DenseGraphLayerWeights(object):
     self._np_activ = None # myutils.get_np_activ(arch.activ)
     self._nlayers = arch.nlayers
     self._layer_lens = \
-        [opts.descriptor_dim] + arch.layer_lens + [opts.final_embedding_dim]
+        [opts.dataset_params.descriptor_dim] + \
+        arch.layer_lens + \
+        [opts.final_embedding_dim]
     self._np_layers = []
     self._layers = []
 
