@@ -276,7 +276,7 @@ class GraphSimNoisyDataset(GraphSimDataset):
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    super(GraphSimDataset, self).__init__(opts, params)
+    GraphSimDataset.__init__(self, opts, params)
 
   def gen_sample(self):
     # Pose graph and related objects
@@ -290,6 +290,42 @@ class GraphSimNoisyDataset(GraphSimDataset):
     AdjMat = np.dot(np.dot(TEmb, Noise), TEmb)
     Degrees = np.diag(np.sum(AdjMat,0))
     sample['AdjMat'] = AdjMat.astype(self.dtype)
+    sample['Degrees'] = Degrees.astype(self.dtype)
+
+    # Laplacian objects
+    Ahat = AdjMat + np.eye(*AdjMat.shape)
+    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
+    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
+    sample['Laplacian'] = Laplacian.astype(self.dtype)
+
+    return sample
+
+class GraphSimGaussDataset(GraphSimDataset):
+  """Dataset for Cycle Consistency graphs"""
+  MAX_IDX=7000
+
+  def __init__(self, opts, params):
+    GraphSimDataset.__init__(self, opts, params)
+
+  def gen_sample(self):
+    print("HALLO")
+    # Pose graph and related objects
+    sample = super(GraphSimDataset, self).gen_sample()
+    print("HALLO")
+
+    # Graph objects
+    p = self.n_pts
+    n = self.n_views 
+    noise = self.params.noise_level
+    TEmb = sample['TrueEmbedding']
+    Noise = np.abs(np.random.randn(p*n,p*n)*noise)
+    AdjMat = np.dot(TEmb, TEmb) + Noise
+    print(TEmb.shape)
+    print(AdjMat.shape)
+    sys.exit()
+    Degrees = np.diag(np.sum(AdjMat,0))
+    sample['AdjMat'] = AdjMat.astype(self.dtype)
+    sample['Degrees'] = Degrees.astype(self.dtype)
 
     # Laplacian objects
     Ahat = AdjMat + np.eye(*AdjMat.shape)
@@ -302,7 +338,14 @@ class GraphSimNoisyDataset(GraphSimDataset):
 
 def get_dataset(opts):
   """Getting the dataset with all the correct attributes"""
-  return GraphSimDataset(opts, opts.dataset_params)
+  if opts.dataset in [ 'synth_small', 'synth_3view', 'synth_4view' ]:
+    return GraphSimDataset(opts, opts.dataset_params)
+  elif opts.dataset in [ 'noise_3view' ]:
+    return GraphSimNoisyDataset(opts, opts.dataset_params)
+  elif opts.dataset in [ 'noise_gauss' ]:
+    return GraphSimGaussDataset(opts, opts.dataset_params)
+  elif opts.dataset in [ 'noise_pairwise' ]:
+    return GraphSimNoisyDataset(opts, opts.dataset_params)
  
 if __name__ == '__main__':
   opts = options.get_opts()

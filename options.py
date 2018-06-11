@@ -54,7 +54,8 @@ def get_opts():
                       help='Directory for saving/loading dataset')
   dataset_choices = [
     'synth_small', 'synth_3view', 'synth_4view',
-    'noise_3view'
+    'noise_3view',
+    'noise_gauss', 'noise_pairwise',
   ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
@@ -201,11 +202,11 @@ def get_opts():
   # Determine dataset
   dataset_params = types.SimpleNamespace(
     data_dir=opts.data_dir,
-    sizes={ 'train': 8000, 'test': 2000 },
+    sizes={ 'train': 40000, 'test': 3000 },
     dtype='float32',
-    fixed_size=False,
-    views=[25, 30],
-    points=[9, 15],
+    fixed_size=True,
+    views=[3],
+    points=[25],
     points_scale=1,
     knn=8,
     scale=3,
@@ -217,29 +218,16 @@ def get_opts():
     noise_level=0.1)
   if opts.dataset == 'synth_3view':
     dataset_params.data_dir = '/NAS/data/stephen/synth_3view'
-    dataset_params.fixed_size=True
-    dataset_params.views=[3]
-    dataset_params.points=[25]
-    dataset_params.sizes = { 'train': 40000, 'test': 3000 }
   elif opts.dataset == 'noise_3view':
     dataset_params.data_dir = '/NAS/data/stephen/noise_3view'
-    dataset_params.fixed_size=True
-    dataset_params.views=[3]
-    dataset_params.points=[25]
     dataset_params.noise_level = 0.2
-    dataset_params.sizes = { 'train': 40000, 'test': 3000 }
   elif opts.dataset == 'synth_small':
     dataset_params.data_dir = '/NAS/data/stephen/synth_small'
-    dataset_params.fixed_size=True
-    dataset_params.views=[3]
-    dataset_params.points=[25]
-    dataset_params.sizes = { 'train': 400, 'test': 300 }
   elif opts.dataset == 'synth_4view':
     dataset_params.data_dir = '/NAS/data/stephen/synth_4view'
-    dataset_params.fixed_size=True
-    dataset_params.views=[4]
-    dataset_params.points=[25]
-    dataset_params.sizes = { 'train': 40000, 'test': 3000 }
+  elif opts.dataset == 'noise_gauss':
+    dataset_params.data_dir = '/NAS/data/stephen/noise_gauss'
+    dataset_params.noise_level = 0.1
   opts.data_dir = dataset_params.data_dir
   setattr(opts, 'dataset_params', dataset_params)
 
