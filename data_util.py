@@ -280,14 +280,14 @@ class GraphSimNoisyDataset(GraphSimDataset):
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = super(GraphSimDataset, self).gen_sample()
+    sample = GraphSimDataset.gen_sample(self)
 
     # Graph objects
     p = self.n_pts
-    noise = self.params.noise_level
+    noise = self.dataset_params.noise_level
     TEmb = sample['TrueEmbedding']
     Noise = np.eye(p) + noise*(np.eye(p, k=-1) + np.eye(p, k=-1))
-    AdjMat = np.dot(np.dot(TEmb, Noise), TEmb)
+    AdjMat = np.dot(np.dot(TEmb, Noise), TEmb.T)
     Degrees = np.diag(np.sum(AdjMat,0))
     sample['AdjMat'] = AdjMat.astype(self.dtype)
     sample['Degrees'] = Degrees.astype(self.dtype)
@@ -308,21 +308,16 @@ class GraphSimGaussDataset(GraphSimDataset):
     GraphSimDataset.__init__(self, opts, params)
 
   def gen_sample(self):
-    print("HALLO")
     # Pose graph and related objects
-    sample = super(GraphSimDataset, self).gen_sample()
-    print("HALLO")
+    sample = GraphSimDataset.gen_sample(self)
 
     # Graph objects
     p = self.n_pts
     n = self.n_views 
-    noise = self.params.noise_level
+    noise = self.dataset_params.noise_level
     TEmb = sample['TrueEmbedding']
     Noise = np.abs(np.random.randn(p*n,p*n)*noise)
-    AdjMat = np.dot(TEmb, TEmb) + Noise
-    print(TEmb.shape)
-    print(AdjMat.shape)
-    sys.exit()
+    AdjMat = np.dot(TEmb, TEmb.T) + Noise
     Degrees = np.diag(np.sum(AdjMat,0))
     sample['AdjMat'] = AdjMat.astype(self.dtype)
     sample['Degrees'] = Degrees.astype(self.dtype)
@@ -345,7 +340,7 @@ def get_dataset(opts):
   elif opts.dataset in [ 'noise_gauss' ]:
     return GraphSimGaussDataset(opts, opts.dataset_params)
   elif opts.dataset in [ 'noise_pairwise' ]:
-    return GraphSimNoisyDataset(opts, opts.dataset_params)
+    return GraphSimGaussDataset(opts, opts.dataset_params)
  
 if __name__ == '__main__':
   opts = options.get_opts()
@@ -361,14 +356,14 @@ if __name__ == '__main__':
     dname = os.path.join(opts.data_dir,t)
     if not os.path.exists(dname):
       os.makedirs(dname)
-    dataset = GraphSimDataset(opts, opts.dataset_params)
+    dataset = get_dataset(opts)
     dataset.convert_dataset(dname, t)
 
   # Generate numpy test
   out_dir = os.path.join(opts.data_dir,'np_test')
   if not os.path.exists(out_dir):
     os.makedirs(out_dir)
-  dataset = GraphSimDataset(opts, opts.dataset_params)
+  dataset = get_dataset(opts)
   dataset.create_np_dataset(out_dir, opts.dataset_params.sizes['test'])
 
 

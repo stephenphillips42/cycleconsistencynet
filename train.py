@@ -3,6 +3,7 @@ import numpy as np
 import os
 import sys
 import collections
+import signal
 import scipy.linalg as la
 from tqdm import tqdm
 
@@ -53,6 +54,10 @@ def build_optimizer(opts, global_step):
 
   return optimizer
 
+def handler(signum, frame):
+  print("Training finished")
+  raise myutils.TimeRunException("Finished running script")
+
 def train(opts):
   # Get data and network
   dataset = data_util.get_dataset(opts)
@@ -78,21 +83,30 @@ def train(opts):
 																					 clip_gradient_norm=5)
 
   tf.logging.set_verbosity(tf.logging.INFO)
-  num_batches = 1.0 * opts.dataset_params.sizes['train'] / opts.batch_size
-  max_steps = int(num_batches * opts.num_epochs)
+  if opts.num_epochs > 0:
+    num_batches = 1.0 * opts.dataset_params.sizes['train'] / opts.batch_size
+    max_steps = int(num_batches * opts.num_epochs)
+  else:
+    max_steps = None
 
   # Train-test loop
   saver = tf.train.Saver()
-  slim.learning.train(
-          train_op=train_op,
-          logdir=opts.save_dir,
-          number_of_steps=max_steps,
-          log_every_n_steps=opts.log_steps,
-          saver=saver,
-          save_summaries_secs=opts.save_summaries_secs,
-          save_interval_secs=opts.save_interval_secs)
+  if opts.run_time > 0:
+    signal.signal(signal.SIGALRM, handler)
+    signal.alarm(60*opts.run_time)
+  try:
+    slim.learning.train(
+            train_op=train_op,
+            logdir=opts.save_dir,
+            number_of_steps=max_steps,
+            log_every_n_steps=opts.log_steps,
+            saver=saver,
+            save_summaries_secs=opts.save_summaries_secs,
+            save_interval_secs=opts.save_interval_secs)
 
-  network.save_np(saver, opts.save_dir)
+    network.save_np(saver, opts.save_dir)
+  except myutils.TimeRunException as exp:
+    print("Exiting training...")
 
 
 if __name__ == "__main__":
