@@ -317,7 +317,44 @@ class GraphSimGaussDataset(GraphSimDataset):
     noise = self.dataset_params.noise_level
     TEmb = sample['TrueEmbedding']
     Noise = np.abs(np.random.randn(p*n,p*n)*noise)
-    AdjMat = np.dot(TEmb, TEmb.T) + Noise
+    AdjMat = np.dot(TEmb, TEmb.T) + Noise - np.eye(p*n)
+    Degrees = np.diag(np.sum(AdjMat,0))
+    sample['AdjMat'] = AdjMat.astype(self.dtype)
+    sample['Degrees'] = Degrees.astype(self.dtype)
+
+    # Laplacian objects
+    Ahat = AdjMat + np.eye(*AdjMat.shape)
+    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
+    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
+    sample['Laplacian'] = Laplacian.astype(self.dtype)
+
+    return sample
+
+class GraphSimPairwiseDataset(GraphSimDataset):
+  """Dataset for Cycle Consistency graphs"""
+  MAX_IDX=7000
+
+  def __init__(self, opts, params):
+    GraphSimDataset.__init__(self, opts, params)
+
+  def gen_sample(self):
+    # Pose graph and related objects
+    sample = GraphSimDataset.gen_sample(self)
+
+    # Graph objects
+    p = self.n_pts
+    n = self.n_views 
+    noise = self.dataset_params.noise_level
+    TEmb = sample['TrueEmbedding']
+    AdjMat = np.zeros((p*n,p*n))
+    for i in range(n):
+      TEmb_i = TEmb[p*i:p*i+p,:]
+      for j in range(i+1, n):
+        TEmb_j = TEmb[p*i:p*i+p,:]
+        Noise = (1-noise)*np.eye(p) + noise*(np.eye(p)[np.random.permutation(p),:])
+        Val_ij = np.dot(TEmb_i, np.dot(Noise, TEmb_j.T))
+        AdjMat[p*i:p*i+p, p*j:p*j+p] = Val_ij
+        AdjMat[p*j:p*j+p, p*i:p*i+p] = Val_ij.T
     Degrees = np.diag(np.sum(AdjMat,0))
     sample['AdjMat'] = AdjMat.astype(self.dtype)
     sample['Degrees'] = Degrees.astype(self.dtype)
@@ -340,7 +377,7 @@ def get_dataset(opts):
   elif opts.dataset in [ 'noise_gauss' ]:
     return GraphSimGaussDataset(opts, opts.dataset_params)
   elif opts.dataset in [ 'noise_pairwise' ]:
-    return GraphSimGaussDataset(opts, opts.dataset_params)
+    return GraphSimPairwiseDataset(opts, opts.dataset_params)
  
 if __name__ == '__main__':
   opts = options.get_opts()

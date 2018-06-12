@@ -232,6 +232,9 @@ def get_opts():
   elif opts.dataset == 'noise_gauss':
     dataset_params.data_dir = '/NAS/data/stephen/noise_gauss'
     dataset_params.noise_level = 0.1
+  elif opts.dataset == 'noise_pairwise':
+    dataset_params.data_dir = '/NAS/data/stephen/noise_pairwise'
+    dataset_params.noise_level = 0.1
   opts.data_dir = dataset_params.data_dir
   setattr(opts, 'dataset_params', dataset_params)
 
