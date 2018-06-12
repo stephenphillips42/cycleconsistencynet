@@ -86,8 +86,12 @@ def get_opts():
                       help='What type of activation to use')
 
   # Machine learning parameters
+  parser.add_argument('--run_time',
+                      default=-1,
+                      type=int,
+                      help='Time in minutes the training procedure runs')
   parser.add_argument('--num_epochs',
-                      default=400,
+                      default=-1,
                       type=int,
                       help='Number of epochs to run training')
   parser.add_argument('--batch_size',
@@ -165,7 +169,7 @@ def get_opts():
                       type=int,
                       help='How frequently we save our model while training')
   parser.add_argument('--log_steps',
-                      default=1,
+                      default=5,
                       type=int,
                       help='How frequently we save our model while training')
   parser.add_argument('--shuffle_data',

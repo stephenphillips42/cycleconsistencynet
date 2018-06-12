@@ -122,5 +122,10 @@ class MyLogger(object):
   def __del__(self):
     self.logfile.close()
 
+class TimeRunException(Exception):
+  def __init__(self,*args,**kwargs):
+    Exception.__init__(self,*args,**kwargs)
+
+
 
 
