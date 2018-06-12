@@ -168,9 +168,9 @@ class SkipConnectionLayerWeights(DenseGraphLayerWeights):
     return output
 
 def get_network(opts, arch):
-  if opts.architecture in ['vanilla', 'vanilla_0', 'vanilla_1']:
+  if opts.architecture in ['vanilla', 'vanilla0', 'vanilla1']:
     network = DenseGraphLayerWeights(opts, arch)
-  elif opts.architecture in ['skip', 'skip_0', 'skip_1']:
+  elif opts.architecture in ['skip', 'skip0', 'skip1']:
     network = SkipConnectionLayerWeights(opts, arch)
   return network
 

@@ -69,8 +69,8 @@ def get_opts():
 
   # Architecture parameters
   arch_choices = [
-    'vanilla', 'vanilla_0', 'vanilla_1', 
-    'skip', 'skip_0', 'skip_1', 
+    'vanilla', 'vanilla0', 'vanilla1', 
+    'skip', 'skip0', 'skip1', 
   ]
   parser.add_argument('--architecture',
                       default='vanilla',
@@ -163,15 +163,15 @@ def get_opts():
   parser.add_argument('--save_summaries_secs',
                       default=300,
                       type=int,
-                      help='How frequently we save our model while training')
+                      help='How frequently in seconds we save training summaries')
   parser.add_argument('--save_interval_secs',
                       default=600,
                       type=int,
-                      help='How frequently we save our model while training')
+                      help='How frequently in seconds we save our model while training')
   parser.add_argument('--log_steps',
                       default=5,
                       type=int,
-                      help='How frequently we save our model while training')
+                      help='How frequently we print training loss')
   parser.add_argument('--shuffle_data',
                       default=True,
                       type=str2bool,
@@ -243,13 +243,13 @@ def get_opts():
       layer_lens=[ 2**min(5+k,9) for k in range(5) ],
       activ='relu',
       normalize_emb=True)
-  elif opts.architecture in ['vanilla_0', 'skip_0']:
+  elif opts.architecture in ['vanilla0', 'skip0']:
     arch = arch_params(
       nlayers=5,
       layer_lens=[ 2**min(6+k,10) for k in range(5) ],
       activ='relu',
       normalize_emb=True)
-  elif opts.architecture in ['vanilla_1', 'skip_1']:
+  elif opts.architecture in ['vanilla1', 'skip1']:
     arch = arch_params(
       nlayers=6,
       layer_lens=[ 2**min(6+k,10) for k in range(6) ],
