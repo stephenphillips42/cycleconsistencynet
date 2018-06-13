@@ -55,7 +55,7 @@ def get_opts():
   dataset_choices = [
     'synth_small', 'synth_3view', 'synth_4view',
     'noise_3view',
-    'noise_gauss', 'noise_pairwise',
+    'noise_gauss', 'noise_symgauss', 'noise_pairwise', 'noise_pairwise3',
   ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
@@ -207,7 +207,6 @@ def get_opts():
   dataset_params = types.SimpleNamespace(
     data_dir=opts.data_dir,
     sizes={ 'train': 40000, 'test': 3000 },
-    dtype='float32',
     fixed_size=True,
     views=[3],
     points=[25],
@@ -219,7 +218,9 @@ def get_opts():
     descriptor_dim=12,
     descriptor_var=1.0,
     descriptor_noise_var=0,
-    noise_level=0.1)
+    noise_level=0.1,
+    num_repeats=1,
+    dtype='float32')
   if opts.dataset == 'synth_3view':
     dataset_params.data_dir = '/NAS/data/stephen/synth_3view'
   elif opts.dataset == 'noise_3view':
@@ -232,9 +233,17 @@ def get_opts():
   elif opts.dataset == 'noise_gauss':
     dataset_params.data_dir = '/NAS/data/stephen/noise_gauss'
     dataset_params.noise_level = 0.1
+  elif opts.dataset == 'noise_symgauss':
+    dataset_params.data_dir = '/NAS/data/stephen/noise_symgauss'
+    dataset_params.noise_level = 0.1
+    dataset_params.num_repeats = 1
   elif opts.dataset == 'noise_pairwise':
     dataset_params.data_dir = '/NAS/data/stephen/noise_pairwise'
     dataset_params.noise_level = 0.1
+  elif opts.dataset == 'noise_pairwise3':
+    dataset_params.data_dir = '/NAS/data/stephen/noise_pairwise3'
+    dataset_params.noise_level = 0.1
+    dataset_params.num_repeats = 3
   opts.data_dir = dataset_params.data_dir
   setattr(opts, 'dataset_params', dataset_params)
 
