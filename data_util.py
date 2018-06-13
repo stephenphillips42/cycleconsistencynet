@@ -350,7 +350,7 @@ class GraphSimPairwiseDataset(GraphSimDataset):
     for i in range(n):
       TEmb_i = TEmb[p*i:p*i+p,:]
       for j in range(i+1, n):
-        TEmb_j = TEmb[p*i:p*i+p,:]
+        TEmb_j = TEmb[p*j:p*j+p,:]
         Noise = (1-noise)*np.eye(p) + noise*(np.eye(p)[np.random.permutation(p),:])
         Val_ij = np.dot(TEmb_i, np.dot(Noise, TEmb_j.T))
         AdjMat[p*i:p*i+p, p*j:p*j+p] = Val_ij
