@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
-import numpy as np 
 import os
 import sys
 import collections
 import signal
-import scipy.linalg as la
-from tqdm import tqdm
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -104,10 +101,10 @@ def train(opts):
             save_summaries_secs=opts.save_summaries_secs,
             save_interval_secs=opts.save_interval_secs)
 
-    network.save_np(saver, opts.save_dir)
   except myutils.TimeRunException as exp:
     print("Exiting training...")
-
+  finally:
+    network.save_np(saver, opts.save_dir)
 
 if __name__ == "__main__":
   opts = options.get_opts()

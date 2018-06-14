@@ -8,6 +8,7 @@ import argparse
 import collections
 import types
 import yaml
+import re
 
 arch_params = collections.namedtuple('arch_params', [
   'nlayers', 'layer_lens', 'activ', 'normalize_emb'
@@ -55,7 +56,8 @@ def get_opts():
   dataset_choices = [
     'synth_small', 'synth_3view', 'synth_4view',
     'noise_3view',
-    'noise_gauss', 'noise_symgauss', 'noise_pairwise', 'noise_pairwise3',
+    'noise_gauss', 'noise_symgauss',
+    'noise_pairwise', 'noise_pairwise3', 'noise_pairwise5',
   ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
@@ -205,7 +207,7 @@ def get_opts():
 
   # Determine dataset
   dataset_params = types.SimpleNamespace(
-    data_dir=opts.data_dir,
+    data_dir='/NAS/data/stephen/{}'.format(opts.data_dir),
     sizes={ 'train': 40000, 'test': 3000 },
     fixed_size=True,
     views=[3],
@@ -222,28 +224,23 @@ def get_opts():
     num_repeats=1,
     dtype='float32')
   if opts.dataset == 'synth_3view':
-    dataset_params.data_dir = '/NAS/data/stephen/synth_3view'
+    pass
   elif opts.dataset == 'noise_3view':
-    dataset_params.data_dir = '/NAS/data/stephen/noise_3view'
     dataset_params.noise_level = 0.2
   elif opts.dataset == 'synth_small':
-    dataset_params.data_dir = '/NAS/data/stephen/synth_small'
+    sizes={ 'train': 400, 'test': 300 },
   elif opts.dataset == 'synth_4view':
-    dataset_params.data_dir = '/NAS/data/stephen/synth_4view'
+    pass
   elif opts.dataset == 'noise_gauss':
-    dataset_params.data_dir = '/NAS/data/stephen/noise_gauss'
     dataset_params.noise_level = 0.1
   elif opts.dataset == 'noise_symgauss':
-    dataset_params.data_dir = '/NAS/data/stephen/noise_symgauss'
     dataset_params.noise_level = 0.1
     dataset_params.num_repeats = 1
-  elif opts.dataset == 'noise_pairwise':
-    dataset_params.data_dir = '/NAS/data/stephen/noise_pairwise'
+  elif 'noise_pairwise' in opts.dataset:
     dataset_params.noise_level = 0.1
-  elif opts.dataset == 'noise_pairwise3':
-    dataset_params.data_dir = '/NAS/data/stephen/noise_pairwise3'
-    dataset_params.noise_level = 0.1
-    dataset_params.num_repeats = 3
+    num_rep = re.search(r'[0-9]+', opts.dataset)
+    if num_rep:
+      dataset_params.num_repeats = int(num_rep.group(0))
   opts.data_dir = dataset_params.data_dir
   setattr(opts, 'dataset_params', dataset_params)
 
