@@ -207,7 +207,7 @@ def get_opts():
 
   # Determine dataset
   dataset_params = types.SimpleNamespace(
-    data_dir='/NAS/data/stephen/{}'.format(opts.data_dir),
+    data_dir='/NAS/data/stephen/{}'.format(opts.dataset),
     sizes={ 'train': 40000, 'test': 3000 },
     fixed_size=True,
     views=[3],
