@@ -61,7 +61,7 @@ def get_opts():
   ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
-                      default=True,
+                      default=dataset_choices[0],
                       choices=dataset_choices,
                       help='Choose which dataset to use')
   parser.add_argument('--use_descriptors',
@@ -187,9 +187,12 @@ def get_opts():
                       default=1,
                       type=int,
                       help='Test data index to experiment with')
-  parser.add_argument('--debug_dir',
-                      default='logs',
+  parser.add_argument('--debug_data_dir',
+                      default='logs/np_datasets',
                       help='Test data directory to experiment with')
+  parser.add_argument('--debug_log_dir',
+                      default='logs',
+                      help='Logs to experiment with')
   parser.add_argument('--debug_plot',
                       default=False,
                       type=str2bool,

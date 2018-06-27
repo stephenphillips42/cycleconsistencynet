@@ -2,10 +2,12 @@ import os
 import sys
 import glob
 import numpy as np
+import types
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import tqdm
+import yaml
 
 import myutils
 import options
@@ -21,7 +23,7 @@ def npload(fdir,idx):
 
 def experiment(opts, network, index):
   # Load sample
-  sample = npload(os.path.join(opts.debug_dir, 'np_test'), index)
+  sample = npload(os.path.join(opts.data_dir, 'np_test'), index)
   output = network.apply_np(sample)
   # Sort by ground truth for better visualization
   labels = sample['TrueEmbedding']
@@ -141,9 +143,13 @@ def experiment(opts, network, index):
   
 
 if __name__ == "__main__":
-  opts = options.get_opts()
+  debug_opts = options.get_opts()
+  with open(os.path.join(debug_opts.debug_log_dir, 'options.yaml'), 'r') as yml:
+    opts = types.SimpleNamespace(**yaml.load(yml))
+  opts.data_dir = os.path.join(debug_opts.debug_data_dir, opts.dataset)
+  opts.debug_plot = debug_opts.debug_plot
   network = model.get_network(opts, opts.arch)
-  network.load_np(opts.save_dir)
+  network.load_np(os.path.join(debug_opts.debug_log_dir, 'np_weights_001'))
   if not opts.debug_plot:
     n = opts.dataset_params.sizes['test']
     stats = np.zeros((n,8))
@@ -153,7 +159,10 @@ if __name__ == "__main__":
     else:
       for i in tqdm.tqdm(range(n)):
         stats[i] = experiment(opts, network, i)
-    print(np.mean(stats,0))
+    meanstats = np.mean(stats,0)
+    print("Diag: {:.2e} +/- {:.2e}, Off Diag: {:.2e} +/- {:.2e}, " \
+          "Baseline Diag: {:.2e} +/- {:.2e}, " \
+          "Baseline Off Diag: {:.2e} +/- {:.2e}".format(*list(meanstats)))
   else:
     experiment(opts, network, opts.debug_index)
 

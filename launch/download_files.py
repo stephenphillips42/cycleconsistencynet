@@ -32,6 +32,9 @@ for n in range(1,len(sys.argv)):
     for l in range(len(logs)):
       loss = np.array(get_loss_values(logs[l]))
       losses.append((loss,"{}-{}".format(name,l),name))
+  elif len(logs) == 0:
+    print("ERROR - {} has no logs".format(yaml_name))
+    sys.exit(1)
   else:
     loss = np.array(get_loss_values(logs[0]))
     losses.append((loss,name,name))
@@ -53,5 +56,7 @@ for i in range(len(losses)):
   plt.plot(losses[i][0], label=losses[i][1])
 plt.legend()
 plt.show()
-print([ loss[-1] for loss, name, _ in losses ])
+print("\n".join([
+        "{}: {} ({})".format(n, l[-1], len(l)) for l, n, _ in losses
+      ]))
 
