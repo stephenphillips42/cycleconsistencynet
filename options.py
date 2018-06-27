@@ -178,6 +178,7 @@ def get_opts():
                       default=True,
                       type=str2bool,
                       help='Shuffle the dataset or no?')
+
   # Debugging options
   parser.add_argument('--verbose',
                       default=False,
@@ -193,9 +194,10 @@ def get_opts():
   parser.add_argument('--debug_log_dir',
                       default='logs',
                       help='Logs to experiment with')
+  plot_options = [ 'none', 'plot', 'save', 'baseline' ]
   parser.add_argument('--debug_plot',
-                      default=False,
-                      type=str2bool,
+                      default=plot_options[0],
+                      choices=plot_options,
                       help='Plot things in experiment')
 
 

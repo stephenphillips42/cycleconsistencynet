@@ -21,62 +21,56 @@ def axes3d(nrows=1, ncols=1):
 def npload(fdir,idx):
   return dict(np.load("{}/np_test-{:04d}.npz".format(fdir,idx)))
 
-def get_sorted(sample):
-  labels = sample['TrueEmbedding']
-  idxs = np.argmax(labels, axis=1)
-  sorted_idxs = np.argsort(idxs)
-  slabels = labels[sorted_idxs]
-  return slabels, sorted_idxs
-
-def get_sims():
-  pass
-
-def plot_baseline(opts, network, index):
-  sample = npload(os.path.join(opts.data_dir, 'np_test'), index)
-  slabels, sorted_idxs = get_sorted(sample)
-  srand = myutils.dim_normalize(sample['InitEmbeddings'][sorted_idxs])
-  lsim = np.abs(np.dot(slabels, slabels.T))
-  rsim = np.abs(np.dot(srand, srand.T))
-  print('Sorted labels')
-  fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2)
-  im0 = ax0.imshow(slabels)
-  im1 = ax1.imshow(srand)
-  fig.colorbar(im0, ax=ax0)
-  fig.colorbar(im1, ax=ax1)
-  plt.show()
-  print('Sorted similarites')
-  fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2)
-  im0 = ax0.imshow(lsim)
-  im1 = ax1.imshow(rsim)
-  fig.colorbar(im0, ax=ax0)
-  fig.colorbar(im1, ax=ax1)
-  plt.show()
-
-def plot_index(opts, network, index):
-  sample = npload(os.path.join(opts.data_dir, 'np_test'), index)
-  output = network.apply_np(sample)
-  pass
+def get_stats():
 
 def experiment(opts, network, index):
   # Load sample
   sample = npload(os.path.join(opts.data_dir, 'np_test'), index)
   output = network.apply_np(sample)
   # Sort by ground truth for better visualization
-  slabels, soutput = get_sorted(sample)
+  labels = sample['TrueEmbedding']
+  idxs = np.argmax(labels, axis=1)
+  sorted_idxs = np.argsort(idxs)
+  slabels = labels[sorted_idxs]
+  soutput = output[sorted_idxs]
+  rand = myutils.dim_normalize(sample['InitEmbeddings'][sorted_idxs])
+  # rand = myutils.dim_normalize(np.random.randn(*shape))
   # Plot setup
+  shape = slabels.shape
   t = list(range(shape[0]))
   xx0, yy0 = np.meshgrid(t, t)
   t = list(range(shape[1]))
   xx1, yy1 = np.meshgrid(t, t)
+  lcorr = np.abs(np.dot(slabels.T, slabels))
+  ocorr = np.abs(np.dot(soutput.T, soutput))
+  rcorr = np.abs(np.dot(rand.T, rand))
   lsim = np.abs(np.dot(slabels, slabels.T))
   osim = np.abs(np.dot(soutput, soutput.T))
   rsim = np.abs(np.dot(rand, rand.T))
   if opts.debug_plot == 'plot':
+    # Plotting images
+    print('Adjacency and Laplacian')
+    fig, (ax0, ax1, ax2) = plt.subplots(nrows=1, ncols=3)
+    im0 = ax0.imshow(sample['AdjMat'])
+    im1 = ax1.imshow(sample['Laplacian'])
+    im2 = ax2.imshow(slabels)
+    fig.colorbar(im0, ax=ax0)
+    fig.colorbar(im1, ax=ax1)
+    fig.colorbar(im2, ax=ax2)
+    plt.show()
     print('Sorted labels')
     fig, (ax0, ax1, ax2) = plt.subplots(nrows=1, ncols=3)
     im0 = ax0.imshow(slabels)
     im1 = ax1.imshow(soutput)
     im2 = ax2.imshow(rand)
+    fig.colorbar(im1, ax=ax1)
+    fig.colorbar(im2, ax=ax2)
+    plt.show()
+    print('Sorted correlations')
+    fig, (ax0, ax1, ax2) = plt.subplots(nrows=1, ncols=3)
+    im0 = ax0.imshow(lcorr)
+    im1 = ax1.imshow(ocorr)
+    im2 = ax2.imshow(rcorr)
     fig.colorbar(im1, ax=ax1)
     fig.colorbar(im2, ax=ax2)
     plt.show()
@@ -93,10 +87,27 @@ def experiment(opts, network, index):
   npts = len(np.unique(idxs))
   mean_sims = np.zeros((npts,npts))
 
-  diag = np.reshape(osim[lsim==1],-1)
-  off_diag = np.reshape(osim[lsim==0],-1)
-  baseline_diag = np.reshape(rsim[lsim==1],-1)
-  baseline_off_diag = np.reshape(rsim[lsim==0],-1)
+  diag = []
+  off_diag = []
+  baseline_diag = []
+  baseline_off_diag = []
+  for i in range(npts):
+    for j in range(npts):
+      simsij = np.abs(np.dot(output[idxs == i], output[idxs == j].T)).reshape(-1).tolist()
+      baselineij = np.abs(np.dot(rand[idxs == i], rand[idxs == j].T)).reshape(-1).tolist()
+      mean_sims[i,j] = np.mean(np.dot(output[idxs == i], output[idxs == j].T))
+      # if i == j:
+      #   for k in range(len(simsij)):
+      #     diag.append(np.arccos(np.minimum(1, simsij[k])))
+      # else:
+      #   for k in range(len(simsij)):
+      #     off_diag.append(np.arccos(np.maximum(-1,np.minimum(1,simsij[k]))))
+      if i == j:
+          diag.extend(simsij)
+          baseline_diag.extend(baselineij)
+      else:
+          off_diag.extend(simsij)
+          baseline_off_diag.extend(baselineij)
   stats = (np.mean(diag), np.std(diag), \
            np.mean(off_diag), np.std(off_diag), \
            np.mean(baseline_diag), np.std(baseline_diag), \
@@ -156,8 +167,4 @@ if __name__ == "__main__":
           "Baseline Off Diag: {:.2e} +/- {:.2e}".format(*list(meanstats)))
   elif opts.debug_plot == 'plot':
     experiment(opts, network, opts.debug_index)
-  elif opts.debug_plot == 'baseline':
-    plot_baseline(opts, network, opts.debug_index)
-
-
 
