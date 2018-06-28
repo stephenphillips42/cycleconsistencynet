@@ -411,7 +411,8 @@ def get_dataset(opts):
     return GraphSimGaussDataset(opts, opts.dataset_params)
   elif opts.dataset in [ 'noise_symgauss' ]:
     return GraphSimSymGaussDataset(opts, opts.dataset_params)
-  elif 'noise_pairwise' in opts.dataset:
+  elif 'noise_large_pairwise' in opts.dataset or \
+        'noise_pairwise' in opts.dataset:
     return GraphSimPairwiseDataset(opts, opts.dataset_params)
  
 if __name__ == '__main__':
@@ -419,6 +420,7 @@ if __name__ == '__main__':
   print("Generating Pose Graphs")
   if not os.path.exists(opts.data_dir):
     os.makedirs(opts.data_dir)
+  dataset = get_dataset(opts)
 
   types = [
     'train',
@@ -428,14 +430,12 @@ if __name__ == '__main__':
     dname = os.path.join(opts.data_dir,t)
     if not os.path.exists(dname):
       os.makedirs(dname)
-    dataset = get_dataset(opts)
     dataset.convert_dataset(dname, t)
 
   # Generate numpy test
   out_dir = os.path.join(opts.data_dir,'np_test')
   if not os.path.exists(out_dir):
     os.makedirs(out_dir)
-  dataset = get_dataset(opts)
   dataset.create_np_dataset(out_dir, opts.dataset_params.sizes['test'])
 
 
