@@ -58,6 +58,7 @@ def get_opts():
     'noise_3view',
     'noise_gauss', 'noise_symgauss',
     'noise_pairwise', 'noise_pairwise3', 'noise_pairwise5',
+    'noise_large_pairwise', 'noise_large_pairwise3'
   ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
@@ -100,6 +101,10 @@ def get_opts():
                       default=32,
                       type=int,
                       help='Size for batches')
+  parser.add_argument('--use_unsupervised_loss',
+                      default=False,
+                      type=str2bool,
+                      help='Use true adjacency or noisy one in loss')
   parser.add_argument('--embedding_offset',
                       default=10,
                       type=int,
@@ -241,6 +246,12 @@ def get_opts():
     dataset_params.num_repeats = 1
   elif 'noise_pairwise' in opts.dataset:
     dataset_params.noise_level = 0.1
+    num_rep = re.search(r'[0-9]+', opts.dataset)
+    if num_rep:
+      dataset_params.num_repeats = int(num_rep.group(0))
+  elif 'noise_large_pairwise' in opts.dataset:
+    dataset_params.noise_level = 0.1
+    dataset_params.sizes['train'] = 400000
     num_rep = re.search(r'[0-9]+', opts.dataset)
     if num_rep:
       dataset_params.num_repeats = int(num_rep.group(0))

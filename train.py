@@ -64,7 +64,14 @@ def train(opts):
   # Get loss
   emb = sample['TrueEmbedding']
   output = network.apply(sample)
-  emb_sim, output_sim = tfutils.get_sim(emb), tfutils.get_sim(output)
+  output_sim = tfutils.get_sim(output)
+  if opts.use_unsupervised_loss:
+    v = opts.dataset_params.views[-1]
+    p = opts.dataset_params.points[-1]
+    b = opts.batch_size 
+    emb_sim = sample['AdjMat'] + tf.eye(v*p, b)
+  else:
+    emb_sim = tfutils.get_sim(emb)
   tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
   tf.summary.image('Embedding Similarity', tf.expand_dims(emb_sim, -1))
   tf.losses.mean_squared_error(emb_sim, output_sim)
