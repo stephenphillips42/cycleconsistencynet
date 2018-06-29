@@ -69,6 +69,11 @@ def get_opts():
                       default=True,
                       type=str2bool,
                       help='Dimention of the descriptors of the points')
+  parser.add_argument('--load_data',
+                      default=True,
+                      type=str2bool,
+                      help='Load data or just generate it on the fly. '
+                           'Generating slower but you get infinite data.')
 
   # Architecture parameters
   arch_choices = [
@@ -155,10 +160,10 @@ def get_opts():
                       default=True,
                       type=str2bool,
                       help='Display everything on tensorboard?')
-  parser.add_argument('--test_check_freq',
-                      default=4000,
-                      type=int,
-                      help='Number of steps between running loss on test set')
+  # parser.add_argument('--test_check_freq',
+  #                     default=4000,
+  #                     type=int,
+  #                     help='Number of steps between running loss on test set')
   parser.add_argument('--num_readers',
                       default=3,
                       type=int,
@@ -168,7 +173,7 @@ def get_opts():
                       type=int,
                       help='How many threads to preprocess data i.e. data augmentation')
   parser.add_argument('--save_summaries_secs',
-                      default=300,
+                      default=120,
                       type=int,
                       help='How frequently in seconds we save training summaries')
   parser.add_argument('--save_interval_secs',
@@ -179,6 +184,10 @@ def get_opts():
                       default=5,
                       type=int,
                       help='How frequently we print training loss')
+  parser.add_argument('--save_interval_steps',
+                      default=4000,
+                      type=int,
+                      help='How frequently in seconds we save our model while training')
   parser.add_argument('--shuffle_data',
                       default=True,
                       type=str2bool,

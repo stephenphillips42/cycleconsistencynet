@@ -27,7 +27,11 @@ class Int64Feature(slim.tfexample_decoder.ItemHandler):
   def __init__(self, key, description):
     super(Int64Feature, self).__init__(key)
     self._key = key
+    self.shape = []
     self._description = description
+
+  def get_placeholder(self):
+    return tf.placeholder(tf.int64, shape=[None])
 
   def get_feature_write(self, value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
@@ -44,9 +48,12 @@ class TensorFeature(slim.tfexample_decoder.ItemHandler):
   def __init__(self, key, shape, dtype, description):
     super(TensorFeature, self).__init__(key)
     self._key = key
-    self._shape = shape
+    self.shape = shape
     self._dtype = dtype
     self._description = description
+
+  def get_placeholder(self):
+    return tf.placeholder(self._dtype, shape=[None] + self.shape)
 
   def get_feature_write(self, value):
     v = value.astype(self._dtype).tobytes()
@@ -58,7 +65,7 @@ class TensorFeature(slim.tfexample_decoder.ItemHandler):
   def tensors_to_item(self, keys_to_tensors):
     tensor = keys_to_tensors[self._key]
     tensor = tf.decode_raw(tensor, out_type=self._dtype)
-    return tf.reshape(tensor, self._shape)
+    return tf.reshape(tensor, self.shape)
 
 class GraphSimDataset(object):
   """Dataset for Cycle Consistency graphs"""
@@ -186,7 +193,10 @@ class GraphSimDataset(object):
       'NumViews': pose_graph.n_views,
       'NumPoints': pose_graph.n_pts,
     }
-    
+
+  def get_placeholders(self):
+    return { k:v.get_placeholder() for k, v in self.features.items() }
+
   def convert_dataset(self, out_dir, mode):
     """Writes synthetic flow data in .mat format to a TF record file."""
     params = self.dataset_params
@@ -216,6 +226,15 @@ class GraphSimDataset(object):
     timestamp_file = '{}_timestamp.txt'.format(mode)
     with open(os.path.join(out_dir, timestamp_file), 'w') as date_file:
       date_file.write('TFrecord created {}'.format(str(datetime.datetime.now())))
+
+  def get_np_batch(self, batch_size):
+    sample = { k:np.zeros([batch_size] + v.shape)
+               for k, v in self.features.items() }
+    for b in range(batch_size):
+      s = self.gen_sample()
+      for k in sample.keys():
+        sample[k][b] = s[k]
+    return sample
 
   def create_np_dataset(self, out_dir, num_entries):
     """Create npz files to store dataset"""
