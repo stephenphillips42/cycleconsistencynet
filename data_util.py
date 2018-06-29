@@ -411,7 +411,7 @@ def get_dataset(opts):
     return GraphSimGaussDataset(opts, opts.dataset_params)
   elif opts.dataset in [ 'noise_symgauss' ]:
     return GraphSimSymGaussDataset(opts, opts.dataset_params)
-  elif 'noise_large_pairwise' in opts.dataset or \
+  elif 'noise_largepairwise' in opts.dataset or \
         'noise_pairwise' in opts.dataset:
     return GraphSimPairwiseDataset(opts, opts.dataset_params)
  
