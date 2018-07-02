@@ -120,7 +120,7 @@ def train_with_generation(opts):
                                            sess.graph,
                                            flush_secs=opts.save_summaries_secs)
     # Train loop
-    for run in range(num_runs):
+    for run in range(opts.num_runs):
       if opts.run_time > 0:
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(60*opts.run_time) # run time in seconds
@@ -163,7 +163,7 @@ def train(opts):
   # Train loop
   saver = tf.train.Saver()
   tf.logging.set_verbosity(tf.logging.INFO)
-  for run in range(num_runs):
+  for run in range(opts.num_runs):
     if opts.run_time > 0:
       signal.signal(signal.SIGALRM, handler)
       signal.alarm(60*opts.run_time) # run time in seconds
