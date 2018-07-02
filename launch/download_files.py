@@ -19,7 +19,7 @@ def get_loss_values(log):
   for x in log:
     line = x.split()
     if '=' in line:
-      loss.append(float(line[5]))
+      loss.append(float(line[line.index('=')+1]))
   return loss
 
 

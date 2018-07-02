@@ -208,7 +208,7 @@ def get_opts():
   parser.add_argument('--debug_log_dir',
                       default='logs',
                       help='Logs to experiment with')
-  plot_options = [ 'none', 'plot', 'save', 'baseline' ]
+  plot_options = [ 'none', 'plot', 'unsorted', 'baseline', 'random' ]
   parser.add_argument('--debug_plot',
                       default=plot_options[0],
                       choices=plot_options,
