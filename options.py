@@ -98,6 +98,11 @@ def get_opts():
                       default=-1,
                       type=int,
                       help='Time in minutes the training procedure runs')
+  parser.add_argument('--num_runs',
+                      default=1,
+                      type=int,
+                      help='Number of times training runs (length determined'
+                           'by run_time)')
   parser.add_argument('--num_epochs',
                       default=-1,
                       type=int,

@@ -120,22 +120,31 @@ def train_with_generation(opts):
                                            sess.graph,
                                            flush_secs=opts.save_summaries_secs)
     # Train loop
-    while step != max_steps:
-      c = 0
-      batch = dataset.get_np_batch(opts.batch_size)
-      feed = { sample[k] : batch[k] for k in batch.keys() }
-      summary, loss_, _ = sess.run([merged, loss, train_op], feed_dict=feed)
-      summary_writer.add_summary(summary, step)
-      if ((step + 1) % opts.log_steps) == 0:
-        print(INFO.format(step, loss_))
-      if (step % opts.save_interval_steps) == 0:
-        saver.save(sess,
-                   os.path.join(opts.save_dir, 'model.ckpt'),
-                   global_step=global_step)
-        slog = SessionLog(status=SessionLog.CHECKPOINT,
-                          checkpoint_path=opts.save_dir)
-        summary_writer.add_session_log(slog, step)
-      step += 1
+    for run in range(num_runs):
+      if opts.run_time > 0:
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(60*opts.run_time) # run time in seconds
+      try:
+        while step != max_steps:
+          c = 0
+          batch = dataset.get_np_batch(opts.batch_size)
+          feed = { sample[k] : batch[k] for k in batch.keys() }
+          summary, loss_, _ = sess.run([merged, loss, train_op], feed_dict=feed)
+          summary_writer.add_summary(summary, step)
+          if ((step + 1) % opts.log_steps) == 0:
+            print(INFO.format(step, loss_))
+          if (step % opts.save_interval_steps) == 0:
+            saver.save(sess,
+                       os.path.join(opts.save_dir, 'model.ckpt'),
+                       global_step=global_step)
+            slog = SessionLog(status=SessionLog.CHECKPOINT,
+                              checkpoint_path=opts.save_dir)
+            summary_writer.add_session_log(slog, step)
+          step += 1
+      except myutils.TimeRunException as exp:
+        print("Exiting training...")
+      finally:
+        network.save_np(saver, opts.save_dir)
 
 
 def train(opts):
@@ -154,23 +163,24 @@ def train(opts):
   # Train loop
   saver = tf.train.Saver()
   tf.logging.set_verbosity(tf.logging.INFO)
-  if opts.run_time > 0:
-    signal.signal(signal.SIGALRM, handler)
-    signal.alarm(60*opts.run_time) # run time in seconds
-  try:
-    slim.learning.train(
-            train_op=train_op,
-            logdir=opts.save_dir,
-            number_of_steps=get_max_steps(opts),
-            log_every_n_steps=opts.log_steps,
-            saver=saver,
-            save_summaries_secs=opts.save_summaries_secs,
-            save_interval_secs=opts.save_interval_secs)
+  for run in range(num_runs):
+    if opts.run_time > 0:
+      signal.signal(signal.SIGALRM, handler)
+      signal.alarm(60*opts.run_time) # run time in seconds
+    try:
+      slim.learning.train(
+              train_op=train_op,
+              logdir=opts.save_dir,
+              number_of_steps=get_max_steps(opts),
+              log_every_n_steps=opts.log_steps,
+              saver=saver,
+              save_summaries_secs=opts.save_summaries_secs,
+              save_interval_secs=opts.save_interval_secs)
 
-  except myutils.TimeRunException as exp:
-    print("Exiting training...")
-  finally:
-    network.save_np(saver, opts.save_dir)
+    except myutils.TimeRunException as exp:
+      print("Exiting training...")
+    finally:
+      network.save_np(saver, opts.save_dir)
 
 if __name__ == "__main__":
   opts = options.get_opts()
