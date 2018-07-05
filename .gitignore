@@ -4,5 +4,6 @@
 stdout.log
 # Ignore log folders
 save/*
+launch/*yaml
 __pycache__/
 figs/*

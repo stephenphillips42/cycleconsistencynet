@@ -6,7 +6,20 @@ from __future__ import print_function
 import os
 import argparse
 import collections
+import types
 import yaml
+import re
+
+arch_params = collections.namedtuple('arch_params', [
+  'nlayers', 'layer_lens', 'activ', 'normalize_emb'
+])
+# synth_dataset_params_vars = [
+#   'data_dir', 'sizes', 'dtype', # Meta-parameters
+#   'fixed_size', 'views', 'points', # Graph
+#   'points_scale', 'knn', 'scale', 'sparse', 'soft_edges',
+#   'descriptor_dim', 'descriptor_var', 'descriptor_noise_var', # Descriptor
+# ]
+
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -35,134 +48,82 @@ def get_opts():
 
   # Directory and dataset options
   parser.add_argument('--save_dir',
-                      default='save/',
+                      default=None,
                       help='Directory to save out logs and checkpoints')
   parser.add_argument('--data_dir',
-                      default='/mount/data/graphs',
-                      help='Directory for saving/loading numpy data')
-  # Dataset options
-  parser.add_argument('--num_gen_train',
-                      default=8000,
-                      type=int,
-                      help='Number of training samples to generate.')
-  parser.add_argument('--num_gen_test',
-                      default=2000,
-                      type=int,
-                      help='Number of testing samples to generate.')
-  parser.add_argument('--np_type',
-                      default='float32',
-                      help='Numpy type to save dataset as')
-  parser.add_argument('--min_views',
-                      default=25,
-                      type=int,
-                      help='Minimum number of viewpoints in the graph')
-  parser.add_argument('--max_views',
-                      default=30,
-                      type=int,
-                      help='Maximum number of viewpoints in the graph')
-  parser.add_argument('--min_points',
-                      default=9,
-                      type=int,
-                      help='Minimum number of points in the world seen in '
-                           'the images')
-  parser.add_argument('--max_points',
-                      default=15,
-                      type=int,
-                      help='Maximum number of points in the world seen in '
-                           'the images')
-  parser.add_argument('--points_scale',
-                      default=1,
-                      type=float,
-                      help='Scale of the points in the world')
-  parser.add_argument('--knn',
-                      default=8,
-                      type=int,
-                      help='number of neighbors used in graph')
-  parser.add_argument('--scale',
-                      default=3,
-                      type=int,
-                      help='Distance from center of sphere to cameras')
-  parser.add_argument('--sparse',
-                      default=False,
-                      type=str2bool,
-                      help='Use full graph')
-  parser.add_argument('--soft_edges',
-                      default=False,
-                      type=str2bool,
-                      help='Use soft or hard correspondences')
+                      default='/NAS/data/stephen/',
+                      help='Directory for saving/loading dataset')
+  dataset_choices = [
+    'synth_small', 'synth_3view', 'synth_4view',
+    'noise_3view',
+    'noise_gauss', 'noise_symgauss',
+    'noise_pairwise', 'noise_pairwise3', 'noise_pairwise5',
+    'noise_largepairwise3', 'noise_largepairwise5'
+  ]
+  # 'synth_noise1', 'synth_noise2'
+  parser.add_argument('--dataset',
+                      default=dataset_choices[0],
+                      choices=dataset_choices,
+                      help='Choose which dataset to use')
+  parser.add_argument('--datasets_dir',
+                      default='/NAS/data/stephen',
+                      help='Directory where all the datasets are')
   parser.add_argument('--use_descriptors',
                       default=True,
                       type=str2bool,
                       help='Dimention of the descriptors of the points')
-  parser.add_argument('--descriptor_dim',
-                      default=12,
-                      type=int,
-                      help='Dimention of the descriptors of the points')
-  parser.add_argument('--descriptor_var',
-                      default=1.0,
-                      type=float,
-                      help='Variance of the true descriptors')
-  parser.add_argument('--descriptor_noise_var',
-                      default=0,
-                      type=float,
-                      help='Variance of the noise of the descriptors '
-                           'of the projected points')
+  parser.add_argument('--load_data',
+                      default=True,
+                      type=str2bool,
+                      help='Load data or just generate it on the fly. '
+                           'Generating slower but you get infinite data.')
 
-  ## TODO: Implement these for graphs
   # Architecture parameters
-  # parser.add_argument('--network_type',
-  #                     default='heading_network',
-  #                     choices=['heading_network'],
-  #                     help='Network architecture to use')
-  parser.add_argument('--nlayers',
-                      default=4,
-                      type=int,
-                      help='Number of layers in the architecture')
+  arch_choices = [
+    'vanilla', 'vanilla0', 'vanilla1', 
+    'skip', 'skip0', 'skip1', 
+  ]
+  parser.add_argument('--architecture',
+                      default='vanilla',
+                      choices=arch_choices,
+                      help='Network architecture to use')
   parser.add_argument('--final_embedding_dim',
                       default=12,
                       type=int,
                       help='Dimensionality of the output')
-  parser.add_argument('--nclasses',
-                      default=24,
-                      type=int,
-                      help='Number of classes')
+  activation_types = ['relu','leakyrelu','tanh', 'elu']
   parser.add_argument('--activation_type',
-                      default=None,
-                      choices=['relu','leakyrelu','tanh','relusq'],
+                      default=activation_types[0],
+                      choices=activation_types,
                       help='What type of activation to use')
-  parser.add_argument('--use_fully_connected',
-                      default=False,
-                      type=str2bool,
-                      help='Use fully connected layer at the end')
-  parser.add_argument('--fully_connected_size',
-                      default=1024,
-                      type=int,
-                      help='Size of the last fully connected layer')
-  parser.add_argument('--use_batch_norm',
-                      default=True,
-                      type=str2bool,
-                      help='Decision whether to use batch norm or not')
-  parser.add_argument('--architecture',
-                      default=None,
-                      help='Helper variable for building the architecture type from network_type')
-  parser.add_argument('--normalize_embedding',
-                      default=False,
-                      type=str2bool,
-                      help='Helper variable for building the architecture type from network_type')
 
   # Machine learning parameters
+  parser.add_argument('--run_time',
+                      default=-1,
+                      type=int,
+                      help='Time in minutes the training procedure runs')
+  parser.add_argument('--num_runs',
+                      default=1,
+                      type=int,
+                      help='Number of times training runs (length determined'
+                           'by run_time)')
   parser.add_argument('--num_epochs',
-                      default=400,
+                      default=-1,
                       type=int,
                       help='Number of epochs to run training')
   parser.add_argument('--batch_size',
                       default=32,
                       type=int,
                       help='Size for batches')
-  # parser.add_argument('--noise_level',
-  #                     default=1e-2,
-  #                     type=float,
-  #                     help='Standard devation of white noise to add to input')
+  parser.add_argument('--use_unsupervised_loss',
+                      default=False,
+                      type=str2bool,
+                      help='Use true adjacency or noisy one in loss')
+  loss_types = [ 'l2', 'bce' ]
+  parser.add_argument('--loss_type',
+                      default=loss_types[0],
+                      choices=loss_types,
+                      help='')
   parser.add_argument('--embedding_offset',
                       default=10,
                       type=int,
@@ -179,17 +140,23 @@ def get_opts():
                       default=3e-5,
                       type=float,
                       help='L1 weight decay regularization')
+  optimizer_types = ['sgd','adam','adadelta','momentum']
   parser.add_argument('--optimizer_type',
-                      default='adam',
-                      choices=['adam','adadelta','momentum','sgd'],
+                      default=optimizer_types[0],
+                      choices=optimizer_types,
                       help='Optimizer type for adaptive learning methods')
   parser.add_argument('--learning_rate',
                       default=1e-3,
                       type=float,
                       help='Learning rate for gradient descent')
+  parser.add_argument('--momentum',
+                      default=0.6,
+                      type=float,
+                      help='Learning rate for gradient descent')
+  lr_decay_types = ['exponential','fixed','polynomial']
   parser.add_argument('--learning_rate_decay_type',
-                      default='exponential',
-                      choices=['fixed','exponential','polynomial'],
+                      default=lr_decay_types[0],
+                      choices=lr_decay_types,
                       help='Learning rate decay policy')
   parser.add_argument('--min_learning_rate',
                       default=1e-5,
@@ -204,10 +171,146 @@ def get_opts():
                       type=int,
                       help='Number of epochs before learning rate decay')
 
+  # Tensorflow technical options
+  parser.add_argument('--full_tensorboard',
+                      default=True,
+                      type=str2bool,
+                      help='Display everything on tensorboard?')
+  # parser.add_argument('--test_check_freq',
+  #                     default=4000,
+  #                     type=int,
+  #                     help='Number of steps between running loss on test set')
+  parser.add_argument('--num_readers',
+                      default=3,
+                      type=int,
+                      help='Number of parallel threads to read in the dataset')
+  parser.add_argument('--num_preprocessing_threads',
+                      default=1,
+                      type=int,
+                      help='How many threads to preprocess data i.e. data augmentation')
+  parser.add_argument('--save_summaries_secs',
+                      default=120,
+                      type=int,
+                      help='How frequently in seconds we save training summaries')
+  parser.add_argument('--save_interval_secs',
+                      default=600,
+                      type=int,
+                      help='How frequently in seconds we save our model while training')
+  parser.add_argument('--log_steps',
+                      default=5,
+                      type=int,
+                      help='How frequently we print training loss')
+  parser.add_argument('--save_interval_steps',
+                      default=4000,
+                      type=int,
+                      help='How frequently in seconds we save our model while training')
+  parser.add_argument('--shuffle_data',
+                      default=True,
+                      type=str2bool,
+                      help='Shuffle the dataset or no?')
+
+  # Debugging options
+  parser.add_argument('--verbose',
+                      default=False,
+                      type=str2bool,
+                      help='Print out everything')
+  parser.add_argument('--debug_index',
+                      default=1,
+                      type=int,
+                      help='Test data index to experiment with')
+  parser.add_argument('--debug_data_dir',
+                      default='logs/np_datasets',
+                      help='Test data directory to experiment with')
+  parser.add_argument('--debug_log_dir',
+                      default='logs',
+                      help='Logs to experiment with')
+  plot_options = [ 'none', 'plot', 'unsorted', 'baseline', 'random' ]
+  parser.add_argument('--debug_plot',
+                      default=plot_options[0],
+                      choices=plot_options,
+                      help='Plot things in experiment')
+
+
   opts = parser.parse_args()
 
+  # Get save directory default
+  if opts.save_dir is None:
+    save_idx = 0
+    while os.path.exists('save/save-{:03d}'.format(save_idx)):
+      save_idx += 1
+    opts.save_dir = 'save/save-{:03d}'.format(save_idx)
+
+  # Determine dataset
+  class DatasetParams(object):
+    def __init__(self, opts):
+      self.data_dir='{}/{}'.format(opts.datasets_dir, opts.dataset),
+      self.sizes={ 'train': 40000, 'test': 3000 }
+      self.fixed_size=True
+      self.views=[3]
+      self.points=[25]
+      self.points_scale=1
+      self.knn=8
+      self.scale=3
+      self.sparse=False
+      self.soft_edges=False
+      self.descriptor_dim=12
+      self.descriptor_var=1.0
+      self.descriptor_noise_var=0
+      self.noise_level=0.1
+      self.num_repeats=1
+      self.dtype='float32'
+  dataset_params = DatasetParams(opts)
+  if opts.dataset == 'synth_3view':
+    pass
+  elif opts.dataset == 'noise_3view':
+    dataset_params.noise_level = 0.2
+  elif opts.dataset == 'synth_small':
+    sizes={ 'train': 400, 'test': 300 },
+  elif opts.dataset == 'synth_4view':
+    pass
+  elif opts.dataset == 'noise_gauss':
+    dataset_params.noise_level = 0.1
+  elif opts.dataset == 'noise_symgauss':
+    dataset_params.noise_level = 0.1
+    dataset_params.num_repeats = 1
+  elif 'noise_pairwise' in opts.dataset:
+    dataset_params.noise_level = 0.1
+    num_rep = re.search(r'[0-9]+', opts.dataset)
+    if num_rep:
+      dataset_params.num_repeats = int(num_rep.group(0))
+  elif 'noise_largepairwise' in opts.dataset:
+    dataset_params.noise_level = 0.1
+    dataset_params.sizes['train'] = 400000
+    num_rep = re.search(r'[0-9]+', opts.dataset)
+    if num_rep:
+      dataset_params.num_repeats = int(num_rep.group(0))
+  opts.data_dir = dataset_params.data_dir
+  setattr(opts, 'dataset_params', dataset_params)
+
+  # Set up architecture
+  arch = None 
+  if opts.architecture in ['vanilla', 'skip']:
+    arch = arch_params(
+      nlayers=5,
+      layer_lens=[ 2**min(5+k,9) for k in range(5) ],
+      activ='relu',
+      normalize_emb=True)
+  elif opts.architecture in ['vanilla0', 'skip0']:
+    arch = arch_params(
+      nlayers=5,
+      layer_lens=[ 2**min(6+k,10) for k in range(5) ],
+      activ='relu',
+      normalize_emb=True)
+  elif opts.architecture in ['vanilla1', 'skip1']:
+    arch = arch_params(
+      nlayers=6,
+      layer_lens=[ 2**min(6+k,10) for k in range(6) ],
+      activ='relu',
+      normalize_emb=True)
+  setattr(opts, 'arch', arch)
+
   # Post processing
-  if opts.normalize_embedding:
+  if arch.normalize_emb:
     opts.embedding_offset = 1
   # Save out options
   if not os.path.exists(opts.save_dir):

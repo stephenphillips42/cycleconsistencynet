@@ -1,17 +1,8 @@
 import os
 import sys
 import numpy as np 
-import matplotlib.pyplot as plt
-from matplotlib.patches import ConnectionPatch
-from mpl_toolkits.mplot3d import Axes3D
-import scipy.linalg as la
-import torch
 
 # Numpy
-def axes3d():
-  fig = plt.figure()
-  return fig, fig.add_subplot(111, projection='3d')
-
 def mysincf(x):
   """Numerically stable sinc function (sin(x)/x)"""
   z = x if x != 0 else 1e-16
@@ -41,11 +32,6 @@ def logm(R):
   """Matrix logarithm of rotation matrix"""
   tt = np.minimum(np.maximum((np.trace(R)-1)/2.0, -1), 1)
   theta = mysincf(np.arccos(tt))
-  if np.abs(theta) < 1e-10:
-    print("THETA")
-    print(theta)
-    print(np.arccos(tt))
-    print(tt)
   return (1.0 / (2.0*theta))*np.array([[R[2,1] - R[1,2],
                                                  R[0,2] - R[2,0],
                                                  R[1,0] - R[0,1]]]).T
@@ -66,7 +52,7 @@ def rot_rand_small(sigma):
   return r2
 
 def normalize(x):
-  return x / np.linalg.norm(x)
+  return x / (1e-16 + np.linalg.norm(x))
 
 def dim_norm(X):
   """Norms of the vectors along the last dimention of X"""
@@ -98,7 +84,25 @@ def pairwise_distances(x, y=None):
     dist = x_norm + y_norm - 2.0 * torch.mm(x, torch.transpose(y, 0, 1))
     return dist
 
+def get_np_activ(activ):
+  if activ == 'relu':
+    return lambda x: np.maximum(0,x)
+  elif activ == 'leakyrelu':
+    return lambda x: np.maximum(0.2*x,x)
+  elif activ == 'tanh':
+    return lambda x: np.tanh(x)
+  elif activ == 'elu':
+    return lambda x: np.where(x > 0, x, np.exp(x)-1)
+
 # Miscellaneous
+def next_dir(directory,prefix="_"):
+  fidx = 1
+  while os.path.exists("{}{}{:03d}".format(directory,prefix,fidx)):
+    fidx += 1
+  new_dir = "{}{}{:03d}".format(directory,prefix,fidx)
+  os.makedirs(new_dir)
+  return new_dir
+
 def next_debug_dir(prefix="figs"):
   fidx = 1
   while os.path.exists("{}/run{:03d}".format(prefix,fidx)):
@@ -106,6 +110,22 @@ def next_debug_dir(prefix="figs"):
   debug_dir = "{}/run{:03d}".format(prefix,fidx)
   os.makedirs(debug_dir)
   return debug_dir
+
+class MyLogger(object):
+  def __init__(self, logfile_name):
+    self.logfile = open(logfile_name, 'w')
+
+  def log(self, message):
+    print(message)
+    self.logfile.write(message + '\n')
+
+  def __del__(self):
+    self.logfile.close()
+
+class TimeRunException(Exception):
+  def __init__(self,*args,**kwargs):
+    Exception.__init__(self,*args,**kwargs)
+
 
 
 
