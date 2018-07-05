@@ -238,23 +238,25 @@ def get_opts():
     opts.save_dir = 'save/save-{:03d}'.format(save_idx)
 
   # Determine dataset
-  dataset_params = types.SimpleNamespace(
-    data_dir='/NAS/data/stephen/{}'.format(opts.dataset),
-    sizes={ 'train': 40000, 'test': 3000 },
-    fixed_size=True,
-    views=[3],
-    points=[25],
-    points_scale=1,
-    knn=8,
-    scale=3,
-    sparse=False,
-    soft_edges=False,
-    descriptor_dim=12,
-    descriptor_var=1.0,
-    descriptor_noise_var=0,
-    noise_level=0.1,
-    num_repeats=1,
-    dtype='float32')
+  class DatasetParams(object):
+    def __init__(self, opts):
+      self.data_dir='/NAS/data/stephen/{}'.format(opts.dataset),
+      self.sizes={ 'train': 40000, 'test': 3000 }
+      self.fixed_size=True
+      self.views=[3]
+      self.points=[25]
+      self.points_scale=1
+      self.knn=8
+      self.scale=3
+      self.sparse=False
+      self.soft_edges=False
+      self.descriptor_dim=12
+      self.descriptor_var=1.0
+      self.descriptor_noise_var=0
+      self.noise_level=0.1
+      self.num_repeats=1
+      self.dtype='float32'
+  dataset_params = DatasetParams(opts)
   if opts.dataset == 'synth_3view':
     pass
   elif opts.dataset == 'noise_3view':
