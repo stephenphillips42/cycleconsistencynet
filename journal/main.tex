@@ -339,4 +339,12 @@ Unfortunately this would make it less directly comparable to the optimization me
 First I need to change the datasets to make sure that they don't go over weight 1, which means regeneration of all the datasets.
 Next I have to add an addtional loss option for choosing between L2 loss and BCE loss.
 
+\subsection*{TensorFlow Implementation Details}
+So my TensorFlow code is OK but it lacks some nice features.
+Talking to Drew, it seems Sonnet is the answer, since he showed me some of the features I was missing.
+I also need to start using \texttt{SingularMonitoredSession} instead of slim since slim is just... annoying.
+So I will need to branch off in git and make a new branch while I get Sonnet working.
+
+
+
 \end{document}
