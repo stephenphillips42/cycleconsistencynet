@@ -307,6 +307,7 @@ class GraphSimNoisyDataset(GraphSimDataset):
     TEmb = sample['TrueEmbedding']
     Noise = np.eye(p) + noise*(np.eye(p, k=-1) + np.eye(p, k=-1))
     AdjMat = np.dot(np.dot(TEmb, Noise), TEmb.T)
+    AdjMat = np.minimum(1, AdjMat)
     Degrees = np.diag(np.sum(AdjMat,0))
     sample['AdjMat'] = AdjMat.astype(self.dtype)
     sample['Degrees'] = Degrees.astype(self.dtype)
@@ -337,6 +338,7 @@ class GraphSimGaussDataset(GraphSimDataset):
     TEmb = sample['TrueEmbedding']
     Noise = np.abs(np.random.randn(p*n,p*n)*noise)
     AdjMat = np.dot(TEmb, TEmb.T) + Noise - np.eye(p*n)
+    AdjMat = np.minimum(1, AdjMat)
     Degrees = np.diag(np.sum(AdjMat,0))
     sample['AdjMat'] = AdjMat.astype(self.dtype)
     sample['Degrees'] = Degrees.astype(self.dtype)
@@ -368,6 +370,7 @@ class GraphSimSymGaussDataset(GraphSimDataset):
     Noise = np.abs(np.random.randn(p*n,p*n)*noise)
     Mask = np.kron(np.ones((n,n))-np.eye(3),np.ones((p,p)))
     AdjMat = np.dot(TEmb, TEmb.T) + ((Noise+Noise.T)/2.0)*Mask - np.eye(p*n)
+    AdjMat = np.minimum(1, AdjMat)
     Degrees = np.diag(np.sum(AdjMat,0))
     sample['AdjMat'] = AdjMat.astype(self.dtype)
     sample['Degrees'] = Degrees.astype(self.dtype)
@@ -407,6 +410,7 @@ class GraphSimPairwiseDataset(GraphSimDataset):
         Val_ij = np.dot(TEmb_i, np.dot(Noise, TEmb_j.T))
         AdjMat[p*i:p*i+p, p*j:p*j+p] = Val_ij
         AdjMat[p*j:p*j+p, p*i:p*i+p] = Val_ij.T
+    AdjMat = np.minimum(1, AdjMat)
     Degrees = np.diag(np.sum(AdjMat,0))
     sample['AdjMat'] = AdjMat.astype(self.dtype)
     sample['Degrees'] = Degrees.astype(self.dtype)
