@@ -101,19 +101,17 @@ We have a very noisy initial embedding.
 To compute the error, we compute the factored similarity matrix, which means we normalize each embedding row then do an outer product.
 For the figures we display the node embedding vectors grouped by the ground truth labels, so the true plots look like a diagonal matrix.
 
-Figure \ref{fig:baseline_plot} shows an example of ground truth node embedding and similarities as well as the node embedding vectors and similarities of the initial embedding we use.
-
+% Figure \ref{fig:baseline_plot} shows an example of ground truth node embedding and similarities as well as the node embedding vectors and similarities of the initial embedding we use.
+% 
 \begin{figure}[H]
     \centering
     % \includegraphics[width=0.7\textwidth]{figures/noiseless_sim.png}
-    \subfloat[Sorted ground truth embedding and initial embedding]{
-        \includegraphics[width=0.45\textwidth]{figures/baseline_embeddings.png}
-        \label{fig:baseline_sub1}
-    }
-    \subfloat[Ground truth and initial similarity]{
-        \includegraphics[width=0.45\textwidth]{figures/baseline_sim.png}
-        \label{fig:baseline_sub2}
-    }
+    \begin{minipage}{.45\linewidth}
+        \subfloat[Sorted ground truth embedding and initial embedding]{ \includegraphics[width=0.9\textwidth]{figures/baseline_embeddings.png} \label{fig:baseline_sub1} }
+    \end{minipage}
+    \begin{minipage}{.45\linewidth}
+        \subfloat[Ground truth and initial similarity]{ \includegraphics[width=0.9\textwidth]{figures/baseline_sim.png} \label{fig:baseline_sub2} }
+    \end{minipage}
     \caption{Here we show a baseline for the node embedding vectors and the final similarity matrix}
     \label{fig:baseline_plot}
 \end{figure}
@@ -124,14 +122,8 @@ This is equivalent to see if Neural Networks can do matrix factorization on a tr
 \begin{figure}[H]
     \centering
     % \includegraphics[width=0.7\textwidth]{figures/noiseless_sim.png}
-    \subfloat[Typical embedding and similarity matrix of Noiseless]{
-        \includegraphics[width=0.45\textwidth]{figures/synth_plot.png}
-        \label{fig:noiseless_sub1}
-    }
-    \subfloat[Typical histogram for similarities of noiseless]{
-        \includegraphics[width=0.45\textwidth]{figures/synth_hist.png}
-        \label{fig:noiseless_sub2}
-    }
+    \subfloat[Typical embedding and similarity matrix of Noiseless]{ \includegraphics[width=0.45\textwidth]{figures/synth_plot.png} \label{fig:noiseless_sub1} }
+    \subfloat[Typical histogram for similarities of noiseless]{ \includegraphics[width=0.45\textwidth]{figures/synth_hist.png} \label{fig:noiseless_sub2} }
     \caption{Here we show a baseline for the node embedding vectors and the final similarity matrix}
     \label{fig:noiseless_plot}
 \end{figure}
@@ -161,14 +153,8 @@ Here, $\theta = 0.9$, $K = 1$.
 \begin{figure}[H]
     \centering
     % \includegraphics[width=0.7\textwidth]{figures/noiseless_sim.png}
-    \subfloat[Typical embedding and similarity matrix of pairwise noise]{
-        \includegraphics[width=0.45\textwidth]{figures/pairwise_plot.png}
-        \label{fig:pairwise_sub1}
-    }
-    \subfloat[Typical histogram for similarities of pairwise noise]{
-        \includegraphics[width=0.45\textwidth]{figures/pairwise_hist.png}
-        \label{fig:pairwise_sub2}
-    }
+    \subfloat[Typical embedding and similarity matrix of pairwise noise]{ \includegraphics[width=0.45\textwidth]{figures/pairwise_plot.png} \label{fig:pairwise_sub1} }
+    \subfloat[Typical histogram for similarities of pairwise noise]{ \includegraphics[width=0.45\textwidth]{figures/pairwise_hist.png} \label{fig:pairwise_sub2} }
     \caption{Here we show a baseline for the node embedding vectors and the final similarity matrix}
     \label{fig:pairwise_plot}
 \end{figure}
@@ -190,14 +176,8 @@ Here, $\theta = 0.9$, $K = 3$.
 \begin{figure}[H]
     \centering
     % \includegraphics[width=0.7\textwidth]{figures/noiseless_sim.png}
-    \subfloat[Typical embedding and similarity matrix of pairwise noise]{
-        \includegraphics[width=0.45\textwidth]{figures/pairwise3_plot.png}
-        \label{fig:pairwise3_sub1}
-    }
-    \subfloat[Typical histogram for similarities of pairwise noise]{
-        \includegraphics[width=0.45\textwidth]{figures/pairwise3_hist.png}
-        \label{fig:pairwise3_sub2}
-    }
+    \subfloat[Typical embedding and similarity matrix of pairwise noise]{ \includegraphics[width=0.45\textwidth]{figures/pairwise3_plot.png} \label{fig:pairwise3_sub1} }
+    \subfloat[Typical histogram for similarities of pairwise noise]{ \includegraphics[width=0.45\textwidth]{figures/pairwise3_hist.png} \label{fig:pairwise3_sub2} }
     \caption{Here we show a baseline for the node embedding vectors and the final similarity matrix}
     \label{fig:pairwise3_plot}
 \end{figure}
@@ -218,14 +198,8 @@ Here, $\theta = 0.9$, $K = 5$.
 \begin{figure}[H]
     \centering
     % \includegraphics[width=0.7\textwidth]{figures/noiseless_sim.png}
-    \subfloat[Typical embedding and similarity matrix of pairwise noise]{
-        \includegraphics[width=0.45\textwidth]{figures/pairwise5_plot.png}
-        \label{fig:pairwise5_sub1}
-    }
-    \subfloat[Typical histogram for similarities of pairwise noise]{
-        \includegraphics[width=0.45\textwidth]{figures/pairwise5_hist.png}
-        \label{fig:pairwise5_sub2}
-    }
+    \subfloat[Typical embedding and similarity matrix of pairwise noise]{ \includegraphics[width=0.45\textwidth]{figures/pairwise5_plot.png} \label{fig:pairwise5_sub1} }
+    \subfloat[Typical histogram for similarities of pairwise noise]{ \includegraphics[width=0.45\textwidth]{figures/pairwise5_hist.png} \label{fig:pairwise5_sub2} }
     \caption{Here we show a baseline for the node embedding vectors and the final similarity matrix}
     \label{fig:pairwise5_plot}
 \end{figure}
@@ -251,17 +225,11 @@ Here are the current results, $\theta = 0.9$, $K = 3$.
 \begin{figure}[H]
     \begin{minipage}{.45\linewidth}
         \centering
-        \subfloat[Typical embedding and similarity matrix of pairwise noise]{
-            \includegraphics[width=0.9\textwidth]{figures/pairwise3_large_plot.png}
-            \label{fig:pairwise3_large_sub1}
-        }
+        \subfloat[Typical embedding and similarity matrix of pairwise noise]{ \includegraphics[width=0.9\textwidth]{figures/pairwise3_large_plot.png} \label{fig:pairwise3_large_sub1} }
     \end{minipage}
     \begin{minipage}{.45\linewidth}
         \centering
-        \subfloat[Typical histogram for similarities of pairwise noise]{
-            \includegraphics[width=0.9\textwidth]{figures/pairwise3_large_hist.png}
-            \label{fig:pairwise3_large_sub2}
-        }
+        \subfloat[Typical histogram for similarities of pairwise noise]{ \includegraphics[width=0.9\textwidth]{figures/pairwise3_large_hist.png} \label{fig:pairwise3_large_sub2} }
     \end{minipage}
     \centering
     \subfloat[Numerical results]{
@@ -284,17 +252,11 @@ This is run on the pairwise dataset with $K=3$.
 \begin{figure}[H]
     \begin{minipage}{.45\linewidth}
         \centering
-        \subfloat[Typical embedding and similarity matrix of pairwise noise]{
-            \includegraphics[width=0.9\textwidth]{figures/pairwise3inf_plot.png}
-            \label{fig:pairwise3inf_sub1}
-        }
+        \subfloat[Typical embedding and similarity matrix of pairwise noise]{ \includegraphics[width=0.9\textwidth]{figures/pairwise3inf_plot.png} \label{fig:pairwise3inf_sub1} }
     \end{minipage}
     \begin{minipage}{.45\linewidth}
         \centering
-        \subfloat[Typical histogram for similarities of pairwise noise]{
-            \includegraphics[width=0.9\textwidth]{figures/pairwise3inf_hist.png}
-            \label{fig:pairwise3inf_sub2}
-        }
+        \subfloat[Typical histogram for similarities of pairwise noise]{ \includegraphics[width=0.9\textwidth]{figures/pairwise3inf_hist.png} \label{fig:pairwise3inf_sub2} }
     \end{minipage}
     \centering
     \subfloat[Numerical results]{
@@ -318,24 +280,15 @@ This is run on the pairwise dataset with $K=5$.
 \begin{figure}[H]
     \begin{minipage}{.45\linewidth}
         \centering
-        \subfloat[Typical embedding and similarity matrix of pairwise noise]{
-            \includegraphics[width=0.9\textwidth]{figures/pairwise5inf_plot.png}
-            \label{fig:pairwise5inf_sub1}
-        }
+        \subfloat[Typical embedding and similarity matrix of pairwise noise]{ \includegraphics[width=0.9\textwidth]{figures/pairwise5inf_plot.png} \label{fig:pairwise5inf_sub1} }
     \end{minipage}
     \begin{minipage}{.45\linewidth}
         \centering
-        \subfloat[For comparison, the non-infinite data trained version]{
-            \includegraphics[width=0.9\textwidth]{figures/pairwise5inf_plot_compare.png}
-            \label{fig:pairwise5inf_sub2}
-        }
+        \subfloat[For comparison, the non-infinite data trained version]{ \includegraphics[width=0.9\textwidth]{figures/pairwise5inf_plot_compare.png} \label{fig:pairwise5inf_sub2} }
     \end{minipage}
     \begin{minipage}{.9\linewidth}
         \centering
-        \subfloat[Typical histogram for similarities of pairwise noise]{
-            \includegraphics[width=0.5\textwidth]{figures/pairwise5inf_hist.png}
-            \label{fig:pairwise5inf_sub3}
-        }
+        \subfloat[Typical histogram for similarities of pairwise noise]{ \includegraphics[width=0.5\textwidth]{figures/pairwise5inf_hist.png} \label{fig:pairwise5inf_sub3} }
     \end{minipage}
     \centering
     \subfloat[Numerical results]{
