@@ -16,19 +16,23 @@ import tfutils
 import options
 
 
-def get_loss(sample, output):
+def get_loss(opts, sample, output):
   emb = sample['TrueEmbedding']
   output_sim = tfutils.get_sim(output)
   if opts.use_unsupervised_loss:
     v = opts.dataset_params.views[-1]
     p = opts.dataset_params.points[-1]
     b = opts.batch_size 
-    emb_sim = sample['AdjMat'] + tf.eye(v*p, b)
+    emb_true = sample['AdjMat'] + tf.eye(v*p, b)
   else:
-    emb_sim = tfutils.get_sim(emb)
+    emb_true = tfutils.get_sim(emb)
   tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
-  tf.summary.image('Embedding Similarity', tf.expand_dims(emb_sim, -1))
-  tf.losses.mean_squared_error(emb_sim, output_sim)
+  tf.summary.image('Embedding Similarity', tf.expand_dims(emb_true, -1))
+  if opts.loss_type == 'l2':
+    tf.losses.mean_squared_error(emb_true, output_sim)
+  elif opts.loss_type == 'bce':
+    bce = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=emb_true, logits=output_sim))
+    tf.losses.add_loss(bce)
   loss = tf.losses.get_total_loss()
   tf.summary.scalar('Loss', loss)
   return loss
@@ -99,7 +103,7 @@ def train_with_generation(opts):
     sample = dataset.get_placeholders()
   network = model.get_network(opts, opts.arch)
   output = network.apply(sample)
-  loss = get_loss(sample, output)
+  loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
 
   # Tensorflow and logging operations
@@ -156,7 +160,7 @@ def train(opts):
     sample = dataset.get_placeholders()
   network = model.get_network(opts, opts.arch)
   output = network.apply(sample)
-  loss = get_loss(sample, output)
+  loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
   global_step = tf.train.get_or_create_global_step()
 

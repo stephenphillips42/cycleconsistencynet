@@ -88,9 +88,10 @@ def get_opts():
                       default=12,
                       type=int,
                       help='Dimensionality of the output')
+  activation_types = ['relu','leakyrelu','tanh', 'elu']
   parser.add_argument('--activation_type',
-                      default=None,
-                      choices=['relu','leakyrelu','tanh', 'elu'],
+                      default=activation_types[0],
+                      choices=activation_types,
                       help='What type of activation to use')
 
   # Machine learning parameters
@@ -115,6 +116,11 @@ def get_opts():
                       default=False,
                       type=str2bool,
                       help='Use true adjacency or noisy one in loss')
+  loss_types = [ 'l2', 'bce' ]
+  parser.add_argument('--loss_type',
+                      default=loss_types[0],
+                      choices=loss_types,
+                      help='')
   parser.add_argument('--embedding_offset',
                       default=10,
                       type=int,
@@ -131,9 +137,10 @@ def get_opts():
                       default=3e-5,
                       type=float,
                       help='L1 weight decay regularization')
+  optimizer_types = ['sgd','adam','adadelta','momentum']
   parser.add_argument('--optimizer_type',
-                      default='sgd',
-                      choices=['adam','adadelta','momentum','sgd'],
+                      default=optimizer_types[0],
+                      choices=optimizer_types,
                       help='Optimizer type for adaptive learning methods')
   parser.add_argument('--learning_rate',
                       default=1e-3,
@@ -143,9 +150,10 @@ def get_opts():
                       default=0.6,
                       type=float,
                       help='Learning rate for gradient descent')
+  lr_decay_types = ['exponential','fixed','polynomial']
   parser.add_argument('--learning_rate_decay_type',
-                      default='exponential',
-                      choices=['fixed','exponential','polynomial'],
+                      default=lr_decay_types[0],
+                      choices=lr_decay_types,
                       help='Learning rate decay policy')
   parser.add_argument('--min_learning_rate',
                       default=1e-5,
