@@ -65,6 +65,9 @@ def get_opts():
                       default=dataset_choices[0],
                       choices=dataset_choices,
                       help='Choose which dataset to use')
+  parser.add_argument('--datasets_dir',
+                      default='/NAS/data/stephen',
+                      help='Directory where all the datasets are')
   parser.add_argument('--use_descriptors',
                       default=True,
                       type=str2bool,
@@ -239,7 +242,7 @@ def get_opts():
 
   # Determine dataset
   dataset_params = types.SimpleNamespace(
-    data_dir='/NAS/data/stephen/{}'.format(opts.dataset),
+    data_dir='{}/{}'.format(opts.datasets_dir, opts.dataset),
     sizes={ 'train': 40000, 'test': 3000 },
     fixed_size=True,
     views=[3],
