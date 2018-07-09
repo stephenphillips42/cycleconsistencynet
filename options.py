@@ -54,7 +54,7 @@ def get_opts():
                       default='/NAS/data/stephen/',
                       help='Directory for saving/loading dataset')
   dataset_choices = [
-    'synth_small', 'synth_3view', 'synth_4view',
+    'synth_3view', 'synth_small', 'synth_4view',
     'noise_3view',
     'noise_gauss', 'noise_symgauss',
     'noise_pairwise', 'noise_pairwise3', 'noise_pairwise5',
@@ -243,7 +243,7 @@ def get_opts():
   # Determine dataset
   class DatasetParams(object):
     def __init__(self, opts):
-      self.data_dir='{}/{}'.format(opts.datasets_dir, opts.dataset),
+      self.data_dir='{}/{}'.format(opts.datasets_dir, opts.dataset)
       self.sizes={ 'train': 40000, 'test': 3000 }
       self.fixed_size=True
       self.views=[3]
