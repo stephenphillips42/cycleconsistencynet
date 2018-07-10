@@ -2,213 +2,393 @@
 import numpy as np 
 import os
 import sys
+import tensorflow as tf
+import sonnet as snt
 
-try:
-  import tensorflow as tf
-  import tfutils
-except:
-  print("ERROR: Tensorflow failed to load")
-  tf = None
-  tfutils = None
-
+import tfutils
 import myutils
 import options
 
-class DenseGraphLayerWeights(object):
-  def __init__(self, opts, arch):
-    super(DenseGraphLayerWeights, self).__init__()
-    self.tf_init = False
-    self.np_init = False
-    self.use_descriptors = opts.use_descriptors
-    self.activ = arch.activ
-    self._activ = None # tfutils.get_tf_activ(arch.activ)
-    self._np_activ = None # myutils.get_np_activ(arch.activ)
+# TODO: Organize this into multiple files
+class EmbeddingRightLinear(snt.AbstractModule):
+  """Linear transformation on an embedding, each independently.
+  
+  This functions almost exactly like snt.Linear except it is for tensors of
+  size batch_size x nodes x input_size. Acts by matrix multiplication on the
+  left side of each nodes x input_size matrix.
+  """
+  def __init__(self,
+               output_size,
+               use_bias=True,
+               initializers=None,
+               partitioners=None,
+               regularizers=None,
+               custom_getter=None,
+               name="lin"):
+    super(EmbeddingRightLinear, self).__init__(custom_getter=custom_getter, name=name)
+    self._output_size = output_size
+    self._output_size = output_size
+    self._use_bias = use_bias
+    self._input_shape = None
+    self._w = None
+    self._b = None
+    self.possible_keys = self.get_possible_initializer_keys(use_bias=use_bias)
+    self._initializers = snt.check_initializers(
+        initializers, self.possible_keys)
+    self._partitioners = snt.check_partitioners(
+        partitioners, self.possible_keys)
+    self._regularizers = snt.check_regularizers(
+        regularizers, self.possible_keys)
+
+  @classmethod
+  def get_possible_initializer_keys(cls, use_bias=True):
+    return {"w", "b"} if use_bias else {"w"}
+
+  def _build(self, laplacian, inputs):
+    input_shape = tuple(inputs.get_shape().as_list())
+    if len(input_shape) != 3:
+      raise base.IncompatibleShapeError(
+          "{}: rank of shape must be 3 not: {}".format(
+              self.scope_name, len(input_shape)))
+
+    if input_shape[2] is None:
+      raise base.IncompatibleShapeError(
+          "{}: Input size must be specified at module build time".format(
+              self.scope_name))
+
+    if self._input_shape is not None and input_shape[2] != self._input_shape[2]:
+      raise base.IncompatibleShapeError(
+          "{}: Input shape must be [batch_size, {}, {}] not: [batch_size, {}, {}]"
+          .format(self.scope_name,
+                  input_shape[2],
+                  self._input_shape[2],
+                  input_shape[1],
+                  input_shape[2]))
+
+    self._input_shape = input_shape
+    dtype = inputs.dtype
+
+    if "w" not in self._initializers:
+      self._initializers["w"] = tfutils.create_linear_initializer(
+                                          self._input_shape[2],
+                                          dtype)
+
+    if "b" not in self._initializers and self._use_bias:
+      self._initializers["b"] = tfutils.create_bias_initializer(
+                                          self._input_shape[2],
+                                          dtype)
+
+    weight_shape = (self._input_shape[2], self.output_size)
+    self._w = tf.get_variable("w",
+                              shape=weight_shape,
+                              dtype=dtype,
+                              initializer=self._initializers["w"],
+                              partitioner=self._partitioners.get("w", None),
+                              regularizer=self._regularizers.get("w", None))
+    outputs = tfutils.matmul(inputs, self._w)
+
+    if self._use_bias:
+      bias_shape = (self.output_size,)
+      self._b = tf.get_variable("b",
+                                shape=bias_shape,
+                                dtype=dtype,
+                                initializer=self._initializers["b"],
+                                partitioner=self._partitioners.get("b", None),
+                                regularizer=self._regularizers.get("b", None))
+      outputs += self._b
+
+    return outputs
+
+  @property
+  def w(self):
+    """Returns the Variable containing the weight matrix.
+    Returns:
+      Variable object containing the weights, from the most recent __call__.
+    Raises:
+      base.NotConnectedError: If the module has not been connected to the
+          graph yet, meaning the variables do not exist.
+    """
+    self._ensure_is_connected()
+    return self._w
+
+  @property
+  def b(self):
+    """Returns the Variable containing the bias.
+    Returns:
+      Variable object containing the bias, from the most recent __call__.
+    Raises:
+      base.NotConnectedError: If the module has not been connected to the
+          graph yet, meaning the variables do not exist.
+      AttributeError: If the module does not use bias.
+    """
+    self._ensure_is_connected()
+    if not self._use_bias:
+      raise AttributeError(
+          "No bias Variable in Linear Module when `use_bias=False`.")
+    return self._b
+
+  @property
+  def output_size(self):
+    """Returns the module output size."""
+    if callable(self._output_size):
+      self._output_size = self._output_size()
+    return self._output_size
+
+  @property
+  def has_bias(self):
+    """Returns `True` if bias Variable is present in the module."""
+    return self._use_bias
+
+  @property
+  def initializers(self):
+    """Returns the initializers dictionary."""
+    return self._initializers
+
+  @property
+  def partitioners(self):
+    """Returns the partitioners dictionary."""
+    return self._partitioners
+
+  @property
+  def regularizers(self):
+    """Returns the regularizers dictionary."""
+    return self._regularizers
+
+  def clone(self, name=None):
+    """Returns a cloned `Linear` module.
+    Args:
+      name: Optional string assigning name of cloned module. The default name
+          is constructed by appending "_clone" to `self.module_name`.
+    Returns:
+      Cloned `Linear` module.
+    """
+    if name is None:
+      name = self.module_name + "_clone"
+    return EmbeddingRightLinear(output_size=self.output_size,
+                                use_bias=self._use_bias,
+                                initializers=self._initializers,
+                                partitioners=self._partitioners,
+                                regularizers=self._regularizers,
+                                name=name)
+
+class GraphConvLayer(snt.AbstractModule):
+  """Linear transformation on an embedding, each independently.
+  
+  This functions almost exactly like snt.Linear except it is for tensors of
+  size batch_size x nodes x input_size. Acts by matrix multiplication on the
+  left side of each nodes x input_size matrix.
+  """
+  def __init__(self,
+               output_size,
+               activation='relu',
+               use_bias=True,
+               initializers=None,
+               regularizers=None,
+               custom_getter=None,
+               name="lin"):
+    super(GraphConvLayer, self).__init__(custom_getter=custom_getter, name=name)
+    self._output_size = output_size
+    self._activ = tfutils.get_tf_activ(activation)
+    self._use_bias = use_bias
+    self._input_shape = None
+    self._w = None
+    self._b = None
+    self.possible_keys = self.get_possible_initializer_keys(use_bias=use_bias)
+    self._initializers = snt.check_initializers(
+        initializers, self.possible_keys)
+    self._partitioners = snt.check_partitioners(
+        partitioners, self.possible_keys)
+    self._regularizers = snt.check_regularizers(
+        regularizers, self.possible_keys)
+
+  @classmethod
+  def get_possible_initializer_keys(cls, use_bias=True):
+    return {"w", "b"} if use_bias else {"w"}
+
+  def _build(self, laplacian, inputs):
+    input_shape = tuple(inputs.get_shape().as_list())
+    if len(input_shape) != 3:
+      raise base.IncompatibleShapeError(
+          "{}: rank of shape must be 3 not: {}".format(
+              self.scope_name, len(input_shape)))
+
+    # TODO: Add shape constraints to laplacian
+
+    if input_shape[2] is None:
+      raise base.IncompatibleShapeError(
+          "{}: Input size must be specified at module build time".format(
+              self.scope_name))
+
+    if input_shape[1] is None:
+      raise base.IncompatibleShapeError(
+          "{}: Number of nodes must be specified at module build time".format(
+              self.scope_name))
+
+    if self._input_shape is not None and \
+        (input_shape[2] != self._input_shape[2] or \
+         input_shape[1] != self._input_shape[1]):
+      raise base.IncompatibleShapeError(
+          "{}: Input shape must be [batch_size, {}, {}] not: [batch_size, {}, {}]"
+          .format(self.scope_name,
+                  self._input_shape[1],
+                  self._input_shape[2],
+                  input_shape[1],
+                  input_shape[2]))
+
+
+    self._input_shape = input_shape
+    dtype = inputs.dtype
+
+    if "w" not in self._initializers:
+      self._initializers["w"] = tfutils.create_linear_initializer(
+                                          self._input_shape[2],
+                                          dtype)
+
+    if "b" not in self._initializers and self._use_bias:
+      self._initializers["b"] = tfutils.create_bias_initializer(
+                                          self._input_shape[2],
+                                          dtype)
+
+    weight_shape = (self._input_shape[2], self.output_size)
+    self._w = tf.get_variable("w",
+                              shape=weight_shape,
+                              dtype=dtype,
+                              initializer=self._initializers["w"],
+                              partitioner=self._partitioners.get("w", None),
+                              regularizer=self._regularizers.get("w", None))
+    outputs_ = tfutils.matmul(inputs, self._w)
+    outputs = tfutils.batch_matmul(laplacian, outputs_)
+
+    if self._use_bias:
+      bias_shape = (self.output_size,)
+      self._b = tf.get_variable("b",
+                                shape=bias_shape,
+                                dtype=dtype,
+                                initializer=self._initializers["b"],
+                                partitioner=self._partitioners.get("b", None),
+                                regularizer=self._regularizers.get("b", None))
+      outputs += self._b
+
+
+    return self._activ(outputs)
+
+  @property
+  def w(self):
+    """Returns the Variable containing the weight matrix.
+    Returns:
+      Variable object containing the weights, from the most recent __call__.
+    Raises:
+      base.NotConnectedError: If the module has not been connected to the
+          graph yet, meaning the variables do not exist.
+    """
+    self._ensure_is_connected()
+    return self._w
+
+  @property
+  def b(self):
+    """Returns the Variable containing the bias.
+    Returns:
+      Variable object containing the bias, from the most recent __call__.
+    Raises:
+      base.NotConnectedError: If the module has not been connected to the
+          graph yet, meaning the variables do not exist.
+      AttributeError: If the module does not use bias.
+    """
+    self._ensure_is_connected()
+    if not self._use_bias:
+      raise AttributeError(
+          "No bias Variable in Linear Module when `use_bias=False`.")
+    return self._b
+
+  @property
+  def output_size(self):
+    """Returns the module output size."""
+    if callable(self._output_size):
+      self._output_size = self._output_size()
+    return self._output_size
+
+  @property
+  def has_bias(self):
+    """Returns `True` if bias Variable is present in the module."""
+    return self._use_bias
+
+  @property
+  def initializers(self):
+    """Returns the initializers dictionary."""
+    return self._initializers
+
+  @property
+  def partitioners(self):
+    """Returns the partitioners dictionary."""
+    return self._partitioners
+
+  @property
+  def regularizers(self):
+    """Returns the regularizers dictionary."""
+    return self._regularizers
+
+  def clone(self, name=None):
+    """Returns a cloned `Linear` module.
+    Args:
+      name: Optional string assigning name of cloned module. The default name
+          is constructed by appending "_clone" to `self.module_name`.
+    Returns:
+      Cloned `Linear` module.
+    """
+    if name is None:
+      name = self.module_name + "_clone"
+    return GraphConvLayer(output_size=self.output_size,
+                           use_bias=self._use_bias,
+                           initializers=self._initializers,
+                           partitioners=self._partitioners,
+                           regularizers=self._regularizers,
+                           name=name)
+
+
+class DenseGraphLayerWeights(snt.AbstractModule):
+  def __init__(self,
+               opts,
+               arch,
+               use_bias=True,
+               initializers=None,
+               regularizers=None,
+               custom_getter=None,
+               name="graphnn"):
+    super(DenseGraphLayerWeights, self).__init__(custom_getter=custom_getter, name=name)
     self._nlayers = arch.nlayers
-    self._layer_lens = \
-        [opts.dataset_params.descriptor_dim] + \
-        arch.layer_lens + \
-        [opts.final_embedding_dim]
-    self._np_layers = []
-    self._layers = []
+    self._layers = [
+      GraphConvLayer(
+        output_size=layer_len,
+        activation=arch.activ,
+        initializers=initializers,
+        regularizers=regularizers)
+      for layer_len in arch.layer_lens
+    ] + [
+      EmbeddingRightLinear(
+        output_size=opts.final_embedding_dim,
+        activation=arch.activ,
+        initializers=initializers,
+        regularizers=regularizers)
+    ]
 
-  def build_tf_layers(self):
-    """Build layers"""
-    self._activ = tfutils.get_tf_activ(self.activ)
-    with tf.variable_scope("gnn_weights"):
-      for i in range(len(self._layer_lens)-1):
-        layer = tf.get_variable("weight_{:02d}".format(i),
-                                [ self._layer_lens[i], self._layer_lens[i+1] ],
-                                initializer=tf.random_normal_initializer())
-        self._layers.append(layer)
-        # TODO: Make this a dictionary
-    self.tf_init = True
-
-  def apply(self, sample):
+  def _build(self, laplacian, init_embedding):
     """Applying this graph network to sample"""
-    if not self.tf_init:
-      self.build_tf_layers()
-    lap = sample['Laplacian']
-    init_emb = None
-    if self.use_descriptors:
-      init_emb = sample['InitEmbeddings']
-    else:
-      init_emb = tf.ones_like(sample['InitEmbeddings'])
-    output = init_emb
-    for l in range(self._nlayers):
-      lin = tfutils.matmul(output, self._layers[l])
-      lin_graph = tfutils.batch_matmul(lap, lin)
-      output = self._activ(lin_graph)
-    output = tfutils.matmul(output, self._layers[-1])
+    for layer in self._layers:
+      output = layer(laplacian, output)
     output = tf.nn.l2_normalize(output, axis=2)
-    return output
-
-  def save_np(self, saver, save_dir):
-    checkpoint_file = tf.train.latest_checkpoint(save_dir)
-    with tf.Session() as np_sess:
-      saver.restore(np_sess, checkpoint_file)
-      for i in range(len(self._layers)):
-        self._np_layers.append(np_sess.run(self._layers[i]))
-    outdir = myutils.next_dir(os.path.join(save_dir, 'np_weights'))
-    np.savez(os.path.join(outdir, 'numpy_weights.npz'), *self._np_layers)
-
-  def load_np(self, save_dir):
-    numpy_weights = np.load(os.path.join(save_dir, 'numpy_weights.npz'))
-    self._np_layers = [ numpy_weights['arr_{}'.format(i)]
-                        for i in range(len(numpy_weights.files)) ]
-    self._np_activ = myutils.get_np_activ(self.activ)
-    self.np_init = True
-
-  def apply_np(self, sample):
-    """Applying this graph network to sample, using numpy input.
-    Only takes in one input at a time."""
-    lap = sample['Laplacian']
-    init_emb = sample['InitEmbeddings']
-    output = init_emb
-    for l in range(self._nlayers):
-      lin = np.dot(output, self._np_layers[l])
-      lin_graph = np.dot(lap, lin)
-      output = self._np_activ(lin_graph)
-    output = np.dot(output, self._np_layers[-1])
-    output = myutils.dim_normalize(output)
-    return output
-
-class SkipConnectionLayerWeights(DenseGraphLayerWeights):
-  def __init__(self, opts, arch):
-    super(SkipConnectionLayerWeights, self).__init__(opts, arch)
-    self._skips = []
-    self._np_layers = {}
-
-  def build_tf_layers(self):
-    """Build layers"""
-    self._activ = tfutils.get_tf_activ(self.activ)
-    with tf.variable_scope("gnn_weights"):
-      for i in range(len(self._layer_lens)-1):
-        layer = tf.get_variable("weight_{:02d}".format(i),
-                                [ self._layer_lens[i], self._layer_lens[i+1] ],
-                                initializer=tf.random_normal_initializer())
-        self._layers.append(layer)
-        if i == len(self._layer_lens)-2:
-          continue
-        skip = tf.get_variable("skip_{:02d}".format(i),
-                                [ self._layer_lens[i], self._layer_lens[i+1] ],
-                                initializer=tf.zeros_initializer())
-        self._skips.append(skip)
-    self.tf_init = True
-
-  def apply(self, sample):
-    """Applying this graph network to sample"""
-    if not self.tf_init:
-      self.build_tf_layers()
-    lap = sample['Laplacian']
-    init_emb = None
-    if self.use_descriptors:
-      init_emb = sample['InitEmbeddings']
-    else:
-      init_emb = tf.ones_like(sample['InitEmbeddings'])
-    output = init_emb
-    for l in range(self._nlayers):
-      lin = tfutils.matmul(output, self._layers[l])
-      lin_graph = tfutils.batch_matmul(lap, lin)
-      skip = tfutils.matmul(output, self._skips[l])
-      output = self._activ(lin_graph) + skip
-    output = tfutils.matmul(output, self._layers[-1])
-    output = tf.nn.l2_normalize(output, axis=2)
-    return output
-
-  def save_np(self, saver, save_dir):
-    checkpoint_file = tf.train.latest_checkpoint(save_dir)
-    with tf.Session() as np_sess:
-      saver.restore(np_sess, checkpoint_file)
-      for i in range(len(self._layers)):
-        self._np_layers["weight_{:02d}".format(i)] = np_sess.run(self._layers[i])
-      for i in range(len(self._skips)):
-        self._np_layers["skip_{:02d}".format(i)] = np_sess.run(self._skips[i])
-    outdir = myutils.next_dir(os.path.join(save_dir, 'np_weights'))
-    np.savez(os.path.join(outdir, 'numpy_weights.npz'), **self._np_layers)
-
-  def load_np(self, save_dir):
-    numpy_weights = np.load(os.path.join(save_dir, 'numpy_weights.npz'))
-    self._np_layers = dict(numpy_weights)
-    self._np_activ = myutils.get_np_activ(self.activ)
-    self.np_init = True
-
-  def apply_np(self, sample):
-    """Applying this graph network to sample, using numpy input.
-    Only takes in one input at a time."""
-    lap = sample['Laplacian']
-    init_emb = sample['InitEmbeddings']
-    output = init_emb
-    for l in range(self._nlayers):
-      lin = np.dot(output, self._np_layers["weight_{:02d}".format(l)])
-      lin_graph = np.dot(lap, lin)
-      skip = np.dot(output, self._np_layers["skip_{:02d}".format(l)])
-      output = self._np_activ(lin_graph)
-    output = np.dot(output, self._np_layers["weight_{:02d}".format(self._nlayers)])
-    output = myutils.dim_normalize(output)
     return output
 
 def get_network(opts, arch):
   if opts.architecture in ['vanilla', 'vanilla0', 'vanilla1']:
     network = DenseGraphLayerWeights(opts, arch)
   elif opts.architecture in ['skip', 'skip0', 'skip1']:
-    network = SkipConnectionLayerWeights(opts, arch)
+    network = DenseGraphLayerWeights(opts, arch)
+    # network = SkipConnectionLayerWeights(opts, arch)
   return network
 
 if __name__ == "__main__":
   import data_util
   opts = options.get_opts()
-  nsteps = 10
-  nout = 15
-  # Test
-  # Build network
-  linear0 = torch.nn.Linear(opts.descriptor_dim, nout)
-  activ0 = torch.nn.ReLU()
-  linear1 = torch.nn.Linear(nout, nout)
-  activ1 = torch.nn.ReLU()
-  # Get data
-  i = 0
-  data = data_util.generate_graph(opts)
-  alt_lap = build_alt_lap(opts, data)
-  x = Variable(torch.from_numpy(data['embeddings']))
-  # Run network
-  out0 = activ0(torch.mm(alt_lap, linear0(x)))
-  print(out0)
-  out1 = activ1(torch.mm(alt_lap, linear1(out0)))
-  print(out1)
-  print("Computing dists")
-  dists = pairwise_distances(out1)
-  weight_mask = build_weight_mask(opts, data)
-  weighted_dists = dists*weight_mask
-  print("Done")
-  print(dists.size())
-  total_weight = torch.sum(weighted_dists)
-  print(total_weight)
-  total_weight.backward()
-
-  print("{}: {}".format(i, out1.size()))
-  print("{}: {}".format(i, dists.size()))
-  print("{}: {}".format(i, dists.size()))
-
 
 
 
