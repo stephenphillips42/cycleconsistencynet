@@ -102,7 +102,7 @@ def train_with_generation(opts):
   else:
     sample = dataset.get_placeholders()
   network = model.get_network(opts, opts.arch)
-  output = network.apply(sample)
+  output = network(sample)
   loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
 
@@ -159,7 +159,7 @@ def train(opts):
   else:
     sample = dataset.get_placeholders()
   network = model.get_network(opts, opts.arch)
-  output = network.apply(sample)
+  output = network(sample)
   loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
   global_step = tf.train.get_or_create_global_step()
