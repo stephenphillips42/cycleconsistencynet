@@ -47,17 +47,17 @@ class EmbeddingRightLinear(snt.AbstractModule):
   def _build(self, laplacian, inputs):
     input_shape = tuple(inputs.get_shape().as_list())
     if len(input_shape) != 3:
-      raise base.IncompatibleShapeError(
+      raise snt.IncompatibleShapeError(
           "{}: rank of shape must be 3 not: {}".format(
               self.scope_name, len(input_shape)))
 
     if input_shape[2] is None:
-      raise base.IncompatibleShapeError(
+      raise snt.IncompatibleShapeError(
           "{}: Input size must be specified at module build time".format(
               self.scope_name))
 
     if self._input_shape is not None and input_shape[2] != self._input_shape[2]:
-      raise base.IncompatibleShapeError(
+      raise snt.IncompatibleShapeError(
           "{}: Input shape must be [batch_size, {}, {}] not: [batch_size, {}, {}]"
           .format(self.scope_name,
                   input_shape[2],
@@ -105,7 +105,7 @@ class EmbeddingRightLinear(snt.AbstractModule):
     Returns:
       Variable object containing the weights, from the most recent __call__.
     Raises:
-      base.NotConnectedError: If the module has not been connected to the
+      snt.NotConnectedError: If the module has not been connected to the
           graph yet, meaning the variables do not exist.
     """
     self._ensure_is_connected()
@@ -117,7 +117,7 @@ class EmbeddingRightLinear(snt.AbstractModule):
     Returns:
       Variable object containing the bias, from the most recent __call__.
     Raises:
-      base.NotConnectedError: If the module has not been connected to the
+      snt.NotConnectedError: If the module has not been connected to the
           graph yet, meaning the variables do not exist.
       AttributeError: If the module does not use bias.
     """
@@ -183,6 +183,7 @@ class GraphConvLayer(snt.AbstractModule):
                activation='relu',
                use_bias=True,
                initializers=None,
+               partitioners=None,
                regularizers=None,
                custom_getter=None,
                name="lin"):
@@ -208,26 +209,26 @@ class GraphConvLayer(snt.AbstractModule):
   def _build(self, laplacian, inputs):
     input_shape = tuple(inputs.get_shape().as_list())
     if len(input_shape) != 3:
-      raise base.IncompatibleShapeError(
+      raise snt.IncompatibleShapeError(
           "{}: rank of shape must be 3 not: {}".format(
               self.scope_name, len(input_shape)))
 
     # TODO: Add shape constraints to laplacian
 
     if input_shape[2] is None:
-      raise base.IncompatibleShapeError(
+      raise snt.IncompatibleShapeError(
           "{}: Input size must be specified at module build time".format(
               self.scope_name))
 
     if input_shape[1] is None:
-      raise base.IncompatibleShapeError(
+      raise snt.IncompatibleShapeError(
           "{}: Number of nodes must be specified at module build time".format(
               self.scope_name))
 
     if self._input_shape is not None and \
         (input_shape[2] != self._input_shape[2] or \
          input_shape[1] != self._input_shape[1]):
-      raise base.IncompatibleShapeError(
+      raise snt.IncompatibleShapeError(
           "{}: Input shape must be [batch_size, {}, {}] not: [batch_size, {}, {}]"
           .format(self.scope_name,
                   self._input_shape[1],
@@ -278,7 +279,7 @@ class GraphConvLayer(snt.AbstractModule):
     Returns:
       Variable object containing the weights, from the most recent __call__.
     Raises:
-      base.NotConnectedError: If the module has not been connected to the
+      snt.NotConnectedError: If the module has not been connected to the
           graph yet, meaning the variables do not exist.
     """
     self._ensure_is_connected()
@@ -290,7 +291,7 @@ class GraphConvLayer(snt.AbstractModule):
     Returns:
       Variable object containing the bias, from the most recent __call__.
     Raises:
-      base.NotConnectedError: If the module has not been connected to the
+      snt.NotConnectedError: If the module has not been connected to the
           graph yet, meaning the variables do not exist.
       AttributeError: If the module does not use bias.
     """
@@ -366,13 +367,13 @@ class DenseGraphLayerWeights(snt.AbstractModule):
     ] + [
       EmbeddingRightLinear(
         output_size=opts.final_embedding_dim,
-        activation=arch.activ,
         initializers=initializers,
         regularizers=regularizers)
     ]
 
-  def _build(self, laplacian, init_embedding):
+  def _build(self, laplacian, init_embeddings):
     """Applying this graph network to sample"""
+    output = init_embeddings
     for layer in self._layers:
       output = layer(laplacian, output)
     output = tf.nn.l2_normalize(output, axis=2)

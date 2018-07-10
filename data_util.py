@@ -26,8 +26,9 @@ class Int64Feature(object):
   def __init__(self, key, description):
     super(Int64Feature, self).__init__()
     self._key = key
+    self.description = description
     self.shape = []
-    self._description = description
+    self.dtype = 'int64'
 
   def get_placeholder(self):
     return tf.placeholder(tf.int64, shape=[None])
@@ -48,8 +49,8 @@ class TensorFeature(object):
     super(TensorFeature, self).__init__()
     self._key = key
     self.shape = shape
-    self._dtype = dtype
-    self._description = description
+    self.dtype = dtype
+    self.description = description
 
   def get_placeholder(self):
     return tf.placeholder(self._dtype, shape=[None] + self.shape)
@@ -63,7 +64,7 @@ class TensorFeature(object):
 
   def tensors_to_item(self, keys_to_tensors):
     tensor = keys_to_tensors[self._key]
-    tensor = tf.decode_raw(tensor, out_type=self._dtype)
+    tensor = tf.decode_raw(tensor, out_type=self.dtype)
     return tf.reshape(tensor, self.shape)
 
 class GraphSimDataset(object):
@@ -250,6 +251,35 @@ class GraphSimDataset(object):
     with open(os.path.join(out_dir, timestamp_file), 'w') as date_file:
       date_file.write('Numpy Dataset created {}'.format(str(datetime.datetime.now())))
 
+  def gen_batch(self, mode):
+    """Return batch loaded from this dataset"""
+    params = self.dataset_params
+    opts = self.opts
+    assert mode in params.sizes, "Mode {} not supported".format(mode)
+    batch_size = opts.batch_size
+    keys = sorted(list(self.features.keys()))
+    shapes = [ self.features[k].shape for k in keys ]
+    types = [ tf.as_dtype(self.features[k].dtype) for k in keys ]
+    tfshapes = [ tf.TensorShape([batch_size] + self.features[k].shape) for k in keys ]
+    def generator():
+      while True:
+        vals = [ np.zeros([batch_size] + shapes[k], types[i])
+                 for i, k in enumerate(keys) ]
+        for b in range(batch_size):
+          s = self.gen_sample()
+          for i, k in enumerate(keys):
+            vals[i][b] = s[k]
+        return vals
+    dataset = tf.data.Dataset.from_generator(generator, tuple(types), tuple(tfshapes))
+    dataset = dataset.prefetch(batch_size * 2)
+
+    iterator = dataset.make_one_shot_iterator()
+    values = iterator.get_next()
+    import pprint
+    pp = pprint.PrettyPrinter()
+    pp.pprint(dict(zip(keys, values)))
+    return dict(zip(keys, values))
+
   def load_batch(self, mode):
     """Return batch loaded from this dataset"""
     params = self.dataset_params
@@ -257,12 +287,11 @@ class GraphSimDataset(object):
     assert mode in params.sizes, "Mode {} not supported".format(mode)
     batch_size = opts.batch_size
     data_source_name = mode + '-[0-9][0-9].tfrecords'
-    print((self.data_dir, mode, data_source_name))
     data_sources = glob.glob(os.path.join(self.data_dir, mode, data_source_name))
     # Build dataset provider
     keys_to_features = { k: v.get_feature_read()
                          for k, v in self.features.items() }
-    items_to_descriptions = { k: v._description
+    items_to_descriptions = { k: v.description
                               for k, v in self.features.items() }
     def parser_op(record):
       example = tf.parse_single_example(record, keys_to_features)

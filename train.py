@@ -100,9 +100,9 @@ def train_with_generation(opts):
   if opts.load_data:
     sample = dataset.load_batch('train')
   else:
-    sample = dataset.get_placeholders()
+    sample = dataset.gen_batch('train')
   network = model.get_network(opts, opts.arch)
-  output = network(sample)
+  output = network(sample['Laplacian'], sample['InitEmbeddings'])
   loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
 
@@ -148,7 +148,8 @@ def train_with_generation(opts):
       except myutils.TimeRunException as exp:
         print("Exiting training...")
       finally:
-        network.save_np(saver, opts.save_dir)
+        pass
+        # network.save_np(saver, opts.save_dir)
 
 
 def train(opts):
@@ -157,9 +158,9 @@ def train(opts):
   if opts.load_data:
     sample = dataset.load_batch('train')
   else:
-    sample = dataset.get_placeholders()
+    sample = dataset.gen_batch('train')
   network = model.get_network(opts, opts.arch)
-  output = network(sample)
+  output = network(sample['Laplacian'], sample['InitEmbeddings'])
   loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
   global_step = tf.train.get_or_create_global_step()
@@ -184,12 +185,14 @@ def train(opts):
     except myutils.TimeRunException as exp:
       print("Exiting training...")
     finally:
-      network.save_np(saver, opts.save_dir)
+      pass
+      # network.save_np(saver, opts.save_dir)
 
 if __name__ == "__main__":
   opts = options.get_opts()
-  if opts.load_data:
-    train(opts)
-  else:
-    train_with_generation(opts)
+  train_with_generation(opts)
+  # if opts.load_data:
+  #   train(opts)
+  # else:
+  #   train_with_generation(opts)
 
