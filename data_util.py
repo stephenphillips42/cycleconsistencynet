@@ -8,7 +8,6 @@ import datetime
 import tqdm
 
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
 
 import options
 import myutils
@@ -22,10 +21,10 @@ def _bytes_feature(value):
 def _int64_feature(value):
   return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
-class Int64Feature(slim.tfexample_decoder.ItemHandler):
+class Int64Feature(object):
   """Custom class used for decoding serialized tensors."""
   def __init__(self, key, description):
-    super(Int64Feature, self).__init__(key)
+    super(Int64Feature, self).__init__()
     self._key = key
     self.shape = []
     self._description = description
@@ -43,10 +42,10 @@ class Int64Feature(slim.tfexample_decoder.ItemHandler):
     tensor = keys_to_tensors[self._key]
     return tf.cast(tensor, dtype=tf.int64)
 
-class TensorFeature(slim.tfexample_decoder.ItemHandler):
+class TensorFeature(object):
   """Custom class used for decoding serialized tensors."""
   def __init__(self, key, shape, dtype, description):
-    super(TensorFeature, self).__init__(key)
+    super(TensorFeature, self).__init__()
     self._key = key
     self.shape = shape
     self._dtype = dtype
@@ -258,37 +257,24 @@ class GraphSimDataset(object):
     assert mode in params.sizes, "Mode {} not supported".format(mode)
     batch_size = opts.batch_size
     data_source_name = mode + '-[0-9][0-9].tfrecords'
+    print((self.data_dir, mode, data_source_name))
     data_sources = glob.glob(os.path.join(self.data_dir, mode, data_source_name))
     # Build dataset provider
     keys_to_features = { k: v.get_feature_read()
                          for k, v in self.features.items() }
-    decoder = slim.tfexample_decoder.TFExampleDecoder(keys_to_features,
-                                                      self.features)
     items_to_descriptions = { k: v._description
                               for k, v in self.features.items() }
-    dataset = slim.dataset.Dataset(
-                data_sources=data_sources,
-                reader=tf.TFRecordReader,
-                decoder=decoder,
-                num_samples=params.sizes[mode],
-                items_to_descriptions=items_to_descriptions)
-    provider = slim.dataset_data_provider.DatasetDataProvider(
-                dataset,
-                num_readers=opts.num_readers,
-                common_queue_capacity=20 * batch_size,
-                common_queue_min=10 * batch_size,
-                shuffle=opts.shuffle_data)
-    # Extract features
-    keys = list(self.features.keys())
-    values = provider.get(keys)
-    keys, values = self.augment(keys, values)
-    # Flow preprocessing here?
-    values = tf.train.batch(
-                values,
-                batch_size=batch_size,
-                num_threads=opts.num_preprocessing_threads,
-                capacity=5 * batch_size)
-    return dict(zip(keys, values))
+    def parser_op(record):
+      example = tf.parse_single_example(record, keys_to_features)
+      return { k : v.tensors_to_item(example) for k, v in self.features.items() }
+    dataset = tf.data.TFRecordDataset(data_sources)
+    dataset = dataset.map(parser_op)
+    dataset = dataset.shuffle(buffer_size=5*opts.batch_size)
+    dataset = dataset.batch(opts.batch_size)
+
+    iterator = dataset.make_one_shot_iterator()
+    sample = iterator.get_next()
+    return sample
 
 class GraphSimNoisyDataset(GraphSimDataset):
   """Dataset for Cycle Consistency graphs"""
@@ -422,7 +408,6 @@ class GraphSimPairwiseDataset(GraphSimDataset):
     sample['Laplacian'] = Laplacian.astype(self.dtype)
 
     return sample
-
 
 def get_dataset(opts):
   """Getting the dataset with all the correct attributes"""
