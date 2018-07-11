@@ -259,25 +259,25 @@ class GraphSimDataset(object):
     batch_size = opts.batch_size
     keys = sorted(list(self.features.keys()))
     shapes = [ self.features[k].shape for k in keys ]
-    types = [ tf.as_dtype(self.features[k].dtype) for k in keys ]
-    tfshapes = [ tf.TensorShape([batch_size] + self.features[k].shape) for k in keys ]
-    def generator():
+    types = [ self.features[k].dtype for k in keys ]
+    tfshapes = [ tuple([batch_size] + s) for s in shapes ]
+    tftypes = [ tf.as_dtype(t) for t in types ]
+    def generator_fn():
       while True:
-        vals = [ np.zeros([batch_size] + shapes[k], types[i])
-                 for i, k in enumerate(keys) ]
+        vals = [ np.zeros([batch_size] + s, types[i])
+                 for i, s in enumerate(shapes) ]
         for b in range(batch_size):
           s = self.gen_sample()
           for i, k in enumerate(keys):
             vals[i][b] = s[k]
-        return vals
-    dataset = tf.data.Dataset.from_generator(generator, tuple(types), tuple(tfshapes))
-    dataset = dataset.prefetch(batch_size * 2)
+        yield tuple(vals)
+    dataset = tf.data.Dataset.from_generator(generator_fn,
+                                             tuple(tftypes),
+                                             tuple(tfshapes))
+    batches = dataset.prefetch(2 * batch_size)
 
-    iterator = dataset.make_one_shot_iterator()
+    iterator = batches.make_one_shot_iterator()
     values = iterator.get_next()
-    import pprint
-    pp = pprint.PrettyPrinter()
-    pp.pprint(dict(zip(keys, values)))
     return dict(zip(keys, values))
 
   def load_batch(self, mode):

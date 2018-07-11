@@ -31,7 +31,8 @@ def get_loss(opts, sample, output):
   if opts.loss_type == 'l2':
     tf.losses.mean_squared_error(emb_true, output_sim)
   elif opts.loss_type == 'bce':
-    bce = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(labels=emb_true, logits=output_sim))
+    bce_elements = tf.nn.sigmoid_cross_entropy_with_logits(labels=emb_true, logits=output_sim)
+    bce = tf.reduce_sum(bce_elements)
     tf.losses.add_loss(bce)
   loss = tf.losses.get_total_loss()
   tf.summary.scalar('Loss', loss)
@@ -82,6 +83,18 @@ def get_train_op(opts, loss):
                                            clip_gradient_norm=5)
   return train_op
   
+def build_session(opts):
+  saver_hook = tf.train.CheckpointSaverHook(opts.save_dir,
+                                            save_secs=opts.save_interval_steps)
+  merged = tf.summary.merge_all()
+  summary_hook = tf.train.SummarySaverHook(output_dir=opts.save_dir, 
+                                           summary_op=merged,
+                                           save_secs=opts.save_summaries_secs)
+  all_hooks = [saver_hook, summary_hook]
+  config = tf.ConfigProto()
+  config.gpu_options.allow_growth = True
+  return tf.train.SingularMonitoredSession(hooks=all_hooks, config=config)
+
 def get_max_steps(opts):
   if opts.num_epochs > 0:
     num_batches = 1.0 * opts.dataset_params.sizes['train'] / opts.batch_size
@@ -94,7 +107,7 @@ def handler(signum, frame):
   print("Training finished")
   raise myutils.TimeRunException("Finished running script")
 
-def train_with_generation(opts):
+def train(opts):
   # Get data and network
   dataset = data_util.get_dataset(opts)
   if opts.load_data:
@@ -107,22 +120,11 @@ def train_with_generation(opts):
   train_op = get_train_op(opts, loss)
 
   # Tensorflow and logging operations
-  # init_op = tf.global_variables_initializer()
-  # global_step = tf.train.get_or_create_global_step()
-  # merged = tf.summary.merge_all()
   step = 0
   max_steps = get_max_steps(opts)
   INFO = "INFO:tensorflow:global step {}: loss = {} (0.00 sec/step)"
-
   # Build session
-  saver_hook = CheckpointSaverHook(opts.save_dir,
-                                   save_secs=opts.save_interval_steps)
-  summary_hook = SummarySaverHook(output_dir=opts.save_dir,
-                                  save_secs=opts.save_summaries_secs)
-  config = tf.ConfigProto()
-  config.gpu_options.allow_growth = True
-  with tf.train.SingularMonitoredSession(hooks=[saver_hook, summary_hook]) as sess:
-    # sess.run(init_op)
+  with build_session(opts) as sess:
     # Train loop
     for run in range(opts.num_runs):
       if opts.run_time > 0:
@@ -140,48 +142,7 @@ def train_with_generation(opts):
         pass
         # network.save_np(saver, opts.save_dir)
 
-
-def train(opts):
-  # Get data and network
-  dataset = data_util.get_dataset(opts)
-  if opts.load_data:
-    sample = dataset.load_batch('train')
-  else:
-    sample = dataset.gen_batch('train')
-  network = model.get_network(opts, opts.arch)
-  output = network(sample['Laplacian'], sample['InitEmbeddings'])
-  loss = get_loss(opts, sample, output)
-  train_op = get_train_op(opts, loss)
-  global_step = tf.train.get_or_create_global_step()
-
-  # Train loop
-  saver = tf.train.Saver()
-  tf.logging.set_verbosity(tf.logging.INFO)
-  for run in range(opts.num_runs):
-    if opts.run_time > 0:
-      signal.signal(signal.SIGALRM, handler)
-      signal.alarm(60*opts.run_time) # run time in seconds
-    try:
-      slim.learning.train(
-              train_op=train_op,
-              logdir=opts.save_dir,
-              number_of_steps=get_max_steps(opts),
-              log_every_n_steps=opts.log_steps,
-              saver=saver,
-              save_summaries_secs=opts.save_summaries_secs,
-              save_interval_secs=opts.save_interval_secs)
-
-    except myutils.TimeRunException as exp:
-      print("Exiting training...")
-    finally:
-      pass
-      # network.save_np(saver, opts.save_dir)
-
 if __name__ == "__main__":
   opts = options.get_opts()
-  train_with_generation(opts)
-  # if opts.load_data:
-  #   train(opts)
-  # else:
-  #   train_with_generation(opts)
+  train(opts)
 
