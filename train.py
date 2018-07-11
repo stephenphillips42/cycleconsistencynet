@@ -107,22 +107,22 @@ def train_with_generation(opts):
   train_op = get_train_op(opts, loss)
 
   # Tensorflow and logging operations
-  init_op = tf.global_variables_initializer()
-  global_step = tf.train.get_or_create_global_step()
-  merged = tf.summary.merge_all()
+  # init_op = tf.global_variables_initializer()
+  # global_step = tf.train.get_or_create_global_step()
+  # merged = tf.summary.merge_all()
   step = 0
   max_steps = get_max_steps(opts)
   INFO = "INFO:tensorflow:global step {}: loss = {} (0.00 sec/step)"
-  saver = tf.train.Saver()
 
   # Build session
+  saver_hook = CheckpointSaverHook(opts.save_dir,
+                                   save_secs=opts.save_interval_steps)
+  summary_hook = SummarySaverHook(output_dir=opts.save_dir,
+                                  save_secs=opts.save_summaries_secs)
   config = tf.ConfigProto()
   config.gpu_options.allow_growth = True
-  with tf.Session(config=config) as sess:
-    sess.run(init_op)
-    summary_writer = tf.summary.FileWriter(opts.save_dir,
-                                           sess.graph,
-                                           flush_secs=opts.save_summaries_secs)
+  with tf.train.SingularMonitoredSession(hooks=[saver_hook, summary_hook]) as sess:
+    # sess.run(init_op)
     # Train loop
     for run in range(opts.num_runs):
       if opts.run_time > 0:
@@ -130,20 +130,9 @@ def train_with_generation(opts):
         signal.alarm(60*opts.run_time) # run time in seconds
       try:
         while step != max_steps:
-          c = 0
-          batch = dataset.get_np_batch(opts.batch_size)
-          feed = { sample[k] : batch[k] for k in batch.keys() }
-          summary, loss_, _ = sess.run([merged, loss, train_op], feed_dict=feed)
-          summary_writer.add_summary(summary, step)
+          loss_, _ = sess.run([loss, train_op])
           if ((step + 1) % opts.log_steps) == 0:
             print(INFO.format(step, loss_))
-          if (step % opts.save_interval_steps) == 0:
-            saver.save(sess,
-                       os.path.join(opts.save_dir, 'model.ckpt'),
-                       global_step=global_step)
-            slog = SessionLog(status=SessionLog.CHECKPOINT,
-                              checkpoint_path=opts.save_dir)
-            summary_writer.add_session_log(slog, step)
           step += 1
       except myutils.TimeRunException as exp:
         print("Exiting training...")
