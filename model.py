@@ -24,9 +24,8 @@ class EmbeddingRightLinear(snt.AbstractModule):
                partitioners=None,
                regularizers=None,
                custom_getter=None,
-               name="lin"):
+               name="embed_lin"):
     super(EmbeddingRightLinear, self).__init__(custom_getter=custom_getter, name=name)
-    self._output_size = output_size
     self._output_size = output_size
     self._use_bias = use_bias
     self._input_shape = None
@@ -71,11 +70,13 @@ class EmbeddingRightLinear(snt.AbstractModule):
     if "w" not in self._initializers:
       self._initializers["w"] = tfutils.create_linear_initializer(
                                           self._input_shape[2],
+                                          self._output_size,
                                           dtype)
 
     if "b" not in self._initializers and self._use_bias:
       self._initializers["b"] = tfutils.create_bias_initializer(
                                           self._input_shape[2],
+                                          self._output_size,
                                           dtype)
 
     weight_shape = (self._input_shape[2], self.output_size)
@@ -186,7 +187,7 @@ class GraphConvLayer(snt.AbstractModule):
                partitioners=None,
                regularizers=None,
                custom_getter=None,
-               name="lin"):
+               name="graph_conv"):
     super(GraphConvLayer, self).__init__(custom_getter=custom_getter, name=name)
     self._output_size = output_size
     self._activ = tfutils.get_tf_activ(activation)
@@ -243,11 +244,13 @@ class GraphConvLayer(snt.AbstractModule):
     if "w" not in self._initializers:
       self._initializers["w"] = tfutils.create_linear_initializer(
                                           self._input_shape[2],
+                                          self._output_size,
                                           dtype)
 
     if "b" not in self._initializers and self._use_bias:
       self._initializers["b"] = tfutils.create_bias_initializer(
                                           self._input_shape[2],
+                                          self._output_size,
                                           dtype)
 
     weight_shape = (self._input_shape[2], self.output_size)
@@ -360,7 +363,7 @@ class GraphSkipLayer(snt.AbstractModule):
                partitioners=None,
                regularizers=None,
                custom_getter=None,
-               name="lin"):
+               name="graph_skip"):
     super(GraphSkipLayer, self).__init__(custom_getter=custom_getter, name=name)
     self._output_size = output_size
     self._activ = tfutils.get_tf_activ(activation)
@@ -419,19 +422,23 @@ class GraphSkipLayer(snt.AbstractModule):
     if "w" not in self._initializers:
       self._initializers["w"] = tfutils.create_linear_initializer(
                                           self._input_shape[2],
+                                          self._output_size,
                                           dtype)
     if "u" not in self._initializers:
       self._initializers["u"] = tfutils.create_linear_initializer(
                                           self._input_shape[2],
+                                          self._output_size,
                                           dtype)
 
     if "b" not in self._initializers and self._use_bias:
       self._initializers["b"] = tfutils.create_bias_initializer(
                                           self._input_shape[2],
+                                          self._output_size,
                                           dtype)
     if "c" not in self._initializers and self._use_bias:
       self._initializers["c"] = tfutils.create_bias_initializer(
                                           self._input_shape[2],
+                                          self._output_size,
                                           dtype)
 
     weight_shape = (self._input_shape[2], self.output_size)
@@ -485,6 +492,18 @@ class GraphSkipLayer(snt.AbstractModule):
     return self._w
 
   @property
+  def u(self):
+    """Returns the Variable containing the skip connection weight matrix.
+    Returns:
+      Variable object containing the skip weights, from most recent __call__.
+    Raises:
+      snt.NotConnectedError: If the module has not been connected to the
+          graph yet, meaning the variables do not exist.
+    """
+    self._ensure_is_connected()
+    return self._u
+
+  @property
   def b(self):
     """Returns the Variable containing the bias.
     Returns:
@@ -499,6 +518,22 @@ class GraphSkipLayer(snt.AbstractModule):
       raise AttributeError(
           "No bias Variable in Linear Module when `use_bias=False`.")
     return self._b
+
+  @property
+  def c(self):
+    """Returns the Variable containing the bias.
+    Returns:
+      Variable object containing the bias, from the most recent __call__.
+    Raises:
+      snt.NotConnectedError: If the module has not been connected to the
+          graph yet, meaning the variables do not exist.
+      AttributeError: If the module does not use bias.
+    """
+    self._ensure_is_connected()
+    if not self._use_bias:
+      raise AttributeError(
+          "No bias Variable in Linear Module when `use_bias=False`.")
+    return self._c
 
   @property
   def output_size(self):
@@ -561,13 +596,15 @@ class GraphConvLayerNetwork(snt.AbstractModule):
         output_size=layer_len,
         activation=arch.activ,
         initializers=initializers,
-        regularizers=regularizers)
+        regularizers=regularizers,
+        name="{}/graph_conv".format(name))
       for layer_len in arch.layer_lens
     ] + [
       EmbeddingRightLinear(
         output_size=opts.final_embedding_dim,
         initializers=initializers,
-        regularizers=regularizers)
+        regularizers=regularizers,
+        name="{}/embed_lin".format(name))
     ]
 
 class GraphSkipLayerNetwork(snt.AbstractModule):
@@ -581,18 +618,25 @@ class GraphSkipLayerNetwork(snt.AbstractModule):
                name="graphnn"):
     super(GraphSkipLayerNetwork, self).__init__(custom_getter=custom_getter, name=name)
     self._nlayers = arch.nlayers
+    final_regularizers = None
+    if regularizers is not None:
+      final_regularizers = { k:v
+                             for k, v in regularizers.items()
+                             if k in ["w", "b"] }
     self._layers = [
       GraphSkipLayer(
         output_size=layer_len,
         activation=arch.activ,
         initializers=initializers,
-        regularizers=regularizers)
+        regularizers=regularizers,
+        name="{}/graph_skip".format(name))
       for layer_len in arch.layer_lens
     ] + [
       EmbeddingRightLinear(
         output_size=opts.final_embedding_dim,
         initializers=initializers,
-        regularizers=regularizers)
+        regularizers=final_regularizers,
+        name="{}/embed_lin".format(name))
     ]
 
   def _build(self, laplacian, init_embeddings):
@@ -603,12 +647,36 @@ class GraphSkipLayerNetwork(snt.AbstractModule):
     output = tf.nn.l2_normalize(output, axis=2)
     return output
 
+def get_regularizers(opts):
+  regularizer_fn = None
+  if opts.weight_decay <= 0 and opts.weight_l1_decay <= 0:
+    return None
+  elif opts.weight_decay > 0 and opts.weight_l1_decay <= 0:
+    regularizer_fn = \
+        lambda r_l2, r_l1: tf.contrib.layers.l2_regularizer(1.0)
+  elif opts.weight_decay <= 0 and opts.weight_l1_decay > 0:
+    regularizer_fn = \
+        lambda r_l2, r_l1: tf.contrib.layers.l1_regularizer(1.0)
+  elif opts.weight_decay <= 0 and opts.weight_l1_decay > 0:
+    regularizer_fn = \
+        lambda r_l2, r_l1: tf.contrib.layers.l1_l2_regularizer(r_l1/r_l2, 1.0)
+  return {
+        "w" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
+        "u" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
+        "b" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay),
+        "c" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay)
+    }
+
 def get_network(opts, arch):
+  regularizers = None
   if opts.architecture in ['vanilla', 'vanilla0', 'vanilla1']:
-    network = GraphConvLayerNetwork(opts, arch)
+    network = GraphConvLayerNetwork(opts,
+                                    arch,
+                                    regularizers=get_regularizers(opts))
   elif opts.architecture in ['skip', 'skip0', 'skip1']:
-    network = GraphSkipLayerNetwork(opts, arch)
-    # network = SkipConnectionLayerWeights(opts, arch)
+    network = GraphSkipLayerNetwork(opts,
+                                    arch,
+                                    regularizers=get_regularizers(opts))
   return network
 
 if __name__ == "__main__":

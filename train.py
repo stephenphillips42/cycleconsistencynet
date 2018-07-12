@@ -6,8 +6,6 @@ import signal
 import time
 
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
-from tensorflow.contrib.slim.python.slim.learning import train_step
 from tensorflow.core.util.event_pb2 import SessionLog                 
                  
 import data_util
@@ -35,7 +33,8 @@ def get_loss(opts, sample, output):
     bce_elements = tf.nn.sigmoid_cross_entropy_with_logits(labels=emb_true, logits=output_sim)
     bce = tf.reduce_sum(bce_elements)
     tf.losses.add_loss(bce)
-  loss = tf.losses.get_total_loss()
+  loss = tf.losses.get_total_loss(add_regularization_losses=False,
+                                  name='total_loss')
   tf.summary.scalar('Loss', loss)
   return loss
 
@@ -78,10 +77,15 @@ def build_optimizer(opts, global_step):
 def get_train_op(opts, loss):
   global_step = tf.train.get_or_create_global_step()
   optimizer = build_optimizer(opts, global_step)
-  train_op = slim.learning.create_train_op(total_loss=loss,
-                                           optimizer=optimizer,
-                                           global_step=global_step,
-                                           clip_gradient_norm=5)
+  train_op = None
+  if opts.weight_decay > 0 or opts.weight_l1_decay > 0:
+    reg_loss = tf.losses.get_regularization_loss()
+    reg_optimizer = tf.train.GradientDescentOptimizer(
+                            learning_rate=opts.weight_decay)
+    with tf.control_dependencies([reg_optimizer.minimize(reg_loss)]):
+      train_op = optimizer.minimize(loss, global_step=global_step)
+  else:
+    train_op = optimizer.minimize(loss, global_step=global_step)
   return train_op
   
 def build_session(opts):
@@ -123,7 +127,7 @@ def train(opts):
   # Tensorflow and logging operations
   step = 0
   max_steps, run_time = get_max_steps_and_time(opts)
-  printstr = "global step {}: loss = {} ({:0.4} sec/step)"
+  printstr = "global step {}: loss = {} ({:.04} sec/step)"
   tf.logging.set_verbosity(tf.logging.INFO)
   # Build session
   with build_session(opts) as sess:
@@ -133,10 +137,10 @@ def train(opts):
       ctime = stime
       while step != max_steps and ctime - stime <= run_time:
         start_time = time.time()
-        loss_ = sess.run(train_op)
+        _, loss_ = sess.run([ train_op, loss ])
         ctime = time.time()
         if ((step + 1) % opts.log_steps) == 0:
-          tf.logging.info(printstr.format(step, loss_, end_time-start_time))
+          tf.logging.info(printstr.format(step, loss_, ctime-start_time))
         step += 1
         # network.save_np(saver, opts.save_dir)
 
