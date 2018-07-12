@@ -122,7 +122,7 @@ def train(opts):
   # Tensorflow and logging operations
   step = 0
   max_steps = get_max_steps(opts)
-  INFO = "INFO:tensorflow:global step {}: loss = {} (0.00 sec/step)"
+  printstr = "global step {}: loss = {} ({:0.4} sec/step)"
   # Build session
   with build_session(opts) as sess:
     # Train loop
@@ -132,9 +132,11 @@ def train(opts):
         signal.alarm(60*opts.run_time) # run time in seconds
       try:
         while step != max_steps:
-          loss_, _ = sess.run([loss, train_op])
+          start_time = time.time()
+          gstep, loss_ = sess.run([global_step, train_op])
+          end_time = time.time()
           if ((step + 1) % opts.log_steps) == 0:
-            print(INFO.format(step, loss_))
+            tf.logging.info(printstr.format(gstep, loss_, start_time-end_time))
           step += 1
       except myutils.TimeRunException as exp:
         print("Exiting training...")
