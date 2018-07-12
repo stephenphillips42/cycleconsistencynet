@@ -53,10 +53,10 @@ class TensorFeature(object):
     self.description = description
 
   def get_placeholder(self):
-    return tf.placeholder(self._dtype, shape=[None] + self.shape)
+    return tf.placeholder(self.dtype, shape=[None] + self.shape)
 
   def get_feature_write(self, value):
-    v = value.astype(self._dtype).tobytes()
+    v = value.astype(self.dtype).tobytes()
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[v]))
 
   def get_feature_read(self):

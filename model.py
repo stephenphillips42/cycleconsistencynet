@@ -361,7 +361,7 @@ class GraphSkipLayer(snt.AbstractModule):
                regularizers=None,
                custom_getter=None,
                name="lin"):
-    super(GraphConvLayer, self).__init__(custom_getter=custom_getter, name=name)
+    super(GraphSkipLayer, self).__init__(custom_getter=custom_getter, name=name)
     self._output_size = output_size
     self._activ = tfutils.get_tf_activ(activation)
     self._use_bias = use_bias
@@ -430,7 +430,7 @@ class GraphSkipLayer(snt.AbstractModule):
                                           self._input_shape[2],
                                           dtype)
     if "c" not in self._initializers and self._use_bias:
-      self._initializers["b"] = tfutils.create_bias_initializer(
+      self._initializers["c"] = tfutils.create_bias_initializer(
                                           self._input_shape[2],
                                           dtype)
 
@@ -448,7 +448,7 @@ class GraphSkipLayer(snt.AbstractModule):
                               partitioner=self._partitioners.get("u", None),
                               regularizer=self._regularizers.get("u", None))
     preactiv_ = tfutils.matmul(inputs, self._w)
-    preactiv = tfutils.batch_matmul(laplacian, outputs_)
+    preactiv = tfutils.batch_matmul(laplacian, preactiv_)
     skip = tfutils.matmul(inputs, self._u)
 
     if self._use_bias:
@@ -459,6 +459,12 @@ class GraphSkipLayer(snt.AbstractModule):
                                 initializer=self._initializers["b"],
                                 partitioner=self._partitioners.get("b", None),
                                 regularizer=self._regularizers.get("b", None))
+      self._c = tf.get_variable("c",
+                                shape=bias_shape,
+                                dtype=dtype,
+                                initializer=self._initializers["c"],
+                                partitioner=self._partitioners.get("c", None),
+                                regularizer=self._regularizers.get("c", None))
       preactiv += self._b
       skip += self._c
 

@@ -3,6 +3,7 @@ import os
 import sys
 import collections
 import signal
+import time
 
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
@@ -123,6 +124,7 @@ def train(opts):
   step = 0
   max_steps = get_max_steps(opts)
   printstr = "global step {}: loss = {} ({:0.4} sec/step)"
+  tf.logging.set_verbosity(tf.logging.INFO)
   # Build session
   with build_session(opts) as sess:
     # Train loop
@@ -133,10 +135,10 @@ def train(opts):
       try:
         while step != max_steps:
           start_time = time.time()
-          gstep, loss_ = sess.run([global_step, train_op])
+          loss_ = sess.run(train_op)
           end_time = time.time()
           if ((step + 1) % opts.log_steps) == 0:
-            tf.logging.info(printstr.format(gstep, loss_, start_time-end_time))
+            tf.logging.info(printstr.format(step, loss_, end_time-start_time))
           step += 1
       except myutils.TimeRunException as exp:
         print("Exiting training...")
