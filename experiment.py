@@ -28,6 +28,30 @@ def get_sorted(sample):
   slabels = labels[sorted_idxs]
   return slabels, sorted_idxs
 
+# TODO: Get this to another file
+def get_loss(opts, sample, output):
+  emb = sample['TrueEmbedding']
+  output_sim = tfutils.get_sim(output)
+  if opts.use_unsupervised_loss:
+    v = opts.dataset_params.views[-1]
+    p = opts.dataset_params.points[-1]
+    b = opts.batch_size 
+    emb_true = sample['AdjMat'] + tf.eye(v*p, b)
+  else:
+    emb_true = tfutils.get_sim(emb)
+  tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
+  tf.summary.image('Embedding Similarity', tf.expand_dims(emb_true, -1))
+  if opts.loss_type == 'l2':
+    tf.losses.mean_squared_error(emb_true, output_sim)
+  elif opts.loss_type == 'bce':
+    bce_elements = tf.nn.sigmoid_cross_entropy_with_logits(labels=emb_true, logits=output_sim)
+    bce = tf.reduce_sum(bce_elements)
+    tf.losses.add_loss(bce)
+  loss = tf.losses.get_total_loss()
+  tf.summary.scalar('Loss', loss)
+  return loss
+
+
 def plot_hist(sim_mats, names, true_sim):
   fig, ax = plt.subplots(nrows=1, ncols=2)
   diags = [ np.reshape(v[true_sim==1],-1) for v in sim_mats ]
@@ -177,8 +201,6 @@ if __name__ == "__main__":
   opts.data_dir = os.path.join(debug_opts.debug_data_dir, opts.dataset)
   opts.debug_plot = debug_opts.debug_plot
   opts.debug_index = debug_opts.debug_index
-  network = model.get_network(opts, opts.arch)
-  network.load_np(os.path.join(debug_opts.debug_log_dir, 'np_weights_001'))
   if opts.debug_plot == 'none':
     n = opts.dataset_params.sizes['test']
     stats = np.zeros((n,8))
@@ -193,13 +215,13 @@ if __name__ == "__main__":
           "Baseline Diag: {:.2e} +/- {:.2e}, " \
           "Baseline Off Diag: {:.2e} +/- {:.2e}".format(*list(meanstats)))
   elif opts.debug_plot == 'plot':
-    plot_index(opts, network, opts.debug_index)
+    plot_index(opts, opts.debug_index)
   elif opts.debug_plot == 'unsorted':
-    plot_index_unsorted(opts, network, opts.debug_index)
+    plot_index_unsorted(opts, opts.debug_index)
   elif opts.debug_plot == 'baseline':
-    plot_baseline(opts, network, opts.debug_index)
+    plot_baseline(opts, opts.debug_index)
   elif opts.debug_plot == 'random':
-    plot_random(opts, network, opts.debug_index)
+    plot_random(opts, opts.debug_index)
 
 
 

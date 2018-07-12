@@ -96,17 +96,17 @@ def build_session(opts):
   config.gpu_options.allow_growth = True
   return tf.train.SingularMonitoredSession(hooks=all_hooks, config=config)
 
-def get_max_steps(opts):
+def get_max_steps_and_time(opts):
   if opts.num_epochs > 0:
     num_batches = 1.0 * opts.dataset_params.sizes['train'] / opts.batch_size
     max_steps = int(num_batches * opts.num_epochs)
   else:
-    max_steps = None
-  return max_steps
-
-def handler(signum, frame):
-  print("Training finished")
-  raise myutils.TimeRunException("Finished running script")
+    max_steps = float('inf')
+  if opts.run_time > 0:
+    run_time = opts.run_time * 60
+  else:
+    run_time = float('inf')
+  return max_steps, run_time
 
 def train(opts):
   # Get data and network
@@ -122,28 +122,22 @@ def train(opts):
 
   # Tensorflow and logging operations
   step = 0
-  max_steps = get_max_steps(opts)
+  max_steps, run_time = get_max_steps_and_time(opts)
   printstr = "global step {}: loss = {} ({:0.4} sec/step)"
   tf.logging.set_verbosity(tf.logging.INFO)
   # Build session
   with build_session(opts) as sess:
     # Train loop
     for run in range(opts.num_runs):
-      if opts.run_time > 0:
-        signal.signal(signal.SIGALRM, handler)
-        signal.alarm(60*opts.run_time) # run time in seconds
-      try:
-        while step != max_steps:
-          start_time = time.time()
-          loss_ = sess.run(train_op)
-          end_time = time.time()
-          if ((step + 1) % opts.log_steps) == 0:
-            tf.logging.info(printstr.format(step, loss_, end_time-start_time))
-          step += 1
-      except myutils.TimeRunException as exp:
-        print("Exiting training...")
-      finally:
-        pass
+      stime = time.time()
+      ctime = stime
+      while step != max_steps and ctime - stime <= run_time:
+        start_time = time.time()
+        loss_ = sess.run(train_op)
+        ctime = time.time()
+        if ((step + 1) % opts.log_steps) == 0:
+          tf.logging.info(printstr.format(step, loss_, end_time-start_time))
+        step += 1
         # network.save_np(saver, opts.save_dir)
 
 if __name__ == "__main__":
