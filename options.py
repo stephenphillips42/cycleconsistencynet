@@ -32,12 +32,6 @@ def str2bool(v):
 def get_opts():
   """Parse arguments from command line and get all options for training."""
   parser = argparse.ArgumentParser(description='Train motion estimator')
-  # Logging options
-  parser.add_argument('--debug',
-                      default=False,
-                      type=str2bool,
-                      help='Run in debug mode')
-
   # Directory and dataset options
   parser.add_argument('--save_dir',
                       default=None,
@@ -164,7 +158,12 @@ def get_opts():
                       type=int,
                       help='Number of times training runs (length determined'
                            'by run_time)')
-  # Tensorflow technical options
+
+  # Logging options
+  parser.add_argument('--verbose',
+                      default=False,
+                      type=str2bool,
+                      help='Print out everything')
   parser.add_argument('--full_tensorboard',
                       default=True,
                       type=str2bool,
@@ -183,10 +182,10 @@ def get_opts():
                       help='How frequently we print training loss')
 
   # Debugging options
-  parser.add_argument('--verbose',
+  parser.add_argument('--debug',
                       default=False,
                       type=str2bool,
-                      help='Print out everything')
+                      help='Run in debug mode')
   parser.add_argument('--debug_index',
                       default=1,
                       type=int,

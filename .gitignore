@@ -7,3 +7,4 @@ save/*
 launch/*yaml
 __pycache__/
 figs/*
+logs/*

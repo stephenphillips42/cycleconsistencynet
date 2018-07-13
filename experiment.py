@@ -77,11 +77,11 @@ def plot_index(save_dir, emb_init, emb_gt, emb_out):
   baseline_diag = np.reshape(rsim[lsim==1],-1)
   baseline_off_diag = np.reshape(rsim[lsim==0],-1)
   fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2)
-  ax0.hist([ diag, baseline_diag ], bins=20, normed=1,
+  ax0.hist([ diag, baseline_diag ], bins=20, density=True,
            label=[ 'diag', 'baseline_diag' ])
   ax0.legend()
   ax0.set_title('Diagonal Similarity Rate')
-  ax1.hist([ off_diag, baseline_off_diag ], bins=20, normed=1,
+  ax1.hist([ off_diag, baseline_off_diag ], bins=20, density=True,
            label=[ 'off_diag', 'baseline_off_diag' ])
   ax1.set_title('Off Diagonal Similarity Rate')
   ax1.legend()
@@ -105,11 +105,11 @@ def plot_index_unsorted(save_dir, emb_init, emb_gt, emb_out, adjmat):
   # baseline_diag = np.reshape(rsim[lsim==1],-1)
   # baseline_off_diag = np.reshape(rsim[lsim==0],-1)
   # fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2)
-  # ax0.hist([ diag, baseline_diag ], bins=20, normed=1,
+  # ax0.hist([ diag, baseline_diag ], bins=20, density=True,
   #          label=[ 'diag', 'baseline_diag' ])
   # ax0.legend()
   # ax0.set_title('Diagonal Similarity Rate')
-  # ax1.hist([ off_diag, baseline_off_diag ], bins=20, normed=1,
+  # ax1.hist([ off_diag, baseline_off_diag ], bins=20, density=True,
   #          label=[ 'off_diag', 'baseline_off_diag' ])
   # ax1.set_title('Off Diagonal Similarity Rate')
   # ax1.legend()
@@ -175,10 +175,10 @@ if __name__ == "__main__":
     print("Diag: {:.2e} +/- {:.2e}, Off Diag: {:.2e} +/- {:.2e}, " \
           "Baseline Diag: {:.2e} +/- {:.2e}, " \
           "Baseline Off Diag: {:.2e} +/- {:.2e}".format(*list(meanstats)))
-    return
+    sys.exit()
   if opts.debug_index > n:
     print("ERROR: debug_index out of bounds")
-    return
+    sys.exit()
   i = opts.debug_index
   if opts.debug_plot == 'plot':
     plot_index(opts.debug_log_dir, emb_init[i], emb_gt[i], emb_out[i])
