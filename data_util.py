@@ -285,7 +285,6 @@ class GraphSimDataset(object):
     params = self.dataset_params
     opts = self.opts
     assert mode in params.sizes, "Mode {} not supported".format(mode)
-    batch_size = opts.batch_size
     data_source_name = mode + '-[0-9][0-9].tfrecords'
     data_sources = glob.glob(os.path.join(self.data_dir, mode, data_source_name))
     # Build dataset provider
@@ -298,8 +297,11 @@ class GraphSimDataset(object):
       return { k : v.tensors_to_item(example) for k, v in self.features.items() }
     dataset = tf.data.TFRecordDataset(data_sources)
     dataset = dataset.map(parser_op)
-    dataset = dataset.shuffle(buffer_size=5*opts.batch_size)
-    dataset = dataset.batch(opts.batch_size)
+    dataset = dataset.repeat(None)
+    if opts.shuffle_data:
+      dataset = dataset.shuffle(buffer_size=5*opts.batch_size)
+    if opts.batch_size > 1:
+      dataset = dataset.batch(opts.batch_size)
 
     iterator = dataset.make_one_shot_iterator()
     sample = iterator.get_next()

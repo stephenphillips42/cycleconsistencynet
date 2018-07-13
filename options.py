@@ -37,14 +37,6 @@ def get_opts():
                       default=False,
                       type=str2bool,
                       help='Run in debug mode')
-  parser.add_argument('--print_freq',
-                      default=5,
-                      type=int,
-                      help='Print every n batches')
-  parser.add_argument('--viewer_size',
-                      default=8,
-                      type=int,
-                      help='Run in debug mode')
 
   # Directory and dataset options
   parser.add_argument('--save_dir',
@@ -68,15 +60,15 @@ def get_opts():
   parser.add_argument('--datasets_dir',
                       default='/NAS/data/stephen',
                       help='Directory where all the datasets are')
-  parser.add_argument('--use_descriptors',
-                      default=True,
-                      type=str2bool,
-                      help='Dimention of the descriptors of the points')
   parser.add_argument('--load_data',
                       default=True,
                       type=str2bool,
                       help='Load data or just generate it on the fly. '
                            'Generating slower but you get infinite data.')
+  parser.add_argument('--shuffle_data',
+                      default=True,
+                      type=str2bool,
+                      help='Shuffle the dataset or no?')
 
   # Architecture parameters
   arch_choices = [
@@ -98,19 +90,6 @@ def get_opts():
                       help='What type of activation to use')
 
   # Machine learning parameters
-  parser.add_argument('--run_time',
-                      default=-1,
-                      type=int,
-                      help='Time in minutes the training procedure runs')
-  parser.add_argument('--num_runs',
-                      default=1,
-                      type=int,
-                      help='Number of times training runs (length determined'
-                           'by run_time)')
-  parser.add_argument('--num_epochs',
-                      default=-1,
-                      type=int,
-                      help='Number of epochs to run training')
   parser.add_argument('--batch_size',
                       default=32,
                       type=int,
@@ -124,14 +103,6 @@ def get_opts():
                       default=loss_types[0],
                       choices=loss_types,
                       help='')
-  parser.add_argument('--embedding_offset',
-                      default=10,
-                      type=int,
-                      help='Offset used for computing the loss on negative examples')
-  parser.add_argument('--embedding_distance_weight',
-                      default=0.01,
-                      type=float,
-                      help='Weight put on embedding distance')
   parser.add_argument('--weight_decay',
                       default=4e-5,
                       type=float,
@@ -171,23 +142,33 @@ def get_opts():
                       type=int,
                       help='Number of epochs before learning rate decay')
 
+  # Training options
+  parser.add_argument('--train_time',
+                      default=-1,
+                      type=int,
+                      help='Time in minutes the training procedure runs')
+  parser.add_argument('--num_epochs',
+                      default=-1,
+                      type=int,
+                      help='Number of epochs to run training')
+  parser.add_argument('--test_freq',
+                      default=8,
+                      type=int,
+                      help='Minutes between running loss on test set')
+  parser.add_argument('--test_freq_steps',
+                      default=0,
+                      type=int,
+                      help='Number of steps between running loss on test set')
+  parser.add_argument('--num_runs',
+                      default=1,
+                      type=int,
+                      help='Number of times training runs (length determined'
+                           'by run_time)')
   # Tensorflow technical options
   parser.add_argument('--full_tensorboard',
                       default=True,
                       type=str2bool,
                       help='Display everything on tensorboard?')
-  # parser.add_argument('--test_check_freq',
-  #                     default=4000,
-  #                     type=int,
-  #                     help='Number of steps between running loss on test set')
-  parser.add_argument('--num_readers',
-                      default=3,
-                      type=int,
-                      help='Number of parallel threads to read in the dataset')
-  parser.add_argument('--num_preprocessing_threads',
-                      default=1,
-                      type=int,
-                      help='How many threads to preprocess data i.e. data augmentation')
   parser.add_argument('--save_summaries_secs',
                       default=120,
                       type=int,
@@ -200,14 +181,6 @@ def get_opts():
                       default=5,
                       type=int,
                       help='How frequently we print training loss')
-  parser.add_argument('--save_interval_steps',
-                      default=4000,
-                      type=int,
-                      help='How frequently in seconds we save our model while training')
-  parser.add_argument('--shuffle_data',
-                      default=True,
-                      type=str2bool,
-                      help='Shuffle the dataset or no?')
 
   # Debugging options
   parser.add_argument('--verbose',
@@ -218,9 +191,9 @@ def get_opts():
                       default=1,
                       type=int,
                       help='Test data index to experiment with')
-  parser.add_argument('--debug_data_dir',
-                      default='logs/np_datasets',
-                      help='Test data directory to experiment with')
+  parser.add_argument('--debug_data_path',
+                      default='test001.npz',
+                      help='Path to test data to experiment with')
   parser.add_argument('--debug_log_dir',
                       default='logs',
                       help='Logs to experiment with')
@@ -229,6 +202,10 @@ def get_opts():
                       default=plot_options[0],
                       choices=plot_options,
                       help='Plot things in experiment')
+  parser.add_argument('--viewer_size',
+                      default=8,
+                      type=int,
+                      help='Run in debug mode')
 
 
   opts = parser.parse_args()
@@ -293,25 +270,25 @@ def get_opts():
     arch = arch_params(
       nlayers=5,
       layer_lens=[ 2**min(5+k,9) for k in range(5) ],
-      activ='relu',
+      activ=opts.activation_type,
       normalize_emb=True)
   elif opts.architecture in ['vanilla0', 'skip0']:
     arch = arch_params(
       nlayers=5,
       layer_lens=[ 2**min(6+k,10) for k in range(5) ],
-      activ='relu',
+      activ=opts.activation_type,
       normalize_emb=True)
   elif opts.architecture in ['vanilla1', 'skip1']:
     arch = arch_params(
       nlayers=6,
       layer_lens=[ 2**min(6+k,10) for k in range(6) ],
-      activ='relu',
+      activ=opts.activation_type,
       normalize_emb=True)
   setattr(opts, 'arch', arch)
 
   # Post processing
   if arch.normalize_emb:
-    opts.embedding_offset = 1
+    setattr(opts, 'embedding_offset', 1)
   # Save out options
   if not os.path.exists(opts.save_dir):
     os.makedirs(opts.save_dir)

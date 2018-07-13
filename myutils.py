@@ -95,6 +95,13 @@ def get_np_activ(activ):
     return lambda x: np.where(x > 0, x, np.exp(x)-1)
 
 # Miscellaneous
+def next_file(directory, fname, suffix):
+  fidx = 1
+  name = lambda i: os.path.join(directory,"{}{:03d}{}".format(fname,i,suffix))
+  while os.path.exists(name(fidx)):
+    fidx += 1
+  return name(fidx)
+
 def next_dir(directory,prefix="_"):
   fidx = 1
   while os.path.exists("{}{}{:03d}".format(directory,prefix,fidx)):
