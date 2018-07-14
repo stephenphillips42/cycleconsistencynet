@@ -23,7 +23,7 @@ def get_loss(opts, sample, output, name='loss'):
     v = opts.dataset_params.views[-1]
     p = opts.dataset_params.points[-1]
     b = opts.batch_size 
-    emb_true = sample['AdjMat'] + tf.eye(v*p, b)
+    emb_true = sample['AdjMat'] + tf.eye(num_rows=v*p, batch_shape=[b])
   else:
     emb_true = tfutils.get_sim(emb)
   tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
