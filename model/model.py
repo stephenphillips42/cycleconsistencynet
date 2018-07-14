@@ -49,6 +49,11 @@ def get_network(opts, arch):
                     opts,
                     arch,
                     regularizers=get_regularizers(opts))
+  elif opts.architecture in ['attn0', 'attn1', 'attn2']:
+    network = networks.GraphAttentionLayerNetwork(
+                    opts,
+                    arch,
+                    regularizers=get_regularizers(opts))
   return network
 
 if __name__ == "__main__":

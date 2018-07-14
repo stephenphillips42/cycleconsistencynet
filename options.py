@@ -11,7 +11,7 @@ import yaml
 import re
 
 arch_params = collections.namedtuple('arch_params', [
-  'nlayers', 'layer_lens', 'activ', 'normalize_emb'
+  'nlayers', 'layer_lens', 'activ', 'attn_lens', 'normalize_emb'
 ])
 # synth_dataset_params_vars = [
 #   'data_dir', 'sizes', 'dtype', # Meta-parameters
@@ -68,9 +68,10 @@ def get_opts():
   arch_choices = [
     'vanilla', 'vanilla0', 'vanilla1', 
     'skip', 'skip0', 'skip1', 
+    'attn0', 'attn1', 'attn2', 
   ]
   parser.add_argument('--architecture',
-                      default='vanilla',
+                      default=arch_choices[0],
                       choices=arch_choices,
                       help='Network architecture to use')
   parser.add_argument('--final_embedding_dim',
@@ -175,7 +176,7 @@ def get_opts():
   parser.add_argument('--save_interval_secs',
                       default=600,
                       type=int,
-                      help='How frequently in seconds we save our model while training')
+                      help='Frequency in seconds to save model while training')
   parser.add_argument('--log_steps',
                       default=5,
                       type=int,
@@ -265,23 +266,26 @@ def get_opts():
 
   # Set up architecture
   arch = None 
-  if opts.architecture in ['vanilla', 'skip']:
+  if opts.architecture in ['vanilla', 'skip', 'attn0']:
     arch = arch_params(
       nlayers=5,
       layer_lens=[ 2**min(5+k,9) for k in range(5) ],
       activ=opts.activation_type,
+      attn_lens=[ 10 + 2*k for k in range(5) ],
       normalize_emb=True)
-  elif opts.architecture in ['vanilla0', 'skip0']:
+  elif opts.architecture in ['vanilla0', 'skip0', 'attn1']:
     arch = arch_params(
       nlayers=5,
       layer_lens=[ 2**min(6+k,10) for k in range(5) ],
       activ=opts.activation_type,
+      attn_lens=[ 10 + 2*k for k in range(5) ],
       normalize_emb=True)
-  elif opts.architecture in ['vanilla1', 'skip1']:
+  elif opts.architecture in ['vanilla1', 'skip1', 'attn2']:
     arch = arch_params(
       nlayers=6,
       layer_lens=[ 2**min(6+k,10) for k in range(6) ],
       activ=opts.activation_type,
+      attn_lens=[ 10 + 2*k for k in range(5) ],
       normalize_emb=True)
   setattr(opts, 'arch', arch)
 
