@@ -9,8 +9,89 @@ import tfutils
 import myutils
 import options
 
+
+class AbstractGraphLayer(snt.AbstractModule):
+  """Transformation on an graphe node embedding.
+  
+  This functions almost exactly like snt.Linear except it is for tensors of
+  size batch_size x nodes x input_size. Acts by matrix multiplication on the
+  left side of each nodes x input_size matrix.
+  """
+  def __init__(self,
+               output_size,
+               use_bias=True,
+               initializers=None,
+               partitioners=None,
+               regularizers=None,
+               custom_getter=None,
+               name="embed_lin"):
+    super(AbstractGraphLayer, self).__init__(custom_getter=custom_getter, name=name)
+    self._output_size = output_size
+    self._use_bias = use_bias
+    self._input_shape = None
+    self.possible_keys = self.get_possible_initializer_keys(use_bias=use_bias)
+    self._initializers = snt.check_initializers(
+        initializers, self.possible_keys)
+    self._partitioners = snt.check_partitioners(
+        partitioners, self.possible_keys)
+    self._regularizers = snt.check_regularizers(
+        regularizers, self.possible_keys)
+
+  @classmethod
+  def get_possible_initializer_keys(cls, use_bias=True):
+    raise NotImplemented("Need to overwrite in subclass")
+
+  def _build(self, laplacian, inputs):
+    return inputs
+
+  @property
+  def output_size(self):
+    """Returns the module output size."""
+    if callable(self._output_size):
+      self._output_size = self._output_size()
+    return self._output_size
+
+  @property
+  def has_bias(self):
+    """Returns `True` if bias Variable is present in the module."""
+    return self._use_bias
+
+  @property
+  def initializers(self):
+    """Returns the initializers dictionary."""
+    return self._initializers
+
+  @property
+  def partitioners(self):
+    """Returns the partitioners dictionary."""
+    return self._partitioners
+
+  @property
+  def regularizers(self):
+    """Returns the regularizers dictionary."""
+    return self._regularizers
+
+  def clone(self, name=None):
+    """Returns a cloned `Linear` module.
+    Args:
+      name: Optional string assigning name of cloned module. The default name
+          is constructed by appending "_clone" to `self.module_name`.
+    Returns:
+      Cloned `Linear` module.
+    """
+    if name is None:
+      name = self.module_name + "_clone"
+    return AbstractGraphLayer(output_size=self.output_size,
+                              use_bias=self._use_bias,
+                              initializers=self._initializers,
+                              partitioners=self._partitioners,
+                              regularizers=self._regularizers,
+                              name=name)
+
+
+
 # TODO: Organize this into multiple files
-class EmbeddingRightLinear(snt.AbstractModule):
+class EmbeddingLinearLayer(AbstractGraphLayer):
   """Linear transformation on an embedding, each independently.
   
   This functions almost exactly like snt.Linear except it is for tensors of
@@ -25,19 +106,17 @@ class EmbeddingRightLinear(snt.AbstractModule):
                regularizers=None,
                custom_getter=None,
                name="embed_lin"):
-    super(EmbeddingRightLinear, self).__init__(custom_getter=custom_getter, name=name)
-    self._output_size = output_size
-    self._use_bias = use_bias
-    self._input_shape = None
+    super(EmbeddingLinearLayer, self).__init__(
+                 output_size,
+                 use_bias=use_bias,
+                 initializers=initializers,
+                 partitioners=partitioners,
+                 regularizers=regularizers,
+                 custom_getter=custom_getter,
+                 name=name)
     self._w = None
     self._b = None
     self.possible_keys = self.get_possible_initializer_keys(use_bias=use_bias)
-    self._initializers = snt.check_initializers(
-        initializers, self.possible_keys)
-    self._partitioners = snt.check_partitioners(
-        partitioners, self.possible_keys)
-    self._regularizers = snt.check_regularizers(
-        regularizers, self.possible_keys)
 
   @classmethod
   def get_possible_initializer_keys(cls, use_bias=True):
@@ -128,33 +207,6 @@ class EmbeddingRightLinear(snt.AbstractModule):
           "No bias Variable in Linear Module when `use_bias=False`.")
     return self._b
 
-  @property
-  def output_size(self):
-    """Returns the module output size."""
-    if callable(self._output_size):
-      self._output_size = self._output_size()
-    return self._output_size
-
-  @property
-  def has_bias(self):
-    """Returns `True` if bias Variable is present in the module."""
-    return self._use_bias
-
-  @property
-  def initializers(self):
-    """Returns the initializers dictionary."""
-    return self._initializers
-
-  @property
-  def partitioners(self):
-    """Returns the partitioners dictionary."""
-    return self._partitioners
-
-  @property
-  def regularizers(self):
-    """Returns the regularizers dictionary."""
-    return self._regularizers
-
   def clone(self, name=None):
     """Returns a cloned `Linear` module.
     Args:
@@ -172,7 +224,7 @@ class EmbeddingRightLinear(snt.AbstractModule):
                                 regularizers=self._regularizers,
                                 name=name)
 
-class GraphConvLayer(snt.AbstractModule):
+class GraphConvLayer(AbstractGraphLayer):
   """Linear transformation on an embedding, each independently.
   
   This functions almost exactly like snt.Linear except it is for tensors of
@@ -188,20 +240,18 @@ class GraphConvLayer(snt.AbstractModule):
                regularizers=None,
                custom_getter=None,
                name="graph_conv"):
-    super(GraphConvLayer, self).__init__(custom_getter=custom_getter, name=name)
-    self._output_size = output_size
+    super(GraphConvLayer, self).__init__(
+                 output_size,
+                 use_bias=use_bias,
+                 initializers=initializers,
+                 partitioners=partitioners,
+                 regularizers=regularizers,
+                 custom_getter=custom_getter,
+                 name=name)
     self._activ = tfutils.get_tf_activ(activation)
-    self._use_bias = use_bias
-    self._input_shape = None
     self._w = None
     self._b = None
     self.possible_keys = self.get_possible_initializer_keys(use_bias=use_bias)
-    self._initializers = snt.check_initializers(
-        initializers, self.possible_keys)
-    self._partitioners = snt.check_partitioners(
-        partitioners, self.possible_keys)
-    self._regularizers = snt.check_regularizers(
-        regularizers, self.possible_keys)
 
   @classmethod
   def get_possible_initializer_keys(cls, use_bias=True):
@@ -304,33 +354,6 @@ class GraphConvLayer(snt.AbstractModule):
           "No bias Variable in Linear Module when `use_bias=False`.")
     return self._b
 
-  @property
-  def output_size(self):
-    """Returns the module output size."""
-    if callable(self._output_size):
-      self._output_size = self._output_size()
-    return self._output_size
-
-  @property
-  def has_bias(self):
-    """Returns `True` if bias Variable is present in the module."""
-    return self._use_bias
-
-  @property
-  def initializers(self):
-    """Returns the initializers dictionary."""
-    return self._initializers
-
-  @property
-  def partitioners(self):
-    """Returns the partitioners dictionary."""
-    return self._partitioners
-
-  @property
-  def regularizers(self):
-    """Returns the regularizers dictionary."""
-    return self._regularizers
-
   def clone(self, name=None):
     """Returns a cloned `Linear` module.
     Args:
@@ -348,7 +371,7 @@ class GraphConvLayer(snt.AbstractModule):
                            regularizers=self._regularizers,
                            name=name)
 
-class GraphSkipLayer(snt.AbstractModule):
+class GraphSkipLayer(AbstractGraphLayer):
   """Linear transformation on an embedding, each independently.
   
   This functions almost exactly like snt.Linear except it is for tensors of
@@ -364,22 +387,20 @@ class GraphSkipLayer(snt.AbstractModule):
                regularizers=None,
                custom_getter=None,
                name="graph_skip"):
-    super(GraphSkipLayer, self).__init__(custom_getter=custom_getter, name=name)
-    self._output_size = output_size
+    super(GraphSkipLayer, self).__init__(
+                 output_size,
+                 use_bias=use_bias,
+                 initializers=initializers,
+                 partitioners=partitioners,
+                 regularizers=regularizers,
+                 custom_getter=custom_getter,
+                 name=name)
     self._activ = tfutils.get_tf_activ(activation)
-    self._use_bias = use_bias
-    self._input_shape = None
     self._w = None
     self._u = None
     self._b = None
     self._c = None
     self.possible_keys = self.get_possible_initializer_keys(use_bias=use_bias)
-    self._initializers = snt.check_initializers(
-        initializers, self.possible_keys)
-    self._partitioners = snt.check_partitioners(
-        partitioners, self.possible_keys)
-    self._regularizers = snt.check_regularizers(
-        regularizers, self.possible_keys)
 
   @classmethod
   def get_possible_initializer_keys(cls, use_bias=True):
@@ -535,33 +556,6 @@ class GraphSkipLayer(snt.AbstractModule):
           "No bias Variable in Linear Module when `use_bias=False`.")
     return self._c
 
-  @property
-  def output_size(self):
-    """Returns the module output size."""
-    if callable(self._output_size):
-      self._output_size = self._output_size()
-    return self._output_size
-
-  @property
-  def has_bias(self):
-    """Returns `True` if bias Variable is present in the module."""
-    return self._use_bias
-
-  @property
-  def initializers(self):
-    """Returns the initializers dictionary."""
-    return self._initializers
-
-  @property
-  def partitioners(self):
-    """Returns the partitioners dictionary."""
-    return self._partitioners
-
-  @property
-  def regularizers(self):
-    """Returns the regularizers dictionary."""
-    return self._regularizers
-
   def clone(self, name=None):
     """Returns a cloned `Linear` module.
     Args:
@@ -572,118 +566,12 @@ class GraphSkipLayer(snt.AbstractModule):
     """
     if name is None:
       name = self.module_name + "_clone"
-    return GraphConvLayer(output_size=self.output_size,
+    return GraphSkipLayer(output_size=self.output_size,
                            use_bias=self._use_bias,
                            initializers=self._initializers,
                            partitioners=self._partitioners,
                            regularizers=self._regularizers,
                            name=name)
-
-
-class GraphConvLayerNetwork(snt.AbstractModule):
-  def __init__(self,
-               opts,
-               arch,
-               use_bias=True,
-               initializers=None,
-               regularizers=None,
-               custom_getter=None,
-               name="graphnn"):
-    super(GraphConvLayerNetwork, self).__init__(custom_getter=custom_getter, name=name)
-    self._nlayers = arch.nlayers
-    self._layers = [
-      GraphConvLayer(
-        output_size=layer_len,
-        activation=arch.activ,
-        initializers=initializers,
-        regularizers=regularizers,
-        name="{}/graph_conv".format(name))
-      for layer_len in arch.layer_lens
-    ] + [
-      EmbeddingRightLinear(
-        output_size=opts.final_embedding_dim,
-        initializers=initializers,
-        regularizers=regularizers,
-        name="{}/embed_lin".format(name))
-    ]
-
-class GraphSkipLayerNetwork(snt.AbstractModule):
-  def __init__(self,
-               opts,
-               arch,
-               use_bias=True,
-               initializers=None,
-               regularizers=None,
-               custom_getter=None,
-               name="graphnn"):
-    super(GraphSkipLayerNetwork, self).__init__(custom_getter=custom_getter, name=name)
-    self._nlayers = arch.nlayers
-    final_regularizers = None
-    if regularizers is not None:
-      final_regularizers = { k:v
-                             for k, v in regularizers.items()
-                             if k in ["w", "b"] }
-    self._layers = [
-      GraphSkipLayer(
-        output_size=layer_len,
-        activation=arch.activ,
-        initializers=initializers,
-        regularizers=regularizers,
-        name="{}/graph_skip".format(name))
-      for layer_len in arch.layer_lens
-    ] + [
-      EmbeddingRightLinear(
-        output_size=opts.final_embedding_dim,
-        initializers=initializers,
-        regularizers=final_regularizers,
-        name="{}/embed_lin".format(name))
-    ]
-
-  def _build(self, laplacian, init_embeddings):
-    """Applying this graph network to sample"""
-    output = init_embeddings
-    for layer in self._layers:
-      output = layer(laplacian, output)
-    output = tf.nn.l2_normalize(output, axis=2)
-    return output
-
-def get_regularizers(opts):
-  regularizer_fn = None
-  if opts.weight_decay <= 0 and opts.weight_l1_decay <= 0:
-    return None
-  elif opts.weight_decay > 0 and opts.weight_l1_decay <= 0:
-    regularizer_fn = \
-        lambda r_l2, r_l1: tf.contrib.layers.l2_regularizer(1.0)
-  elif opts.weight_decay <= 0 and opts.weight_l1_decay > 0:
-    regularizer_fn = \
-        lambda r_l2, r_l1: tf.contrib.layers.l1_regularizer(1.0)
-  elif opts.weight_decay <= 0 and opts.weight_l1_decay > 0:
-    regularizer_fn = \
-        lambda r_l2, r_l1: tf.contrib.layers.l1_l2_regularizer(r_l1/r_l2, 1.0)
-  return {
-        "w" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
-        "u" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
-        "b" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay),
-        "c" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay)
-    }
-
-def get_network(opts, arch):
-  regularizers = None
-  if opts.architecture in ['vanilla', 'vanilla0', 'vanilla1']:
-    network = GraphConvLayerNetwork(opts,
-                                    arch,
-                                    regularizers=get_regularizers(opts))
-  elif opts.architecture in ['skip', 'skip0', 'skip1']:
-    network = GraphSkipLayerNetwork(opts,
-                                    arch,
-                                    regularizers=get_regularizers(opts))
-  return network
-
-if __name__ == "__main__":
-  import data_util
-  opts = options.get_opts()
-
-
 
 
 
