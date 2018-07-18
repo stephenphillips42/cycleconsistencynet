@@ -185,25 +185,6 @@ def get_opts():
                       default=False,
                       type=str2bool,
                       help='Run in debug mode')
-  parser.add_argument('--debug_index',
-                      default=1,
-                      type=int,
-                      help='Test data index to experiment with')
-  parser.add_argument('--debug_data_path',
-                      default='test001.npz',
-                      help='Path to test data to experiment with')
-  parser.add_argument('--debug_log_dir',
-                      default='logs',
-                      help='Logs to experiment with')
-  plot_options = [ 'none', 'plot', 'unsorted', 'baseline', 'random' ]
-  parser.add_argument('--debug_plot',
-                      default=plot_options[0],
-                      choices=plot_options,
-                      help='Plot things in experiment')
-  parser.add_argument('--viewer_size',
-                      default=8,
-                      type=int,
-                      help='Run in debug mode')
 
 
   opts = parser.parse_args()

@@ -1,22 +1,40 @@
 import os
 import sys
-import glob
 import numpy as np
-import types
+import argparse
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import tqdm
-import yaml
+# import yaml
 
 import myutils
-import options
-import model
+# import options
 
-def axes3d(nrows=1, ncols=1):
-  fig = plt.figure()
-  axes = [ fig.add_subplot(nrows, ncols, i+1, projection='3d') for i in range(nrows*ncols) ]
-  return fig, axes
+def get_experiment_opts():
+  parser = argparse.ArgumentParser(description='Experiment with output')
+  parser.add_argument('--index',
+                      default=1,
+                      type=int,
+                      help='Test data index to experiment with')
+  parser.add_argument('--data_path',
+                      default='test001.npz',
+                      help='Path to test data to experiment with')
+  parser.add_argument('--save_dir',
+                      default=None,
+                      help='Directory to save plot files in')
+  plot_options = [ 'none', 'plot', 'unsorted', 'baseline', 'random', 'save_all' ]
+  parser.add_argument('--plot_style',
+                      default=plot_options[0],
+                      choices=plot_options,
+                      help='Plot things in experiment')
+  parser.add_argument('--viewer_size',
+                      default=8,
+                      type=int,
+                      help='Run in debug mode')
+
+  opts = parser.parse_args()
+  # Finished, return options
+  return opts
 
 def npload(fdir,idx):
   return dict(np.load("{}/np_test-{:04d}.npz".format(fdir,idx)))
@@ -37,7 +55,10 @@ def plot_hist(save_dir, sim_mats, names, true_sim):
   ax[1].hist(off_diags, bins=20, density=True, label=names)
   ax[1].set_title('Off Diagonal Similarity Rate')
   ax[1].legend()
-  plt.savefig(os.path.join(save_dir, 'hist.png'))
+  if save_dir:
+    fig.savefig(os.path.join(save_dir, 'hist.png'))
+  else:
+    plt.show()
 
 def plot_baseline(save_dir, emb_init, emb_gt, emb_out):
   slabels, sorted_idxs = get_sorted(emb_gt)
@@ -50,16 +71,23 @@ def plot_baseline(save_dir, emb_init, emb_gt, emb_out):
   im1 = ax1.imshow(srand)
   fig.colorbar(im0, ax=ax0)
   fig.colorbar(im1, ax=ax1)
-  plt.savefig(os.path.join(save_dir, 'labels_sort.png'))
+  if save_dir:
+    fig.savefig(os.path.join(save_dir, 'labels_sort.png'))
+  else:
+    plt.show()
   print('Sorted similarites')
   fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2)
   im0 = ax0.imshow(lsim)
   im1 = ax1.imshow(rsim)
   fig.colorbar(im0, ax=ax0)
   fig.colorbar(im1, ax=ax1)
-  plt.savefig(os.path.join(save_dir, 'sim_sort.png'))
+  if save_dir:
+    fig.savefig(os.path.join(save_dir, 'sim_sort.png'))
+  else:
+    plt.show()
 
 def plot_index(save_dir, emb_init, emb_gt, emb_out):
+  # Embeddings
   slabels, sorted_idxs = get_sorted(emb_gt)
   soutput = emb_out[sorted_idxs]
   srand = myutils.dim_normalize(emb_init[sorted_idxs])
@@ -71,7 +99,11 @@ def plot_index(save_dir, emb_init, emb_gt, emb_out):
   im1 = ax1.imshow(osim)
   fig.colorbar(im0, ax=ax0)
   fig.colorbar(im1, ax=ax1)
-  plt.savefig(os.path.join(save_dir, 'output.png'))
+  if save_dir:
+    fig.savefig(os.path.join(save_dir, 'output.png'))
+  else:
+    plt.show()
+  # Histogram
   diag = np.reshape(osim[lsim==1],-1)
   off_diag = np.reshape(osim[lsim==0],-1)
   baseline_diag = np.reshape(rsim[lsim==1],-1)
@@ -85,7 +117,10 @@ def plot_index(save_dir, emb_init, emb_gt, emb_out):
            label=[ 'off_diag', 'baseline_off_diag' ])
   ax1.set_title('Off Diagonal Similarity Rate')
   ax1.legend()
-  plt.savefig(os.path.join(save_dir, 'sim_hist.png'))
+  if save_dir:
+    fig.savefig(os.path.join(save_dir, 'sim_hist.png'))
+  else:
+    plt.show()
 
 def plot_index_unsorted(save_dir, emb_init, emb_gt, emb_out, adjmat):
   labels = emb_gt
@@ -99,7 +134,10 @@ def plot_index_unsorted(save_dir, emb_init, emb_gt, emb_out, adjmat):
   im2 = ax2.imshow(adjmat + np.eye(adjmat.shape[0]))
   fig.colorbar(im0, ax=ax0)
   fig.colorbar(im1, ax=ax1)
-  plt.savefig(os.path.join(save_dir, 'unsorted_output.png'))
+  if save_dir:
+    fig.savefig(os.path.join(save_dir, 'unsorted_output.png'))
+  else:
+    plt.show()
   # diag = np.reshape(osim[lsim==1],-1)
   # off_diag = np.reshape(osim[lsim==0],-1)
   # baseline_diag = np.reshape(rsim[lsim==1],-1)
@@ -113,7 +151,7 @@ def plot_index_unsorted(save_dir, emb_init, emb_gt, emb_out, adjmat):
   #          label=[ 'off_diag', 'baseline_off_diag' ])
   # ax1.set_title('Off Diagonal Similarity Rate')
   # ax1.legend()
-  # plt.savefig(os.path.join(save_dir, 'sim_hist_unsorted.png'))
+  # fig.savefig(os.path.join(save_dir, 'sim_hist_unsorted.png'))
 
 def plot_random(save_dir, emb_init, emb_gt, emb_out):
   slabels, sorted_idxs = get_sorted(emb_gt)
@@ -134,7 +172,10 @@ def plot_random(save_dir, emb_init, emb_gt, emb_out):
     print(np.min(diags[i]))
     print(np.max(off_diags[i]))
     print('--')
-  plt.savefig(os.path.join(save_dir, 'random.png'))
+  if save_dir:
+    fig.savefig(os.path.join(save_dir, 'random.png'))
+  else:
+    plt.show()
 
 def get_stats(emb_init, emb_gt, emb_out):
   slabels, sorted_idxs = get_sorted(emb_gt)
@@ -155,15 +196,16 @@ def get_stats(emb_init, emb_gt, emb_out):
 
 if __name__ == "__main__":
   # Build options
-  opts = options.get_opts()
+  # opts = options.get_opts()
+  opts = get_experiment_opts()
   # Run experiment
-  ld = np.load(opts.debug_data_path)
+  ld = np.load(opts.data_path)
   emb_init = ld['input']
   emb_gt = ld['gt']
   emb_out = ld['output']
   adjmat = ld['adjmat']
   n = len(emb_gt)
-  if opts.debug_plot == 'none':
+  if opts.plot_style == 'none':
     stats = np.zeros((n,8))
     if opts.verbose:
       for i in tqdm.tqdm(range(n)):
@@ -176,18 +218,26 @@ if __name__ == "__main__":
           "Baseline Diag: {:.2e} +/- {:.2e}, " \
           "Baseline Off Diag: {:.2e} +/- {:.2e}".format(*list(meanstats)))
     sys.exit()
-  if opts.debug_index > n:
-    print("ERROR: debug_index out of bounds")
+  if opts.index > n:
+    print("ERROR: index out of bounds")
     sys.exit()
-  i = opts.debug_index
-  if opts.debug_plot == 'plot':
-    plot_index(opts.debug_log_dir, emb_init[i], emb_gt[i], emb_out[i])
-  elif opts.debug_plot == 'unsorted':
-    plot_index_unsorted(opts.debug_log_dir, emb_init[i], emb_gt[i], emb_out[i])
-  elif opts.debug_plot == 'baseline':
-    plot_baseline(opts.debug_log_dir, emb_init[i], emb_gt[i], emb_out[i])
-  elif opts.debug_plot == 'random':
-    plot_random(opts.debug_log_dir, emb_init[i], emb_gt[i], emb_out[i])
+  i = opts.index
+  if opts.plot_style == 'plot':
+    plot_index(None, emb_init[i], emb_gt[i], emb_out[i])
+  elif opts.plot_style == 'unsorted':
+    plot_index_unsorted(None, emb_init[i], emb_gt[i], emb_out[i])
+  elif opts.plot_style == 'baseline':
+    plot_baseline(None, emb_init[i], emb_gt[i], emb_out[i])
+  elif opts.plot_style == 'random':
+    plot_random(None, emb_init[i], emb_gt[i], emb_out[i])
+  elif opts.plot_style == 'save_all':
+    if opts.save_dir:
+      save_dir = opts.save_dir
+    else:
+      save_dir = os.path.dirname(os.path.abspath(opts.data_path))
+    plot_index(save_dir, emb_init[i], emb_gt[i], emb_out[i])
+    plot_baseline(save_dir, emb_init[i], emb_gt[i], emb_out[i])
+    plot_random(save_dir, emb_init[i], emb_gt[i], emb_out[i])
 
 
 

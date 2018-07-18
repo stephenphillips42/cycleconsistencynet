@@ -586,6 +586,7 @@ class GraphAttentionLayer(AbstractGraphLayer):
                activation='relu',
                attn_activation='leakyrelu',
                use_bias=True,
+               sparse=False,
                initializers=None,
                partitioners=None,
                regularizers=None,
@@ -600,6 +601,7 @@ class GraphAttentionLayer(AbstractGraphLayer):
                  custom_getter=custom_getter,
                  name=name)
     print(self._regularizers)
+    self._sparse = sparse
     self._activ = tfutils.get_tf_activ(activation)
     self._attn_activ = tfutils.get_tf_activ(attn_activation)
     self.weight_keys = { ("w", output_size), ("u", output_size),
@@ -692,7 +694,10 @@ class GraphAttentionLayer(AbstractGraphLayer):
       f1_ += self.weights["d1"]
       f2_ += self.weights["d2"]
     preattn_mat_ = f1_ + tf.transpose(f2_, [0, 2, 1])
-    preattn_mat = self._attn_activ(preattn_mat_) + laplacian
+    if self._sparse:
+      preattn_mat = self._attn_activ(preattn_mat_) * laplacian
+    else:
+      preattn_mat = self._attn_activ(preattn_mat_) + laplacian
     attn_mat = tf.nn.softmax(preattn_mat, axis=-1)
     preactiv = tfutils.batch_matmul(attn_mat, preactiv_)
     skip = tfutils.matmul(inputs, self.weights["u"])
