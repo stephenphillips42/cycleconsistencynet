@@ -67,6 +67,7 @@ def get_opts():
     'skip', 'skip0', 'skip1',
     'longskip0',
     'attn0', 'attn1', 'attn2',
+    'spattn0', 'spattn1', 'spattn2',
   ]
   parser.add_argument('--architecture',
                       default=arch_choices[0],
@@ -155,7 +156,7 @@ def get_opts():
   parser.add_argument('--num_runs',
                       default=1,
                       type=int,
-                      help='Number of times training runs (length determined'
+                      help='Number of times training runs (length determined '
                            'by run_time)')
 
   # Logging options
@@ -270,17 +271,20 @@ def get_opts():
       self.attn_lens = []
       self.skip_layers = []
       self.normalize_emb = True
+      self.sparse = False
   arch = ArchParams(opts)
-  if opts.architecture in ['vanilla', 'skip', 'attn0']:
+  if opts.architecture in ['vanilla', 'skip', 'attn0', 'spattn0']:
     arch.layer_lens=[ 2**min(5+k,9) for k in range(5) ]
-  elif opts.architecture in ['vanilla0', 'skip0', 'attn1']:
+  elif opts.architecture in ['vanilla0', 'skip0', 'attn1', 'spattn1']:
     arch.layer_lens=[ 2**min(5+k,9) for k in range(5) ]
-  elif opts.architecture in ['vanilla1', 'skip1', 'attn2']:
+  elif opts.architecture in ['vanilla1', 'skip1', 'attn2', 'spattn2']:
     arch.layer_lens=[ 2**min(5+k,9) for k in range(5) ]
   elif opts.architecture in ['longskip0']:
     arch.layer_lens=[ 32, 64, 128, 256, 512, 512, 512,
                       512, 512, 512, 1024, 1024 ]
     arch.skip_layers = [ len(arch.layer_lens)//2, len(arch.layer_lens) - 1 ]
+  if opts.architecture in [ 'spattn0', 'spattn1', 'spattn2' ]:
+    arch.sparse = True
   setattr(opts, 'arch', arch)
 
   # Post processing
