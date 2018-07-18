@@ -16,11 +16,15 @@ def get_logs(yaml_name):
 
 def get_loss_values(log):
   loss = []
+  test_loss = []
   for x in log:
     line = x.split()
     if '=' in line:
-      loss.append(float(line[line.index('=')+1]))
-  return loss
+      if 'Test' in line:
+        test_loss.append(float(line[line.index('=')+1]))
+      else:
+        loss.append(float(line[line.index('=')+1]))
+  return loss, test_loss
 
 
 losses = []
@@ -30,18 +34,18 @@ for n in range(1,len(sys.argv)):
   logs = get_logs(yaml_name)
   if len(logs) > 1:
     for l in range(len(logs)):
-      loss = np.array(get_loss_values(logs[l]))
-      losses.append((loss,"{}-{}".format(name,l),name))
+      loss, test_loss = np.array(get_loss_values(logs[l]))
+      losses.append((loss,test_loss,"{}-{}".format(name,l),name))
   elif len(logs) == 0:
     print("ERROR - {} has no logs".format(yaml_name))
     sys.exit(1)
   else:
-    loss = np.array(get_loss_values(logs[0]))
-    losses.append((loss,name,name))
+    loss, test_loss = np.array(get_loss_values(logs[0]))
+    losses.append((loss, test_loss, name, name))
 
-print([ len(loss) for loss, name, _ in losses])
+print([ (len(loss), len(test_loss)) for loss, test_loss, name, _ in losses ])
 path="/home/stephen/cycleconsistencynet/save/save"
-for loss, name, pathname in losses:
+for loss, test_loss, name, pathname in losses:
   dirpath = "../logs/save-{}".format(name)
   if not os.path.exists(dirpath):
     subprocess.call([
@@ -51,12 +55,16 @@ for loss, name, pathname in losses:
       dirpath
     ])
     np.save(os.path.join(dirpath, 'loss.npy'), loss)
+    np.save(os.path.join(dirpath, 'test_loss.npy'), test_loss)
 
+fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2)
 for i in range(len(losses)):
-  plt.plot(losses[i][0], label=losses[i][1])
-plt.legend()
+  ax0.plot(losses[i][0], label=losses[i][2])
+  ax1.plot(losses[i][1], label=losses[i][2])
+ax0.legend()
+ax1.legend()
 plt.show()
 print("\n".join([
-        "{}: {} ({})".format(n, l[-1], len(l)) for l, n, _ in losses
+        "{}, {}: {} ({})".format(n, l[-1], tl[-1], len(l)) for l, tl, n, _ in losses
       ]))
 
