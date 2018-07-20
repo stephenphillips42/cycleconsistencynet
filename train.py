@@ -80,7 +80,8 @@ def get_train_op(opts, loss):
     reg_loss = tf.losses.get_regularization_loss()
     reg_optimizer = tf.train.GradientDescentOptimizer(
                             learning_rate=opts.weight_decay)
-    with tf.control_dependencies([reg_optimizer.minimize(reg_loss)]):
+    reg_step = reg_optimizer.minimize(reg_loss, global_step=global_step)
+    with tf.control_dependencies([reg_step]):
       train_op = optimizer.minimize(loss, global_step=global_step)
   else:
     train_op = optimizer.minimize(loss, global_step=global_step)
@@ -96,7 +97,10 @@ def build_session(opts):
   all_hooks = [saver_hook, summary_hook]
   config = tf.ConfigProto()
   config.gpu_options.allow_growth = True
-  return tf.train.SingularMonitoredSession(hooks=all_hooks, config=config)
+  return tf.train.SingularMonitoredSession(
+            checkpoint_dir=opts.save_dir,
+            hooks=all_hooks,
+            config=config)
 
 def get_intervals(opts):
   if opts.num_epochs > 0:
@@ -147,17 +151,16 @@ def train(opts):
   loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
   # Testing
-  if opts.load_data:
-    test_data = {}
-    test_data['sample'] = dataset.load_batch('test')
-    test_data['output'] = network(test_data['sample']['Laplacian'],
-                                  test_data['sample']['InitEmbeddings'])
-    test_data['loss'] = get_loss(opts,
-                                 test_data['sample'],
-                                 test_data['output'],
-                                 name='test_loss')
-    num_batches = 1.0 * opts.dataset_params.sizes['test'] / opts.batch_size
-    test_data['nsteps'] = int(num_batches)
+  test_data = {}
+  test_data['sample'] = dataset.load_batch('test')
+  test_data['output'] = network(test_data['sample']['Laplacian'],
+                                test_data['sample']['InitEmbeddings'])
+  test_data['loss'] = get_loss(opts,
+                               test_data['sample'],
+                               test_data['output'],
+                               name='test_loss')
+  num_batches = 1.0 * opts.dataset_params.sizes['test'] / opts.batch_size
+  test_data['nsteps'] = int(num_batches)
 
   # Tensorflow and logging operations
   step = 0
@@ -181,8 +184,7 @@ def train(opts):
                                           loss_,
                                           ctime - start_time,
                                           ctime - stime))
-        if opts.load_data and \
-            ((test_freq_steps and step % test_freq_steps == 0) or \
+        if ((test_freq_steps and step % test_freq_steps == 0) or \
             (ctime - ttime > test_freq)):
           start_time = time.time()
           raw_sess = sess.raw_session()

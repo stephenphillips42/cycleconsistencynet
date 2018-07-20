@@ -298,7 +298,7 @@ class GraphSimDataset(object):
     dataset = tf.data.TFRecordDataset(data_sources)
     dataset = dataset.map(parser_op)
     dataset = dataset.repeat(None)
-    if opts.shuffle_data:
+    if opts.shuffle_data and mode != 'test':
       dataset = dataset.shuffle(buffer_size=5*opts.batch_size)
     if opts.batch_size > 1:
       dataset = dataset.batch(opts.batch_size)

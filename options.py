@@ -10,13 +10,6 @@ import types
 import yaml
 import re
 
-# synth_dataset_params_vars = [
-#   'data_dir', 'sizes', 'dtype', # Meta-parameters
-#   'fixed_size', 'views', 'points', # Graph
-#   'points_scale', 'knn', 'scale', 'sparse', 'soft_edges',
-#   'descriptor_dim', 'descriptor_var', 'descriptor_noise_var', # Descriptor
-# ]
-
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
