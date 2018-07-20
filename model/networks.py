@@ -147,7 +147,6 @@ class GraphAttentionLayerNetwork(snt.AbstractModule):
                opts,
                arch,
                use_bias=True,
-               sparse=False,
                initializers=None,
                regularizers=None,
                custom_getter=None,
@@ -164,7 +163,7 @@ class GraphAttentionLayerNetwork(snt.AbstractModule):
       layers.GraphAttentionLayer(
         output_size=layer_len,
         activation=arch.activ,
-        sparse=sparse,
+        sparse=arch.sparse,
         initializers=initializers,
         regularizers=regularizers,
         name="{}/graph_attn".format(name))

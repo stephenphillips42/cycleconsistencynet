@@ -37,7 +37,8 @@ def get_regularizers(opts):
           "b" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay),
           "c" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay),
       }
-  elif opts.architecture in ['attn0', 'attn1', 'attn2']:
+  elif opts.architecture in ['attn0', 'attn1', 'attn2', \
+                             'spattn0', 'spattn1', 'spattn2']:
     return {
           "w" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
           "u" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
@@ -66,7 +67,8 @@ def get_network(opts, arch):
                     opts,
                     arch,
                     regularizers=get_regularizers(opts))
-  elif opts.architecture in ['attn0', 'attn1', 'attn2']:
+  elif opts.architecture in ['attn0', 'attn1', 'attn2', \
+                             'spattn0', 'spattn1', 'spattn2']:
     network = networks.GraphAttentionLayerNetwork(
                     opts,
                     arch,
