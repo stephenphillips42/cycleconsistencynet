@@ -444,6 +444,8 @@ def get_dataset(opts):
   """Getting the dataset with all the correct attributes"""
   if opts.dataset in [ 'synth_small', 'synth_3view', 'synth_4view' ]:
     return GraphSimDataset(opts, opts.dataset_params)
+  elif 'synth_pts' in opts.dataset:
+    return GraphSimDataset(opts, opts.dataset_params)
   elif opts.dataset in [ 'noise_3view' ]:
     return GraphSimNoisyDataset(opts, opts.dataset_params)
   elif opts.dataset in [ 'noise_gauss' ]:

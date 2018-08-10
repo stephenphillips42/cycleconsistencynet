@@ -24,7 +24,6 @@ def get_regularizers(opts):
   elif opts.weight_decay <= 0 and opts.weight_l1_decay > 0:
     regularizer_fn = \
         lambda r_l2, r_l1: tf.contrib.layers.l1_l2_regularizer(r_l1/r_l2, 1.0)
-  print(opts.architecture)
   if opts.architecture in ['vanilla', 'vanilla0', 'vanilla1']:
     return {
           "w" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 

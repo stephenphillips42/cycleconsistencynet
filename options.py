@@ -34,7 +34,8 @@ def get_opts():
     'noise_3view',
     'noise_gauss', 'noise_symgauss',
     'noise_pairwise', 'noise_pairwise3', 'noise_pairwise5',
-    'noise_largepairwise3', 'noise_largepairwise5'
+    'noise_largepairwise3', 'noise_largepairwise5',
+    'synth_pts50', 'synth_pts100',
   ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
@@ -234,6 +235,11 @@ def get_opts():
     num_rep = re.search(r'[0-9]+', opts.dataset)
     if num_rep:
       dataset_params.num_repeats = int(num_rep.group(0))
+  elif 'synth_pts' in opts.dataset:
+    dataset_params.noise_level = 0.1
+    num_pts = re.search(r'[0-9]+', opts.dataset)
+    if num_pts:
+      dataset_params.points = [ int(num_pts.group(0)) ]
   opts.data_dir = dataset_params.data_dir
   setattr(opts, 'dataset_params', dataset_params)
 
