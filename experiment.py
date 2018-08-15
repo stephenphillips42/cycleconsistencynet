@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 import argparse
+import argcomplete
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import tqdm
@@ -10,8 +11,21 @@ import tqdm
 import myutils
 # import options
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def get_experiment_opts():
   parser = argparse.ArgumentParser(description='Experiment with output')
+  argcomplete.autocomplete(parser)
+  parser.add_argument('--verbose',
+                      default=False,
+                      type=str2bool,
+                      help='Print everything or not')
   parser.add_argument('--index',
                       default=1,
                       type=int,
