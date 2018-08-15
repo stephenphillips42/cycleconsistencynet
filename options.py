@@ -30,12 +30,13 @@ def get_opts():
                       default='/NAS/data/stephen/',
                       help='Directory for saving/loading dataset')
   dataset_choices = [
-    'synth_3view', 'synth_small', 'synth_4view',
+    'synth_3view', 'synth_small', 'synth_4view', 'synth_5view', 'synth_6view',
     'noise_3view',
     'noise_gauss', 'noise_symgauss',
     'noise_pairwise', 'noise_pairwise3', 'noise_pairwise5',
     'noise_largepairwise3', 'noise_largepairwise5',
     'synth_pts50', 'synth_pts100',
+    'noise_outlier1', 'noise_outlier2', 'noise_outlier4', 'noise_outlier8',
   ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
@@ -209,6 +210,7 @@ def get_opts():
       self.descriptor_noise_var=0
       self.noise_level=0.1
       self.num_repeats=1
+      self.num_outliers=0
       self.dtype='float32'
   dataset_params = DatasetParams(opts)
   if opts.dataset == 'synth_3view':
@@ -218,7 +220,11 @@ def get_opts():
   elif opts.dataset == 'synth_small':
     sizes={ 'train': 400, 'test': 300 },
   elif opts.dataset == 'synth_4view':
-    pass
+    dataset_params.views = [4]
+  elif opts.dataset == 'synth_5view':
+    dataset_params.views = [5]
+  elif opts.dataset == 'synth_6view':
+    dataset_params.views = [6]
   elif opts.dataset == 'noise_gauss':
     dataset_params.noise_level = 0.1
   elif opts.dataset == 'noise_symgauss':
@@ -240,6 +246,10 @@ def get_opts():
     num_pts = re.search(r'[0-9]+', opts.dataset)
     if num_pts:
       dataset_params.points = [ int(num_pts.group(0)) ]
+  elif 'noise_outlier' in opts.dataset:
+    num_out = re.search(r'[0-9]+', opts.dataset)
+    if num_out:
+      dataset_params.num_outliers = int(num_out.group(0))
   opts.data_dir = dataset_params.data_dir
   setattr(opts, 'dataset_params', dataset_params)
 
