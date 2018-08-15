@@ -600,7 +600,6 @@ class GraphAttentionLayer(AbstractGraphLayer):
                  regularizers=regularizers,
                  custom_getter=custom_getter,
                  name=name)
-    print(self._regularizers)
     self._sparse = sparse
     self._activ = tfutils.get_tf_activ(activation)
     self._attn_activ = tfutils.get_tf_activ(attn_activation)
