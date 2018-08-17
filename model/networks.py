@@ -63,6 +63,8 @@ class GraphLongSkipLayerNetwork(snt.AbstractModule):
       lin_regularizers = { k:v
                            for k, v in regularizers.items()
                            if k in ["w", "b"] }
+    else:
+      lin_regularizers = None
     self._layers = [
       layers.GraphSkipLayer(
         output_size=layer_len,

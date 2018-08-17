@@ -60,7 +60,7 @@ def get_opts():
   arch_choices = [
     'vanilla', 'vanilla0', 'vanilla1',
     'skip', 'skip0', 'skip1',
-    'longskip0',
+    'longskip0', 'longskip1',
     'attn0', 'attn1', 'attn2',
     'spattn0', 'spattn1', 'spattn2',
   ]
@@ -273,6 +273,11 @@ def get_opts():
     arch.layer_lens=[ 32, 64, 128, 256, 512, 512, 512,
                       512, 512, 512, 1024, 1024 ]
     arch.skip_layers = [ len(arch.layer_lens)//2, len(arch.layer_lens) - 1 ]
+  elif opts.architecture in ['longskip1']:
+    arch.layer_lens=[ 32, 64, 128, 256, 512, 512,
+                      512, 512, 512, 1024, 1024,
+                      512, 512, 512, 1024, 1024 ]
+    arch.skip_layers = [ 5, 10, len(arch.layer_lens) - 1 ]
   if opts.architecture in [ 'spattn0', 'spattn1', 'spattn2' ]:
     arch.sparse = True
   setattr(opts, 'arch', arch)

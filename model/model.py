@@ -29,7 +29,7 @@ def get_regularizers(opts):
           "w" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
           "b" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay),
       }
-  elif opts.architecture in ['skip', 'skip0', 'skip1', 'longskip0']:
+  elif opts.architecture in ['skip', 'skip0', 'skip1', 'longskip0', 'longskip1']:
     return {
           "w" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
           "u" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
@@ -61,7 +61,7 @@ def get_network(opts, arch):
                     opts,
                     arch,
                     regularizers=get_regularizers(opts))
-  elif opts.architecture in ['longskip0']:
+  elif opts.architecture in ['longskip0', 'longskip1']:
     network = networks.GraphLongSkipLayerNetwork(
                     opts,
                     arch,
