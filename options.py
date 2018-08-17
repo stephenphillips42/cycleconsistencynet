@@ -34,6 +34,7 @@ def get_opts():
     'noise_3view',
     'noise_gauss', 'noise_symgauss',
     'noise_pairwise', 'noise_pairwise3', 'noise_pairwise5',
+    'noise_pairwise3view5', 'noise_pairwise3view6', 'noise_pairwise5view5',
     'noise_largepairwise3', 'noise_largepairwise5',
     'synth_pts50', 'synth_pts100',
     'noise_outlier1', 'noise_outlier2', 'noise_outlier4', 'noise_outlier8',
@@ -238,9 +239,15 @@ def get_opts():
   elif 'noise_largepairwise' in opts.dataset:
     dataset_params.noise_level = 0.1
     dataset_params.sizes['train'] = 400000
-    num_rep = re.search(r'[0-9]+', opts.dataset)
-    if num_rep:
-      dataset_params.num_repeats = int(num_rep.group(0))
+    regex0 = re.compile('noise_pairwise([0-9]+)view([0-9]+)$')
+    regex1 = re.compile('noise_pairwise([0-9]+)$')
+    nums0 = regex0.findall(opts.dataset)
+    nums1 = regex1.findall(opts.dataset)
+    if len(nums0) > 0:
+      dataset_params.num_repeats = nums[0]
+      dataset_params.views = [nums[1]]
+    elif len(nums1) > 0:
+      dataset_params.num_repeats = nums[0]
   elif 'synth_pts' in opts.dataset:
     dataset_params.noise_level = 0.1
     num_pts = re.search(r'[0-9]+', opts.dataset)
@@ -250,6 +257,7 @@ def get_opts():
     num_out = re.search(r'[0-9]+', opts.dataset)
     if num_out:
       dataset_params.num_outliers = int(num_out.group(0))
+  else:
   opts.data_dir = dataset_params.data_dir
   setattr(opts, 'dataset_params', dataset_params)
 
