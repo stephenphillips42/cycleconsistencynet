@@ -349,5 +349,128 @@ So I will need to branch off in git and make a new branch while I get Sonnet wor
 \subsection*{TensorFlow Implementation Details}
 Still working on updating the TensorFlow features to use Sonnet.
 
+\entry{2018}{09}{17}
+I have much ground to catch up on. But better late than never.
+\subsection*{TensorFlow Implementation Details Completed}
+I finished this and the code is much cleaner - the code is divided better. The \texttt{model.py} function has been replaced with a model module (directory with multiple files), so now custom layers, custom network types, and the architecture selection logic are separated. However, the regularization is still a bit crude, and when building a new architecture it tends to give a 'gotcha' - I need to fix that. Otherwise it is working much better.
+\subsection*{Binary Cross Entropy afterthoughts}
+I have not tested this extensively but the limited experiments I did try didn't seem to make much of a difference. I think it might be better dealing with outliers. Right now we use a Frobenious norm loss, which implicitly assumes $A_{ij} \sim \mathcal{N}(e_i^\top e_j, \sigma^2)$. This assumes infinte support and is not quite we are assuming if we enforce $e_i$ to be norm 1. Thus the rational is since it is between 0 and 1, we can treat each element as a classifcation: $P(A_{ij} = 1) = 1 - P(A_{ij} = 0) = e_i^\top e_j$. This is more appropriate and possibly more robust to noise (maybe outliers?). However, more tests need to be done to determine its actual effectiveness.
+\subsection*{Experiments}
+Many experiments were done during this time. Here are the tables and figures
+
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/synth-3view-skip-relu-unsup-false-0}
+  \label{fig:synth-3view-skip-relu-unsup-false-0-sub1}
+  \caption{Typical embedding and similarity matrix of pairwise noise}
+\end{figure}
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/synth-3view-skip-leakyrelu-unsup-true-0}
+  \label{fig:synth-3view-skip-leakyrelu-unsup-true-0-sub1}
+  \caption{Typical embedding and similarity matrix of pairwise noise}
+\end{figure}
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/synth-3view-skip-leakyrelu-unsup-false-0}
+  \label{fig:synth-3view-skip-leakyrelu-unsup-false-0-sub1}
+  \caption{Typical embedding and similarity matrix of pairwise noise}
+\end{figure}
+Dataset type $\texttt{synth3view}$ - noiseless 3 view dataset.
+\begin{table}[H]
+    \begin{tabular}{|c|c|c|c|} \hline
+                                      &  Same Point Similarities  &  Different Point Similarities  \\ \hline
+Baseline   & 5.11e-01 $\pm$ 3.90e-01 & 2.56e-01 $\pm$ 2.06e-01 \\ \hline
+Skip Type 0 Arch., Leakyrelu   & 9.97e-01 $\pm$ 7.39e-03 & 9.74e-02 $\pm$ 1.38e-01 \\ \hline
+Skip Type 0 Arch., Leakyrelu, Unsupervised   & 9.94e-01 $\pm$ 1.04e-02 & 1.21e-01 $\pm$ 1.31e-01 \\ \hline
+Skip Type 0 Arch., Relu   & 9.98e-01 $\pm$ 5.89e-03 & 8.48e-02 $\pm$ 1.41e-01 \\ \hline
+Skip Type 0 Arch., Relu, Unsupervised  & 9.96e-01 $\pm$ 7.70e-03 & 1.16e-01 $\pm$ 1.32e-01 \\ \hline
+Skip Type 1 Arch., Leakyrelu   & 9.92e-01 $\pm$ 1.68e-02 & 1.10e-01 $\pm$ 1.32e-01 \\ \hline
+Skip Type 1 Arch., Leakyrelu, Unsupervised   & 9.97e-01 $\pm$ 6.13e-03 & 1.25e-01 $\pm$ 1.31e-01 \\ \hline
+Skip Type 1 Arch., Relu   & 9.98e-01 $\pm$ 4.96e-03 & 9.04e-02 $\pm$ 1.37e-01 \\ \hline
+Skip Type 1 Arch., Relu, Unsupervised   & 9.98e-01 $\pm$ 5.27e-03 & 1.19e-01 $\pm$ 1.30e-01 \\ \hline
+      \end{tabular}
+  \caption{Numerical results}
+\end{table}
+% \label{fig:tabletab1}
+% Baseline   & 5.11e-01 $\pm$ 3.90e-01 & 2.56e-01 $\pm$ 2.06e-01 \\ \hline
+% Skip Type 1 Arch., Leakyrelu   & 9.97e-01 $\pm$ 7.39e-03 & 9.74e-02 $\pm$ 1.38e-01 \\ \hline
+% Skip Type 1 Arch., Leakyrelu, Using unsupervised loss   & 9.94e-01 $\pm$ 1.04e-02 & 1.21e-01 $\pm$ 1.31e-01 \\ \hline
+% Skip Type 1 Arch., Relu   & 9.98e-01 $\pm$ 5.89e-03 & 8.48e-02 $\pm$ 1.41e-01 \\ \hline
+% Skip Type 1 Arch., Relu, Using unsupervised loss   & 9.96e-01 $\pm$ 7.70e-03 & 1.16e-01 $\pm$ 1.32e-01 \\ \hline
+% Skip Type 2 Arch., Leakyrelu   & 9.92e-01 $\pm$ 1.68e-02 & 1.10e-01 $\pm$ 1.32e-01 \\ \hline
+% Skip Type 2 Arch., Leakyrelu, Using unsupervised loss   & 9.97e-01 $\pm$ 6.13e-03 & 1.25e-01 $\pm$ 1.31e-01 \\ \hline
+% Skip Type 2 Arch., Relu   & 9.98e-01 $\pm$ 4.96e-03 & 9.04e-02 $\pm$ 1.37e-01 \\ \hline
+
+Using ReLu activation type with aforementioned pairwise noise. 
+\begin{figure}[H]
+\subfloat[Typical embedding and similarity matrix of pairwise noise]{ \includegraphics[width=0.9\textwidth]{figures/pairwise5-skip0-relu-ld-false-unsup-true-0} \label{fig:pairwise5-skip0-relu-ld-false-unsup-true-0-sub1} }
+\subfloat[Typical embedding and similarity matrix of pairwise noise]{ \includegraphics[width=0.9\textwidth]{figures/pairwise3-attn2-relu-ld-true-unsup-false-0} \label{fig:pairwise3-attn2-relu-ld-true-unsup-false-0-sub1} }
+\subfloat[Typical embedding and similarity matrix of pairwise noise]{ \includegraphics[width=0.9\textwidth]{figures/pairwise3-skip0-relu-ld-true-unsup-false-0} \label{fig:pairwise3-skip0-relu-ld-true-unsup-false-0-sub1} }
+  \subfloat[Numerical results]{
+      \begin{tabular}{|c|c|c|c|} \hline
+                                      &  Same Point Similarities  &  Different Point Similarities  \\ \hline
+Baseline   & 5.11e-01 $\pm$ 3.90e-01 & 2.56e-01 $\pm$ 2.06e-01 \\ \hline
+Data type $\texttt{pairwise3}$ \\ \hline
+GAT Network Type 0 Arch., Data generation   & 5.75e-01 $\pm$ 3.58e-01 & 2.26e-01 $\pm$ 1.77e-01 \\ \hline
+GAT Network Type 0 Arch., Data generation, Using unsupervised loss   & 7.11e-01 $\pm$ 2.65e-01 & 1.74e-01 $\pm$ 1.41e-01 \\ \hline
+GAT Network Type 0 Arch.   & 5.95e-01 $\pm$ 3.45e-01 & 2.05e-01 $\pm$ 1.66e-01 \\ \hline
+GAT Network Type 0 Arch., Using unsupervised loss   & 6.64e-01 $\pm$ 3.15e-01 & 1.82e-01 $\pm$ 1.68e-01 \\ \hline
+GAT Network Type 1 Arch., Data generation   & 5.96e-01 $\pm$ 3.44e-01 & 2.07e-01 $\pm$ 1.65e-01 \\ \hline
+GAT Network Type 1 Arch., Data generation, Using unsupervised loss   & 7.65e-01 $\pm$ 2.36e-01 & 1.87e-01 $\pm$ 1.53e-01 \\ \hline
+GAT Network Type 1 Arch.   & 5.09e-01 $\pm$ 3.93e-01 & 2.21e-01 $\pm$ 1.87e-01 \\ \hline
+GAT Network Type 1 Arch., Using unsupervised loss   & 7.07e-01 $\pm$ 2.76e-01 & 1.64e-01 $\pm$ 1.47e-01 \\ \hline
+GAT Network Type 2 Arch., Data generation   & 8.33e-01 $\pm$ 1.79e-01 & 2.17e-01 $\pm$ 1.67e-01 \\ \hline
+GAT Network Type 2 Arch., Data generation, Using unsupervised loss   & 5.13e-01 $\pm$ 3.89e-01 & 1.98e-01 $\pm$ 1.71e-01 \\ \hline
+GAT Network Type 2 Arch.   & 4.92e-01 $\pm$ 4.00e-01 & 2.30e-01 $\pm$ 1.98e-01 \\ \hline
+GAT Network Type 2 Arch., Using unsupervised loss   & 6.12e-01 $\pm$ 3.33e-01 & 2.04e-01 $\pm$ 1.65e-01 \\ \hline
+Skip Type 0 Arch., Data generation   & 9.90e-01 $\pm$ 2.35e-02 & 7.18e-02 $\pm$ 1.60e-01 \\ \hline
+Skip Type 0 Arch., Data generation, Using unsupervised loss   & 9.59e-01 $\pm$ 6.03e-02 & 1.00e-01 $\pm$ 1.57e-01 \\ \hline
+Skip Type 0 Arch.   & 9.80e-01 $\pm$ 3.75e-02 & 8.56e-02 $\pm$ 1.57e-01 \\ \hline
+Skip Type 0 Arch., Using unsupervised loss   & 9.62e-01 $\pm$ 5.32e-02 & 1.01e-01 $\pm$ 1.61e-01 \\ \hline
+Skip Type 0 Arch., Data generation   & 9.74e-01 $\pm$ 5.64e-02 & 9.52e-02 $\pm$ 1.60e-01 \\ \hline
+Skip Type 0 Arch., Data generation, Using unsupervised loss   & 9.66e-01 $\pm$ 7.82e-02 & 8.26e-02 $\pm$ 1.61e-01 \\ \hline
+Skip Type 0 Arch.   & 9.73e-01 $\pm$ 6.48e-02 & 8.12e-02 $\pm$ 1.60e-01 \\ \hline
+Skip Type 0 Arch., Using unsupervised loss   & 9.66e-01 $\pm$ 7.71e-02 & 8.23e-02 $\pm$ 1.57e-01 \\ \hline
+Data type $\texttt{pairwise5}$ \\ \hline
+GAT Network Type 0 Arch., Data generation   & 5.04e-01 $\pm$ 3.97e-01 & 2.12e-01 $\pm$ 1.90e-01 \\ \hline
+GAT Network Type 0 Arch., Data generation, Using unsupervised loss   & 7.51e-01 $\pm$ 2.39e-01 & 2.06e-01 $\pm$ 1.57e-01 \\ \hline
+GAT Network Type 0 Arch.   & 8.06e-01 $\pm$ 2.14e-01 & 1.88e-01 $\pm$ 1.63e-01 \\ \hline
+GAT Network Type 0 Arch., Using unsupervised loss   & 5.92e-01 $\pm$ 3.56e-01 & 1.76e-01 $\pm$ 1.71e-01 \\ \hline
+GAT Network Type 1 Arch., Data generation   & 6.99e-01 $\pm$ 2.74e-01 & 1.99e-01 $\pm$ 1.53e-01 \\ \hline
+GAT Network Type 1 Arch., Data generation, Using unsupervised loss   & 5.41e-01 $\pm$ 3.74e-01 & 2.16e-01 $\pm$ 1.79e-01 \\ \hline
+GAT Network Type 1 Arch.   & 4.96e-01 $\pm$ 3.99e-01 & 2.27e-01 $\pm$ 1.97e-01 \\ \hline
+GAT Network Type 1 Arch., Using unsupervised loss   & 5.95e-01 $\pm$ 3.44e-01 & 2.06e-01 $\pm$ 1.65e-01 \\ \hline
+GAT Network Type 2 Arch., Data generation   & 6.72e-01 $\pm$ 2.90e-01 & 2.01e-01 $\pm$ 1.55e-01 \\ \hline
+GAT Network Type 2 Arch., Data generation, Using unsupervised loss   & 5.09e-01 $\pm$ 3.93e-01 & 1.94e-01 $\pm$ 1.83e-01 \\ \hline
+GAT Network Type 2 Arch.   & 8.11e-01 $\pm$ 2.06e-01 & 2.02e-01 $\pm$ 1.68e-01 \\ \hline
+GAT Network Type 2 Arch., Using unsupervised loss   & 5.84e-01 $\pm$ 3.49e-01 & 1.96e-01 $\pm$ 1.62e-01 \\ \hline
+Skip Type 0 Arch., Data generation   & 9.68e-01 $\pm$ 5.29e-02 & 9.50e-02 $\pm$ 1.58e-01 \\ \hline
+Skip Type 0 Arch., Data generation, Using unsupervised loss   & 9.40e-01 $\pm$ 7.90e-02 & 1.11e-01 $\pm$ 1.54e-01 \\ \hline
+Skip Type 0 Arch.   & 9.66e-01 $\pm$ 5.37e-02 & 9.77e-02 $\pm$ 1.60e-01 \\ \hline
+Skip Type 0 Arch., Using unsupervised loss   & 9.74e-01 $\pm$ 4.28e-02 & 8.56e-02 $\pm$ 1.51e-01 \\ \hline
+Skip Type 0 Arch., Data generation   & 9.69e-01 $\pm$ 7.55e-02 & 6.14e-02 $\pm$ 1.43e-01 \\ \hline
+Skip Type 0 Arch., Data generation, Using unsupervised loss   & 9.66e-01 $\pm$ 8.32e-02 & 6.17e-02 $\pm$ 1.37e-01 \\ \hline
+Skip Type 0 Arch.   & 9.69e-01 $\pm$ 7.68e-02 & 6.22e-02 $\pm$ 1.44e-01 \\ \hline
+Skip Type 0 Arch., Using unsupervised loss   & 9.65e-01 $\pm$ 8.34e-02 & 6.49e-02 $\pm$ 1.42e-01 \\ \hline
+      \end{tabular}
+      \label{fig:{0}_tab1}
+  }
+\end{figure}[H]
+% Skip Type 2 Arch., Relu, Using unsupervised loss   & 9.98e-01 $\pm$ 5.27e-03 & 1.19e-01 $\pm$ 1.30e-01 \\ \hline
+
+\subsubsection*{Thoughts}
+To my dismay, the GAT architecture seems very unstable to train and doesn't converge very well if at all. Comparitavely, the best results come from stacking many layers - on the order of 15 seems to work for these problems pretty well. Now the best thing to do would be to go to real data since these seem to be working pretty well. To get better results we really do need additional losses though.
+
+
+
+
 
 \end{document}
+
+
+
+
+
+
+
+
+
+
