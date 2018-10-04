@@ -9,7 +9,7 @@ import pickle
 import tensorflow as tf
 
 import sim_graphs
-from data_util import dataset
+from data_util import parent_dataset
 from data_util import tf_helpers
 
 # Format:
@@ -77,11 +77,11 @@ bundle_file_info = {
 }
 
 
-class Rome16KTripletDataset(dataset.GraphSimDataset):
+class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
   """Abstract base class for Rome16K cycle consistency graphs"""
 
   def __init__(self, opts, params):
-    dataset.GraphSimDataset.__init__(self, opts, params)
+    parent_dataset.GraphSimDataset.__init__(self, opts, params)
     self.rome16k_dir = opts.rome16k_dir
     del self.features['Mask']
     del self.features['MaskOffset']

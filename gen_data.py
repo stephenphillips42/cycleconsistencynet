@@ -11,7 +11,7 @@ opts = options.get_opts()
 print("Generating Pose Graphs")
 if not os.path.exists(opts.data_dir):
   os.makedirs(opts.data_dir)
-dataset = get_dataset(opts)
+mydataset = dataset.get_dataset(opts)
 
 types = [
   'train',
@@ -21,12 +21,12 @@ for t in types:
   dname = os.path.join(opts.data_dir,t)
   if not os.path.exists(dname):
     os.makedirs(dname)
-  dataset.convert_dataset(dname, t)
+  mydataset.convert_dataset(dname, t)
 
 # Generate numpy test
 out_dir = os.path.join(opts.data_dir,'np_test')
 if not os.path.exists(out_dir):
   os.makedirs(out_dir)
-dataset.create_np_dataset(out_dir, opts.dataset_params.sizes['test'])
+mydataset.create_np_dataset(out_dir, opts.dataset_params.sizes['test'])
 
 

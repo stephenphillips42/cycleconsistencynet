@@ -2,19 +2,19 @@
 import numpy as np
 import os
 
-from data_util.dataset import GraphSimDataset
+from data_util import parent_dataset # import GraphSimDataset
 
 
-class GraphSimNoisyDataset(GraphSimDataset):
+class GraphSimNoisyDataset(parent_dataset.GraphSimDataset):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    GraphSimDataset.__init__(self, opts, params)
+    parent_dataset.GraphSimDataset.__init__(self, opts, params)
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = GraphSimDataset.gen_sample(self)
+    sample = parent_dataset.GraphSimDataset.gen_sample(self)
 
     # Graph objects
     p = self.n_pts
@@ -35,16 +35,16 @@ class GraphSimNoisyDataset(GraphSimDataset):
 
     return sample
 
-class GraphSimGaussDataset(GraphSimDataset):
+class GraphSimGaussDataset(parent_dataset.GraphSimDataset):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    GraphSimDataset.__init__(self, opts, params)
+    parent_dataset.GraphSimDataset.__init__(self, opts, params)
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = GraphSimDataset.gen_sample(self)
+    sample = parent_dataset.GraphSimDataset.gen_sample(self)
 
     # Graph objects
     p = self.n_pts
@@ -66,16 +66,16 @@ class GraphSimGaussDataset(GraphSimDataset):
 
     return sample
 
-class GraphSimSymGaussDataset(GraphSimDataset):
+class GraphSimSymGaussDataset(parent_dataset.GraphSimDataset):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    GraphSimDataset.__init__(self, opts, params)
+    parent_dataset.GraphSimDataset.__init__(self, opts, params)
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = GraphSimDataset.gen_sample(self)
+    sample = parent_dataset.GraphSimDataset.gen_sample(self)
 
     # Graph objects
     p = self.n_pts
@@ -98,16 +98,16 @@ class GraphSimSymGaussDataset(GraphSimDataset):
 
     return sample
 
-class GraphSimPairwiseDataset(GraphSimDataset):
+class GraphSimPairwiseDataset(parent_dataset.GraphSimDataset):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    GraphSimDataset.__init__(self, opts, params)
+    parent_dataset.GraphSimDataset.__init__(self, opts, params)
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = GraphSimDataset.gen_sample(self)
+    sample = parent_dataset.GraphSimDataset.gen_sample(self)
 
     # Graph objects
     p = self.n_pts
@@ -138,12 +138,12 @@ class GraphSimPairwiseDataset(GraphSimDataset):
 
     return sample
 
-class GraphSimOutlierDataset(GraphSimDataset):
+class GraphSimOutlierDataset(parent_dataset.GraphSimDataset):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    GraphSimDataset.__init__(self, opts, params)
+    parent_dataset.GraphSimDataset.__init__(self, opts, params)
 
   def create_outlier_indeces(self, o, n):
     ind_pairs = [ (x,y) for x in range(n) for y in range(x+1,n) ]
@@ -161,7 +161,7 @@ class GraphSimOutlierDataset(GraphSimDataset):
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = GraphSimDataset.gen_sample(self)
+    sample = parent_dataset.GraphSimDataset.gen_sample(self)
 
     # Graph objects
     p = self.n_pts
