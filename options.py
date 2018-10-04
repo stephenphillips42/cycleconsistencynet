@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import print_function
 
 import os
+import sys
 import argparse
 import collections
 import types
@@ -29,6 +30,9 @@ def get_opts():
   parser.add_argument('--data_dir',
                       default='/NAS/data/stephen/',
                       help='Directory for saving/loading dataset')
+  parser.add_argument('--rome16k_dir',
+                      default='/NAS/data/stephen/Rome16K',
+                      help='Directory for storing Rome16K dataset (Very specific)')
   dataset_choices = [
     'synth_3view', 'synth_small', 'synth_4view', 'synth_5view', 'synth_6view',
     'noise_3view',
@@ -38,6 +42,7 @@ def get_opts():
     'noise_largepairwise3', 'noise_largepairwise5',
     'synth_pts50', 'synth_pts100',
     'noise_outlier1', 'noise_outlier2', 'noise_outlier4', 'noise_outlier8',
+    'rome16kknn0', 
   ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
@@ -194,6 +199,9 @@ def get_opts():
     opts.save_dir = 'save/save-{:03d}'.format(save_idx)
 
   # Determine dataset
+  if opts.load_data and opts.dataset in [ 'rome16kknn0' ]:
+    print("ERROR: Cannot generate samples on the fly for this dataset: {}".format(opts.dataset))
+    sys.exit(1)
   class DatasetParams(object):
     def __init__(self, opts):
       self.data_dir='{}/{}'.format(opts.datasets_dir, opts.dataset)
@@ -202,7 +210,7 @@ def get_opts():
       self.views=[3]
       self.points=[25]
       self.points_scale=1
-      self.knn=8
+      self.knn=5
       self.scale=3
       self.sparse=False
       self.soft_edges=False
@@ -219,7 +227,7 @@ def get_opts():
   elif opts.dataset == 'noise_3view':
     dataset_params.noise_level = 0.2
   elif opts.dataset == 'synth_small':
-    sizes={ 'train': 400, 'test': 300 },
+    dataset_params.sizes={ 'train': 400, 'test': 300 }
   elif opts.dataset == 'synth_4view':
     dataset_params.views = [4]
   elif opts.dataset == 'synth_5view':
@@ -259,6 +267,13 @@ def get_opts():
     num_out = re.search(r'[0-9]+', opts.dataset)
     if num_out:
       dataset_params.num_outliers = int(num_out.group(0))
+  elif opts.dataset == 'rome16kknn0':
+    dataset_params.points=[80] 
+    dataset_params.descriptor_dim=128
+    # The dataset size is undermined until loading
+    dataset_params.sizes={ 'train': -1, 'test': -1 }
+  else:
+    pass
   opts.data_dir = dataset_params.data_dir
   setattr(opts, 'dataset_params', dataset_params)
 
