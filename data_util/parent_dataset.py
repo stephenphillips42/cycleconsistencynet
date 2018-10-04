@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import scipy.io as sio
 import os
-import sys
 import glob
 import datetime
 import tqdm
 
 import tensorflow as tf
 
-import options
-import myutils
 import sim_graphs
 from data_util import tf_helpers
 
@@ -23,6 +19,7 @@ class GraphSimDataset(object):
     self.dataset_params = params
     self.data_dir = params.data_dir
     self.dtype = params.dtype
+    # TODO: Fix this - this isn't right, we need to make it a function!
     if params.fixed_size:
       self.n_views = params.views[-1]
       self.n_pts = params.points[-1]
@@ -183,15 +180,6 @@ class GraphSimDataset(object):
     with open(os.path.join(out_dir, timestamp_file), 'w') as date_file:
       date_file.write('TFrecord created {}'.format(str(datetime.datetime.now())))
 
-  def get_np_batch(self, batch_size):
-    sample = { k:np.zeros([batch_size] + v.shape)
-               for k, v in self.features.items() }
-    for b in range(batch_size):
-      s = self.gen_sample()
-      for k in sample.keys():
-        sample[k][b] = s[k]
-    return sample
-
   def create_np_dataset(self, out_dir, num_entries):
     """Create npz files to store dataset"""
     fname = 'np_test-{:04d}.npz'
@@ -262,247 +250,5 @@ class GraphSimDataset(object):
     iterator = dataset.make_one_shot_iterator()
     sample = iterator.get_next()
     return sample
-
-class GraphSimNoisyDataset(GraphSimDataset):
-  """Dataset for Cycle Consistency graphs"""
-  MAX_IDX=7000
-
-  def __init__(self, opts, params):
-    GraphSimDataset.__init__(self, opts, params)
-
-  def gen_sample(self):
-    # Pose graph and related objects
-    sample = GraphSimDataset.gen_sample(self)
-
-    # Graph objects
-    p = self.n_pts
-    noise = self.dataset_params.noise_level
-    TEmb = sample['TrueEmbedding']
-    Noise = np.eye(p) + noise*(np.eye(p, k=-1) + np.eye(p, k=-1))
-    AdjMat = np.dot(np.dot(TEmb, Noise), TEmb.T)
-    AdjMat = np.minimum(1, AdjMat)
-    Degrees = np.diag(np.sum(AdjMat,0))
-    sample['AdjMat'] = AdjMat.astype(self.dtype)
-    sample['Degrees'] = Degrees.astype(self.dtype)
-
-    # Laplacian objects
-    Ahat = AdjMat + np.eye(*AdjMat.shape)
-    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
-    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
-    sample['Laplacian'] = Laplacian.astype(self.dtype)
-
-    return sample
-
-class GraphSimGaussDataset(GraphSimDataset):
-  """Dataset for Cycle Consistency graphs"""
-  MAX_IDX=7000
-
-  def __init__(self, opts, params):
-    GraphSimDataset.__init__(self, opts, params)
-
-  def gen_sample(self):
-    # Pose graph and related objects
-    sample = GraphSimDataset.gen_sample(self)
-
-    # Graph objects
-    p = self.n_pts
-    n = self.n_views 
-    noise = self.dataset_params.noise_level
-    TEmb = sample['TrueEmbedding']
-    Noise = np.abs(np.random.randn(p*n,p*n)*noise)
-    AdjMat = np.dot(TEmb, TEmb.T) + Noise - np.eye(p*n)
-    AdjMat = np.minimum(1, AdjMat)
-    Degrees = np.diag(np.sum(AdjMat,0))
-    sample['AdjMat'] = AdjMat.astype(self.dtype)
-    sample['Degrees'] = Degrees.astype(self.dtype)
-
-    # Laplacian objects
-    Ahat = AdjMat + np.eye(*AdjMat.shape)
-    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
-    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
-    sample['Laplacian'] = Laplacian.astype(self.dtype)
-
-    return sample
-
-class GraphSimSymGaussDataset(GraphSimDataset):
-  """Dataset for Cycle Consistency graphs"""
-  MAX_IDX=7000
-
-  def __init__(self, opts, params):
-    GraphSimDataset.__init__(self, opts, params)
-
-  def gen_sample(self):
-    # Pose graph and related objects
-    sample = GraphSimDataset.gen_sample(self)
-
-    # Graph objects
-    p = self.n_pts
-    n = self.n_views 
-    noise = self.dataset_params.noise_level
-    TEmb = sample['TrueEmbedding']
-    Noise = np.abs(np.random.randn(p*n,p*n)*noise)
-    Mask = np.kron(np.ones((n,n))-np.eye(3),np.ones((p,p)))
-    AdjMat = np.dot(TEmb, TEmb.T) + ((Noise+Noise.T)/2.0)*Mask - np.eye(p*n)
-    AdjMat = np.minimum(1, AdjMat)
-    Degrees = np.diag(np.sum(AdjMat,0))
-    sample['AdjMat'] = AdjMat.astype(self.dtype)
-    sample['Degrees'] = Degrees.astype(self.dtype)
-
-    # Laplacian objects
-    Ahat = AdjMat + np.eye(*AdjMat.shape)
-    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
-    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
-    sample['Laplacian'] = Laplacian.astype(self.dtype)
-
-    return sample
-
-class GraphSimPairwiseDataset(GraphSimDataset):
-  """Dataset for Cycle Consistency graphs"""
-  MAX_IDX=7000
-
-  def __init__(self, opts, params):
-    GraphSimDataset.__init__(self, opts, params)
-
-  def gen_sample(self):
-    # Pose graph and related objects
-    sample = GraphSimDataset.gen_sample(self)
-
-    # Graph objects
-    p = self.n_pts
-    n = self.n_views 
-    r = self.dataset_params.num_repeats
-    noise = self.dataset_params.noise_level
-    perm = lambda p: np.eye(p)[np.random.permutation(p),:]
-    TEmb = sample['TrueEmbedding']
-    AdjMat = np.zeros((p*n,p*n))
-    for i in range(n):
-      TEmb_i = TEmb[p*i:p*i+p,:]
-      for j in range(i+1, n):
-        TEmb_j = TEmb[p*j:p*j+p,:]
-        Noise = (1-noise)*np.eye(p) + noise*sum([ perm(p) for i in range(r) ])
-        Val_ij = np.dot(TEmb_i, np.dot(Noise, TEmb_j.T))
-        AdjMat[p*i:p*i+p, p*j:p*j+p] = Val_ij
-        AdjMat[p*j:p*j+p, p*i:p*i+p] = Val_ij.T
-    AdjMat = np.minimum(1, AdjMat)
-    Degrees = np.diag(np.sum(AdjMat,0))
-    sample['AdjMat'] = AdjMat.astype(self.dtype)
-    sample['Degrees'] = Degrees.astype(self.dtype)
-
-    # Laplacian objects
-    Ahat = AdjMat + np.eye(*AdjMat.shape)
-    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
-    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
-    sample['Laplacian'] = Laplacian.astype(self.dtype)
-
-    return sample
-
-class GraphSimOutlierDataset(GraphSimDataset):
-  """Dataset for Cycle Consistency graphs"""
-  MAX_IDX=7000
-
-  def __init__(self, opts, params):
-    GraphSimDataset.__init__(self, opts, params)
-
-  def create_outlier_indeces(self, o, n):
-    ind_pairs = [ (x,y) for x in range(n) for y in range(x+1,n) ]
-    probs = [ 1.0/len(ind_pairs) ] * len(ind_pairs)
-    outlier_ind_pairs = np.random.multinomial(o, probs, size=1)[0]
-    outlier_sel = np.zeros((n,n), dtype=np.int64)
-    for i in range(len(outlier_ind_pairs)):
-      outlier_sel[ind_pairs[i]] = int(outlier_ind_pairs[i])
-      outlier_sel[ind_pairs[i]] = (outlier_ind_pairs[i])
-    # for i in range(n):
-    #   for j in range(i+1,n):
-    #     outlier_sel[i,j] = outlier_ind_pairs[i*n + j]
-    #     outlier_sel[j,i] = outlier_ind_pairs[i*n + j]
-    return outlier_sel
-
-  def gen_sample(self):
-    # Pose graph and related objects
-    sample = GraphSimDataset.gen_sample(self)
-
-    # Graph objects
-    p = self.n_pts
-    n = self.n_views 
-    r = self.dataset_params.num_repeats
-    o = self.dataset_params.num_outliers
-    noise = self.dataset_params.noise_level
-    perm = lambda p: np.eye(p)[np.random.permutation(p),:]
-    TEmb = sample['TrueEmbedding']
-    AdjMat = np.zeros((p*n,p*n))
-    outlier_sel =  self.create_outlier_indeces(o, n)
-    # Generate matrix
-    for i in range(n):
-      TEmb_i = TEmb[p*i:p*i+p,:]
-      for j in range(i+1, n):
-        TEmb_j = TEmb[p*j:p*j+p,:]
-        if outlier_sel[i,j] > 0:
-          Noise = np.eye(p)
-          # for _ in range(outlier_sel[i,j]):
-          for _ in range(1):
-            s0, s1 = np.random.choice(range(p), size=2, replace=False)
-            tmp = Noise[s1,:].copy()
-            Noise[s1,:] = Noise[s0,:]
-            Noise[s0,:] = tmp
-          Val_ij = np.dot(TEmb_i, np.dot(Noise, TEmb_j.T))
-        else:
-          Val_ij = np.dot(TEmb_i, TEmb_j.T)
-        AdjMat[p*i:p*i+p, p*j:p*j+p] = Val_ij
-        AdjMat[p*j:p*j+p, p*i:p*i+p] = Val_ij.T
-    AdjMat = np.minimum(1, AdjMat)
-    Degrees = np.diag(np.sum(AdjMat,0))
-    sample['AdjMat'] = AdjMat.astype(self.dtype)
-    sample['Degrees'] = Degrees.astype(self.dtype)
-
-    # Laplacian objects
-    Ahat = AdjMat + np.eye(*AdjMat.shape)
-    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
-    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
-    sample['Laplacian'] = Laplacian.astype(self.dtype)
-
-    return sample
-
-
-def get_dataset(opts):
-  """Getting the dataset with all the correct attributes"""
-  if opts.dataset in [ 'synth_small', 'synth_3view', 'synth_4view', \
-                       'synth_5view', 'synth_6view' ]:
-    return GraphSimDataset(opts, opts.dataset_params)
-  elif 'synth_pts' in opts.dataset:
-    return GraphSimDataset(opts, opts.dataset_params)
-  elif opts.dataset in [ 'noise_3view' ]:
-    return GraphSimNoisyDataset(opts, opts.dataset_params)
-  elif opts.dataset in [ 'noise_gauss' ]:
-    return GraphSimGaussDataset(opts, opts.dataset_params)
-  elif opts.dataset in [ 'noise_symgauss' ]:
-    return GraphSimSymGaussDataset(opts, opts.dataset_params)
-  elif 'noise_largepairwise' in opts.dataset or \
-        'noise_pairwise' in opts.dataset:
-    return GraphSimPairwiseDataset(opts, opts.dataset_params)
-  elif 'noise_outlier' in opts.dataset:
-    return GraphSimOutlierDataset(opts, opts.dataset_params)
- 
-if __name__ == '__main__':
-  opts = options.get_opts()
-  print("Generating Pose Graphs")
-  if not os.path.exists(opts.data_dir):
-    os.makedirs(opts.data_dir)
-  dataset = get_dataset(opts)
-
-  types = [
-    'train',
-    'test'
-  ]
-  for t in types:
-    dname = os.path.join(opts.data_dir,t)
-    if not os.path.exists(dname):
-      os.makedirs(dname)
-    dataset.convert_dataset(dname, t)
-
-  # Generate numpy test
-  out_dir = os.path.join(opts.data_dir,'np_test')
-  if not os.path.exists(out_dir):
-    os.makedirs(out_dir)
-  dataset.create_np_dataset(out_dir, opts.dataset_params.sizes['test'])
 
 
