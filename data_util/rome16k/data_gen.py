@@ -51,7 +51,6 @@ def generate_samples_fixed_knn(opts, bundle_file):
     Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
     Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
 
-    # Mask objects
     yield {
       'InitEmbeddings': InitEmbeddings.astype(self.dtype),
       'AdjMat': AdjMat.astype(self.dtype),

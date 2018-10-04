@@ -195,4 +195,57 @@ class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
     values = iterator.get_next()
     return dict(zip(keys, values))
 
+class KNNRome16KDataset(Rome16KTripletDataset):
+  def __init__(self, opts, params):
+    Rome16KTripletDataset.__init__(self, opts, params)
+
+  def gen_sample_from_triplet(self, scene, triplet):
+    # Parameters
+    k = opts.knn
+    n = opts.points[-1]
+    v = opts.views[-1]
+    mask = np.kron(np.ones((v,v))-np.eye(v),np.ones((n,n)))
+    cam_pt = lambda i: set([ f.point for f in scene.cams[i].features ])
+    point_set = cam_pt(triplet[0]) & cam_pt(triplet[1]) & cam_pt(triplet[2])
+    # Build features
+    feat_perm = np.random.permutation(len(point_set))[:n]
+    features = [ 
+        sorted([ ([ f for f in p.features if f.cam.id == camid  ])[0] for p in point_set ],
+               key=lambda x: x.id)[feat_perm]
+        for camid in triplet ]
+    descs_ = [ np.array([ f.desc for f in feats ]) for feats in features ]
+    rids = [ np.random.permutation(len(ff)) for ff in descs_ ]
+    perm_mats = [ np.eye(len(perm))[perm] for perm in rids ]
+    perm = la.block_diag(*perm_mats)
+    descs = np.dot(perm,np.concatenate(descs_))
+    desc_norms = np.sum(descs**2, 1).reshape(-1, 1)
+    ndescs = descs / desc_norms
+    Dinit = np.dot(ndescs,ndescs.T)
+    # Rescaling
+    Dmin = Dinit.min()
+    Dmax = Dinit.max()
+    D = (Dinit - Dmin)/(Dmax-Dmin)
+    L = np.copy(D)
+    for i in range(L.shape[0]):
+      L[i,L[i].argsort()[:-k]] = 0
+    LLT = np.maximum(L,L.T)
+
+    # Build dataset options
+    InitEmbeddings = ndescs
+    AdjMat = LLT*mask
+    Degrees = np.diag(np.sum(AdjMat,0))
+    TrueEmbedding = np.concatenate(perm_mats,axis=0)
+    Ahat = AdjMat + np.eye(*AdjMat.shape)
+    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
+    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
+
+    return {
+      'InitEmbeddings': InitEmbeddings.astype(self.dtype),
+      'AdjMat': AdjMat.astype(self.dtype),
+      'Degrees': Degrees.astype(self.dtype),
+      'Laplacian': Laplacian.astype(self.dtype),
+      'TrueEmbedding': TrueEmbedding.astype(self.dtype),
+      'NumViews': v,
+      'NumPoints': n,
+    }
 
