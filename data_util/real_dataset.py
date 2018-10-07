@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.linalg as la
 import os
 import sys
 import glob
@@ -11,71 +12,7 @@ import tensorflow as tf
 import sim_graphs
 from data_util import parent_dataset
 from data_util import tf_helpers
-
-# Format:
-# dict: {'train', 'test', 'np_dataset'}
-#   -> dict: rome16k_name -> (ntriplets, ncams)
-bundle_file_info = {
-  'train' : {
-    '5.1.0.0': (507, 44),
-    '20.0.0.0': (566, 48),
-    '55.0.0.0': (644, 58),
-    '38.0.0.0': (663, 70),
-    '26.1.0.0': (744, 86),
-    '74.0.0.0': (1050, 33),
-    '49.0.0.0': (1053, 37),
-    '36.0.0.0': (1204, 34),
-    '12.0.0.0': (1511, 63),
-    '60.0.0.0': (2057, 47),
-    '54.0.0.0': (2068, 60),
-    '57.0.0.0': (2094, 40),
-    '167.0.0.0': (2119, 42),
-    '4.11.0.0': (2714, 115),
-    '38.3.0.0': (3248, 39),
-    '135.0.0.0': (3476, 46),
-    '4.8.0.0': (3980, 63),
-    '110.0.0.0': (4075, 86),
-    '4.3.0.0': (4442, 81),
-    '29.0.0.0': (4849, 50),
-    '97.0.0.0': (4967, 87),
-    '4.6.0.0': (5409, 99),
-    '84.0.0.0': (5965, 59),
-    '9.1.0.0': (6536, 58),
-    '33.0.0.0': (6698, 125),
-    '15.0.0.0': (9950, 59),
-    '26.5.0.0': (12913, 54),
-    '122.0.0.0': (15269, 93),
-    '10.0.0.0': (16709, 101),
-    '11.0.0.0': (16871, 262),
-    '0.0.0.0': (22632, 186),
-    '17.0.0.0': (28333, 117),
-    '16.0.0.0': (35180, 93),
-    '4.1.0.0': (36460, 163),
-    '26.2.0.1': (75225, 135),
-    '4.5.0.0': (79259, 251)
-  },
-  'test' : {
-    '73.0.0.0': (26, 32),
-    '33.0.0.1': (31, 13),
-    '5.11.0.0': (93, 50),
-    '0.3.0.0': (170, 31),
-    '46.0.0.0': (205, 67),
-    '26.4.0.0': (239, 30),
-    '82.0.0.0': (256, 56),
-    '65.0.0.0': (298, 35),
-    '40.0.0.0': (340, 36),
-    '56.0.0.0': (477, 30),
-    '5.9.0.0': (481, 88),
-    '34.1.0.0': (487, 38),
-  },
-  'np_dataset' : {
-    '11.2.0.0': (12, 40),
-    '125.0.0.0': (21, 34),
-    '41.0.0.0': (22, 54),
-    '37.0.0.0': (25, 46),
-  }
-}
-
+from data_util.rome16k import parse
 
 class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
   """Abstract base class for Rome16K cycle consistency graphs"""
@@ -86,11 +23,11 @@ class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
     del self.features['Mask']
     del self.features['MaskOffset']
     self.dataset_params.sizes['train'] = \
-        sum([x[0] for _, x in bundle_file_info['train'].items()])
+        sum([x[0] for _, x in parse.bundle_file_info['train'].items()])
     self.dataset_params.sizes['test'] = \
-        sum([x[0] for _, x in bundle_file_info['test'].items()])
+        sum([x[0] for _, x in parse.bundle_file_info['test'].items()])
     self.np_dataset_size = \
-        sum([x[0] for _, x in bundle_file_info['np_dataset'].items()])
+        sum([x[0] for _, x in parse.bundle_file_info['np_dataset'].items()])
 
   def gen_sample(self):
     print("ERROR: Cannot generate sample - need to load data")
@@ -100,8 +37,8 @@ class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
     print("ERROR: Not implemented in abstract base class")
     sys.exit(1)
 
-  def triplet_fname(name):
-    return os.path.join(self.rome16k_dir, 'triplets.{}.pkl'.format(name))
+  def triplet_fname(self, bundle_file):
+    return os.path.join(self.rome16k_dir, parse.triplets_name(bundle_file))
 
   def convert_dataset(self, out_dir, mode):
     """Writes synthetic flow data in .mat format to a TF record file."""
@@ -118,8 +55,10 @@ class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
     file_idx = self.MAX_IDX + 1
 
     pbar = tqdm.tqdm(total=params.sizes[mode])
-    for name in bundle_file_info[mode]:
-      with open(triplet_fname(name), 'rb') as f:
+    for bundle_file in parse.bundle_file_info[mode]:
+      scene_name = '{}/{}'.format(self.rome16k_dir, parse.scene_name(bundle_file))
+      scene = parse.load_scene(scene_name)
+      with open(self.triplet_fname(bundle_file), 'rb') as f:
         triplets = pickle.load(f)
       for triplet in triplets:
         if file_idx > self.MAX_IDX:
@@ -148,18 +87,17 @@ class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
     print('Writing dataset to {}'.format(out_dir))
     record_idx = 0
     pbar = tqdm.tqdm(total=self.np_dataset_size)
-    for name in bundle_file_info['np_dataset']:
-      with open(triplet_fname(name), 'rb') as f:
+    index = 0
+    for bundle_file in parse.bundle_file_info['np_dataset']:
+      scene_name = '{}/{}'.format(self.rome16k_dir, parse.scene_name(bundle_file))
+      scene = parse.load_scene(scene_name)
+      with open(self.triplet_fname(bundle_file), 'rb') as f:
         triplets = pickle.load(f)
       for triplet in triplets:
-        loaded_features = self.gen_sample_from_triplet(scene, triplet)
-        features = self.process_features(loaded_features)
+        features = self.gen_sample_from_triplet(scene, triplet)
         np.savez(outfile(index), **features)
+        index += 1
         pbar.update()
-
-    for index in tqdm.tqdm(range(num_entries)):
-      features = self.gen_sample()
-      np.savez(outfile(index), **features)
 
     # And save out a file with the creation time for versioning
     timestamp_file = 'np_test_timestamp.txt'
@@ -201,18 +139,19 @@ class KNNRome16KDataset(Rome16KTripletDataset):
 
   def gen_sample_from_triplet(self, scene, triplet):
     # Parameters
-    k = opts.knn
-    n = opts.points[-1]
-    v = opts.views[-1]
+    k = self.dataset_params.knn
+    n = self.dataset_params.points[-1]
+    v = self.dataset_params.views[-1]
     mask = np.kron(np.ones((v,v))-np.eye(v),np.ones((n,n)))
     cam_pt = lambda i: set([ f.point for f in scene.cams[i].features ])
     point_set = cam_pt(triplet[0]) & cam_pt(triplet[1]) & cam_pt(triplet[2])
     # Build features
     feat_perm = np.random.permutation(len(point_set))[:n]
-    features = [ 
-        sorted([ ([ f for f in p.features if f.cam.id == camid  ])[0] for p in point_set ],
-               key=lambda x: x.id)[feat_perm]
-        for camid in triplet ]
+    features = [] 
+    for camid in triplet:
+      fset = [ ([ f for f in p.features if f.cam.id == camid  ])[0] for p in point_set ]
+      fset = sorted(fset, key=lambda x: x.id)
+      features.append([ fset[x] for x in feat_perm ])
     descs_ = [ np.array([ f.desc for f in feats ]) for feats in features ]
     rids = [ np.random.permutation(len(ff)) for ff in descs_ ]
     perm_mats = [ np.eye(len(perm))[perm] for perm in rids ]

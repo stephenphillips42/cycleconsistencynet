@@ -64,7 +64,7 @@ class Scene(Saver):
       'cams' : cams, 'points': points, 'features': features
     }
 
-  def save_out_dict(self, fname):
+  def save_out_dict(self):
     points = []
     for p in self.points:
       p_d = p.get_dict()

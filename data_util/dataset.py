@@ -25,6 +25,6 @@ def get_dataset(opts):
     return noisy_dataset.GraphSimPairwiseDataset(opts, opts.dataset_params)
   elif 'noise_outlier' in opts.dataset:
     return noisy_dataset.GraphSimOutlierDataset(opts, opts.dataset_params)
-  elif opts.dataset in [ 'rome16kv1' ]:
-    return real_dataset.Rome16KDataset(opts, opts.dataset_params)
+  elif opts.dataset in [ 'rome16kknn0' ]:
+    return real_dataset.KNNRome16KDataset(opts, opts.dataset_params)
 

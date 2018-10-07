@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.core.util.event_pb2 import SessionLog                 
                  
-import data_util
+from data_util import dataset
 import model
 import myutils
 import tfutils
@@ -140,19 +140,19 @@ def run_test(opts, sess, test_data):
 # TODO: Make this a class to deal with all the variable passing
 def train(opts):
   # Get data and network
-  dataset = data_util.get_dataset(opts)
+  mydataset = dataset.get_dataset(opts)
   network = model.get_network(opts, opts.arch)
   # Training
   if opts.load_data:
-    sample = dataset.load_batch('train')
+    sample = mydataset.load_batch('train')
   else:
-    sample = dataset.gen_batch('train')
+    sample = mydataset.gen_batch('train')
   output = network(sample['Laplacian'], sample['InitEmbeddings'])
   loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
   # Testing
   test_data = {}
-  test_data['sample'] = dataset.load_batch('test')
+  test_data['sample'] = mydataset.load_batch('test')
   test_data['output'] = network(test_data['sample']['Laplacian'],
                                 test_data['sample']['InitEmbeddings'])
   test_data['loss'] = get_loss(opts,

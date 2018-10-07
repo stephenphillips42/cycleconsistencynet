@@ -199,7 +199,7 @@ def get_opts():
     opts.save_dir = 'save/save-{:03d}'.format(save_idx)
 
   # Determine dataset
-  if opts.load_data and opts.dataset in [ 'rome16kknn0' ]:
+  if not opts.load_data and opts.dataset in [ 'rome16kknn0' ]:
     print("ERROR: Cannot generate samples on the fly for this dataset: {}".format(opts.dataset))
     sys.exit(1)
   class DatasetParams(object):

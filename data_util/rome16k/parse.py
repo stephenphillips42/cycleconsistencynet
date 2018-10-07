@@ -8,30 +8,99 @@ import gzip
 import pickle
 import yaml
 
-from data_util import scenes
+from data_util.rome16k import scenes
 
-bundle_files =  [
-    '0.0.0.0', '0.1.0.0', '0.2.0.0', '0.3.0.0', '4.0.0.0', '4.1.0.0',
-    '4.2.0.0', '4.3.0.0', '4.4.0.0', '4.5.0.0', '4.6.0.0', '4.7.0.0',
-    '4.8.0.0', '5.0.0.0', '5.1.0.0', '5.2.0.0', '5.3.0.0', '5.3.0.0',
-    '5.8.0.0', '5.9.0.0', '6.0.0.0', '9.0.0.0', '9.1.0.0', '10.0.0.0',
-    '11.0.0.0', '11.1.0.0', '11.2.0.0', '12.0.0.0', '15.0.0.0', '16.0.0.0',
-    '17.0.0.0', '20.0.0.0', '26.1.0.0', '26.2.0.0', '26.4.0.0', '26.5.0.0',
-    '29.0.0.0', '33.0.0.0', '34.0.0.0', '34.1.0.0', '36.0.0.0', '37.0.0.0',
-    '38.0.0.0', '38.3.0.0', '40.0.0.0', '41.0.0.0', '46.0.0.0', '49.0.0.0',
-    '54.0.0.0', '54.0.0.0', '55.0.0.0', '56.0.0.0', '57.0.0.0', '60.0.0.0',
-    '65.0.0.0', '73.0.0.0', '74.0.0.0', '82.0.0.0', '84.0.0.0', '97.0.0.0'
-    '110.0.0.0', '122.0.0.0', '125.0.0.0', '135.0.0.0', '167.0.0.0'
-  ]
+# Format:
+# dict: {'train', 'test', 'np_dataset'}
+#   -> dict: rome16k_name -> (ntriplets, ncams)
+bundle_file_info = {
+  'train' : {
+    '5.1.0.0': (507, 44),
+    '20.0.0.0': (566, 48),
+    '55.0.0.0': (644, 58),
+    '38.0.0.0': (663, 70),
+    '26.1.0.0': (744, 86),
+    '74.0.0.0': (1050, 33),
+    '49.0.0.0': (1053, 37),
+    '36.0.0.0': (1204, 34),
+    '12.0.0.0': (1511, 63),
+    '60.0.0.0': (2057, 47),
+    '54.0.0.0': (2068, 60),
+    '57.0.0.0': (2094, 40),
+    '167.0.0.0': (2119, 42),
+    '4.11.0.0': (2714, 115),
+    '38.3.0.0': (3248, 39),
+    '135.0.0.0': (3476, 46),
+    '4.8.0.0': (3980, 63),
+    '110.0.0.0': (4075, 86),
+    '4.3.0.0': (4442, 81),
+    '29.0.0.0': (4849, 50),
+    '97.0.0.0': (4967, 87),
+    '4.6.0.0': (5409, 99),
+    '84.0.0.0': (5965, 59),
+    '9.1.0.0': (6536, 58),
+    '33.0.0.0': (6698, 125),
+    '15.0.0.0': (9950, 59),
+    '26.5.0.0': (12913, 54),
+    '122.0.0.0': (15269, 93),
+    '10.0.0.0': (16709, 101),
+    '11.0.0.0': (16871, 262),
+    '0.0.0.0': (22632, 186),
+    '17.0.0.0': (28333, 117),
+    '16.0.0.0': (35180, 93),
+    '4.1.0.0': (36460, 163),
+    # These two comprize ~37% of the total training data
+    # '26.2.0.1': (75225, 135),
+    # '4.5.0.0': (79259, 251)
+  },
+  'test' : {
+    '73.0.0.0': (26, 32),
+    '33.0.0.1': (31, 13),
+    '5.11.0.0': (93, 50),
+    '0.3.0.0': (170, 31),
+    '46.0.0.0': (205, 67),
+    '26.4.0.0': (239, 30),
+    '82.0.0.0': (256, 56),
+    '65.0.0.0': (298, 35),
+    '40.0.0.0': (340, 36),
+    '56.0.0.0': (477, 30),
+    '5.9.0.0': (481, 88),
+    '34.1.0.0': (487, 38),
+  },
+  'np_dataset' : {
+    '11.2.0.0': (12, 40),
+    '125.0.0.0': (21, 34),
+    '41.0.0.0': (22, 54),
+    '37.0.0.0': (25, 46),
+  }
+}
+# bundle_files =  [
+#     '0.0.0.0', '0.3.0.0', '10.0.0.0', '11.0.0.0', '11.2.0.0',
+#     '110.0.0.0', '12.0.0.0', '122.0.0.0', '125.0.0.0', '135.0.0.0',
+#     '15.0.0.0', '16.0.0.0', '167.0.0.0', '17.0.0.0', '20.0.0.0',
+#     '26.1.0.0', '26.2.0.1', '26.4.0.0', '26.5.0.0', '29.0.0.0',
+#     '33.0.0.0', '33.0.0.1', '34.1.0.0', '36.0.0.0', '37.0.0.0',
+#     '38.0.0.0', '38.3.0.0', '4.1.0.0', '4.11.0.0', '4.3.0.0',
+#     '4.5.0.0', '4.6.0.0', '4.8.0.0', '40.0.0.0', '41.0.0.0',
+#     '46.0.0.0', '49.0.0.0', '5.1.0.0', '5.11.0.0', '5.9.0.0',
+#     '54.0.0.0', '55.0.0.0', '56.0.0.0', '57.0.0.0', '60.0.0.0',
+#     '65.0.0.0', '73.0.0.0', '74.0.0.0', '82.0.0.0', '84.0.0.0',
+#     '9.1.0.0', '97.0.0.0', 
+#   ]
+
+def check_valid_name(bundle_file):
+  return ((bundle_file in bundle_file_info['train']) or \
+          (bundle_file in bundle_file_info['test']) or \
+          (bundle_file in bundle_file_info['np_dataset']))
 
 def scene_name(bundle_file):
-  if bundle_file not in bundle_files:
+  if not check_valid_name(bundle_file):
     print("ERROR: Specified bundle file does not exist: {}".format(bundle_files))
     sys.exit(1)
   return 'scene.{}.pkl'.format(bundle_file)
 
 def triplets_name(bundle_file, lite=False):
-  if bundle_file not in bundle_files:
+  if not check_valid_name(bundle_file):
     print("ERROR: Specified bundle file does not exist: {}".format(bundle_files))
     sys.exit(1)
   if lite:
@@ -152,22 +221,27 @@ def parse_bundle(bundle_file, max_load=-1):
 
   return scene
 
-def save_scene(scene, bundle_file):
-  scene_dict = scene.save_out_dict(scene_name(bundle_file))
-  print("Saving scene...")
-  with open(scene_name(bundle_file), 'wb') as f:
+def save_scene(scene, filename, verbose=False):
+  scene_dict = scene.save_out_dict()
+  if verbose:
+    print("Saving scene...")
+  with open(filename, 'wb') as f:
     pickle.dump(scene_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
-  print("Done")
+  if verbose:
+    print("Done")
 
-def load_scene(bundle_file):
+def load_scene(filename, verbose=False):
   scene = scenes.Scene(0)
-  print("Loading pickle file...")
-  with open(scene_name(bundle_file), 'rb') as f:
+  if verbose:
+    print("Loading pickle file...")
+  with open(filename, 'rb') as f:
     scene_dict = pickle.load(f)
-  print("Done")
-  print("Parsing pickle file...")
+  if verbose:
+    print("Done")
+    print("Parsing pickle file...")
   scene.load_dict(scene_dict)
-  print("Done")
+  if verbose:
+    print("Done")
   return scene
 
 
