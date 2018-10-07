@@ -40,6 +40,7 @@ def build_optimizer(opts, global_step):
   # Learning parameters post-processing
   num_batches = 1.0 * opts.dataset_params.sizes['train'] / opts.batch_size
   decay_steps = int(num_batches * opts.learning_rate_decay_epochs)
+  use_staircase = (not opts.learning_rate_continuous)
   if opts.learning_rate_decay_type == 'fixed':
     learning_rate = tf.constant(opts.learning_rate, name='fixed_learning_rate')
   elif opts.learning_rate_decay_type == 'exponential':
@@ -47,7 +48,7 @@ def build_optimizer(opts, global_step):
                                                global_step,
                                                decay_steps,
                                                opts.learning_rate_decay_rate,
-                                               staircase=True,
+                                               staircase=use_staircase,
                                                name='learning_rate')
   elif opts.learning_rate_decay_type == 'polynomial':
     learning_rate = tf.train.polynomial_decay(opts.learning_rate,

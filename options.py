@@ -132,9 +132,13 @@ def get_opts():
                       default=0.95,
                       type=float,
                       help='Learning rate decay rate')
+  parser.add_argument('--learning_rate_continuous',
+                      default=False,
+                      type=str2bool,
+                      help='Number of epochs before learning rate decay')
   parser.add_argument('--learning_rate_decay_epochs',
                       default=4,
-                      type=int,
+                      type=float,
                       help='Number of epochs before learning rate decay')
 
   # Training options
