@@ -661,6 +661,99 @@ To my dismay, the GAT architecture seems very unstable to train and doesn't conv
 On the flip side, the Long Skip was a great discovery and works really well, much better than any of the previous architectures. It needs to get more layers for more views... this I am guessing a fundamental limitation. I wonder if there is a way to get around this.
 
 
+\entry{2018}{10}{08}
+\subsubsection*{Rome16K dataset}
+Formatting this dataset took much longer than expected but I managed to build a parser for it, and now can generate data. The dataset is quite large - I had to subsample it, but if I used the whole thing there would be 1 million examples of triplets
+
+\subsubsection*{Rome16K Experiments Round 1}
+These initial experiments were a failure, so I did some experimentation with the learning rate afterward
+
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-longskip0-load-true-0}
+  \label{fig:rome16kknn0-longskip0-load-true-0-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for best performing of this set}
+\end{figure}
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-longskip0-load-true-0}
+  \label{fig:rome16kknn0-longskip0-load-true-0-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for worst performing of this set}
+\end{figure}
+\begin{table}[H]
+  \caption{Numerical results}
+      \begin{tabular}{|l|c|c|c|} \hline
+                                      &  Same Point Similarities  &  Different Point Similarities  \\ \hline
+Baseline   & 9.71e-01 $\pm$ 3.87e-02 & 4.75e-01 $\pm$ 1.42e-01 \\ \hline
+Long Skip Type 0 Architecture   & 1.00e+00 $\pm$ 1.64e-07 & 1.00e+00 $\pm$ 3.28e-07 \\ \hline
+Long Skip Type 1 Architecture   & 1.00e+00 $\pm$ 1.66e-06 & 1.00e+00 $\pm$ 1.37e-06 \\ \hline
+      \end{tabular}
+      \label{fig:tab1}
+\end{table}
+
+\subsubsection*{Rome16K Experiments Round 2}
+This seem to work better - using a learning rate of 1e-4 seemed to work best
+
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-longskip0-lr-1e-4-0}
+  \label{fig:rome16kknn0-longskip0-lr-1e-4-0-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for best performing of this set}
+\end{figure}
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-longskip0-lr-1e-3-0}
+  \label{fig:rome16kknn0-longskip0-lr-1e-3-0-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for worst performing of this set}
+\end{figure}
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-longskip0-lr-1e-5-0}
+  \label{fig:rome16kknn0-longskip0-lr-1e-5-0-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for random experiment of this set}
+\end{figure}
+\begin{table}[H]
+  \caption{Numerical results}
+      \begin{tabular}{|l|c|c|c|} \hline
+                                      &  Same Point Similarities  &  Different Point Similarities  \\ \hline
+Baseline   & 9.70e-01 $\pm$ 3.84e-02 & 4.78e-01 $\pm$ 1.42e-01 \\ \hline
+Long Skip Type 0 Architecture, Learning rate 1e-3   & 1.00e+00 $\pm$ 1.80e-07 & 1.00e+00 $\pm$ 4.03e-07 \\ \hline
+Long Skip Type 0 Architecture, Learning rate 1e-4   & 9.00e-01 $\pm$ 1.55e-01 & 1.09e-01 $\pm$ 1.42e-01 \\ \hline
+Long Skip Type 0 Architecture, Learning rate 1e-5   & 7.59e-01 $\pm$ 2.86e-01 & 7.95e-02 $\pm$ 1.19e-01 \\ \hline
+      \end{tabular}
+      \label{fig:tab1}
+\end{table}
+
+\subsubsection*{Rome16K Experiments Round 3}
+Here I tried to use different decay rate schedules to see which worked best. All these tests used the Long Skip Type 0 Architecture and a learning rate of 1e-4. It seems exponential still works best.
+
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-longskip0-lr-1e-4-type-exponential-steps-3e-1-0}
+  \label{fig:rome16kknn0-longskip0-lr-1e-4-type-exponential-steps-3e-1-0-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for best performing of this set}
+\end{figure}
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-longskip0-lr-1e-4-type-fixed-steps-1e0-0}
+  \label{fig:rome16kknn0-longskip0-lr-1e-4-type-fixed-steps-1e0-0-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for worst performing of this set}
+\end{figure}
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-longskip0-lr-1e-4-type-exponential-steps-1e0-0}
+  \label{fig:rome16kknn0-longskip0-lr-1e-4-type-exponential-steps-1e0-0-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for random experiment of this set}
+\end{figure}
+\begin{table}[H]
+  \caption{Numerical results}
+      \begin{tabular}{|l|c|c|c|} \hline
+                                      &  Same Point Similarities  &  Different Point Similarities  \\ \hline
+Baseline   & 9.70e-01 $\pm$ 3.88e-02 & 4.78e-01 $\pm$ 1.42e-01 \\ \hline
+LR Decay Exponential, LR Decay Steps 1e0 & 6.94e-01 $\pm$ 3.18e-01 & 7.96e-02 $\pm$ 1.08e-01 \\ \hline
+LR Decay Exponential, LR Decay Steps 3e-1& 5.84e-01 $\pm$ 3.42e-01 & 8.29e-02 $\pm$ 8.74e-02 \\ \hline
+LR Decay Exponential, LR Decay Steps 5e-1& 7.66e-01 $\pm$ 2.75e-01 & 7.93e-02 $\pm$ 1.06e-01 \\ \hline
+LR Decay Fixed                  & 6.69e-01 $\pm$ 3.34e-01 & 5.18e-01 $\pm$ 2.99e-01 \\ \hline
+LR Decay Fixed                   & 7.84e-01 $\pm$ 2.72e-01 & 8.12e-02 $\pm$ 1.27e-01 \\ \hline
+LR Decay Fixed                   & 4.64e-01 $\pm$ 4.25e-01 & 7.89e-02 $\pm$ 1.04e-01 \\ \hline
+LR Decay Polynomial, LR Decay Steps 1e0  & 5.89e-01 $\pm$ 3.73e-01 & 8.11e-02 $\pm$ 1.01e-01 \\ \hline
+LR Decay Polynomial, LR Decay Steps 3e-1 & 9.31e-01 $\pm$ 1.13e-01 & 1.92e-01 $\pm$ 2.06e-01 \\ \hline
+LR Decay Polynomial, LR Decay Steps 5e-1 & 6.78e-01 $\pm$ 3.33e-01 & 3.18e-01 $\pm$ 2.44e-01 \\ \hline
+      \end{tabular}
+      \label{fig:tab1}
+\end{table}
 
 
 
