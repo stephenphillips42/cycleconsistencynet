@@ -13,15 +13,15 @@ if not os.path.exists(opts.data_dir):
   os.makedirs(opts.data_dir)
 mydataset = dataset.get_dataset(opts)
 
-# types = [
-#   'train',
-#   'test'
-# ]
-# for t in types:
-#   dname = os.path.join(opts.data_dir,t)
-#   if not os.path.exists(dname):
-#     os.makedirs(dname)
-#   mydataset.convert_dataset(dname, t)
+types = [
+  'train',
+  'test'
+]
+for t in types:
+  dname = os.path.join(opts.data_dir,t)
+  if not os.path.exists(dname):
+    os.makedirs(dname)
+  mydataset.convert_dataset(dname, t)
 
 # Generate numpy test
 out_dir = os.path.join(opts.data_dir,'np_test')

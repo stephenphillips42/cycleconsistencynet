@@ -11,7 +11,7 @@ import yaml
 from data_util.rome16k import scenes
 
 # Format:
-# dict: {'train', 'test', 'np_dataset'}
+# dict: {'train', 'test'}
 #   -> dict: rome16k_name -> (ntriplets, ncams)
 bundle_file_info = {
   'train' : {
@@ -66,8 +66,6 @@ bundle_file_info = {
     '56.0.0.0': (477, 30),
     '5.9.0.0': (481, 88),
     '34.1.0.0': (487, 38),
-  },
-  'np_dataset' : {
     '11.2.0.0': (12, 40),
     '125.0.0.0': (21, 34),
     '41.0.0.0': (22, 54),
@@ -90,8 +88,7 @@ bundle_file_info = {
 
 def check_valid_name(bundle_file):
   return ((bundle_file in bundle_file_info['train']) or \
-          (bundle_file in bundle_file_info['test']) or \
-          (bundle_file in bundle_file_info['np_dataset']))
+          (bundle_file in bundle_file_info['test']))
 
 def scene_name(bundle_file):
   if not check_valid_name(bundle_file):

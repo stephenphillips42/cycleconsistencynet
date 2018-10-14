@@ -26,8 +26,6 @@ class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
         sum([x[0] for _, x in parse.bundle_file_info['train'].items()])
     self.dataset_params.sizes['test'] = \
         sum([x[0] for _, x in parse.bundle_file_info['test'].items()])
-    self.np_dataset_size = \
-        sum([x[0] for _, x in parse.bundle_file_info['np_dataset'].items()])
 
   def gen_sample(self):
     print("ERROR: Cannot generate sample - need to load data")
@@ -86,9 +84,9 @@ class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
     outfile = lambda idx: os.path.join(out_dir, fname.format(idx))
     print('Writing dataset to {}'.format(out_dir))
     record_idx = 0
-    pbar = tqdm.tqdm(total=self.np_dataset_size)
+    pbar = tqdm.tqdm(total=self.dataset_params.sizes['test'])
     index = 0
-    for bundle_file in parse.bundle_file_info['np_dataset']:
+    for bundle_file in parse.bundle_file_info['test']:
       scene_name = '{}/{}'.format(self.rome16k_dir, parse.scene_name(bundle_file))
       scene = parse.load_scene(scene_name)
       with open(self.triplet_fname(bundle_file), 'rb') as f:
