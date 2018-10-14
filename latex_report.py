@@ -29,14 +29,20 @@ def get_latex_opts():
                       type=str2bool,
                       help='Print everything or not')
   parser.add_argument('--index',
-                      default=1,
+                      default=0,
                       type=int,
                       help='Test data index to experiment with')
   parser.add_argument('--experiments',
                       nargs='+',
                       help='Path to test data to run analysis on')
+  parser.add_argument('--plot_generate',
+                      default='',
+                      help='Path to experiment to generate single plot')
   parser.add_argument('--latex_path',
                       default='./journal',
+                      help='Path to latex - very very machine dependent')
+  parser.add_argument('--save_dir',
+                      default='figures',
                       help='Path to latex - very very machine dependent')
   parser.add_argument('--viewer_size',
                       default=4,
@@ -57,11 +63,12 @@ def get_sorted(labels):
   return slabels, sorted_idxs
 
 class Experiment(object):
-  def __init__(self, folder, verbose=False):
+  def __init__(self, folder, extention='png', verbose=False):
     if folder[-1] == '/':
       folder = folder[:-1]
     self.folder = folder
     self.name = os.path.split(folder)[1]
+    self.extention = extention
     self.verbose = False
 
   def get_losses(self, use_time=False):
@@ -151,7 +158,7 @@ class Experiment(object):
 
   def get_plot_name(self):
     """Simple name for saving plots."""
-    return self.name[5:].replace('_','-') + '.png'
+    return self.name[5:].replace('_','-') + '.{}'.format(self.extention)
 
   def get_arch_type(self, arch_):
     arch_type = arch_
@@ -284,7 +291,7 @@ def build_latex_example():
 class LatexGenerator(object):
   def __init__(self, opts, verbose=True):
     self.top_dir = opts.latex_path
-    self.save_dir = 'figures'
+    self.save_dir = opts.save_dir
     self.experiments = []
     self.index = opts.index
     self.viewer_size = opts.viewer_size
@@ -389,8 +396,18 @@ if __name__ == "__main__":
   # # fig.savefig(os.path.join(save_dir, exp.get_plot_name()))
   # baselines = stats[:,-4:]
   # plt.close(fig)
-  latex = LatexGenerator(opts)
-  print(latex.build_final_latex())
+  if opts.experiments and len(opts.experiments) > 0:
+    latex = LatexGenerator(opts)
+    print(latex.build_final_latex())
+  else:
+    if opts.plot_generate == '':
+      print("ERROR: No experiments or plot_generate - nothing to do")
+      sys.exit(1)
+    print()
+    exp = Experiment(opts.plot_generate, extention='eps')
+    fig = exp.generate_plot(opts.viewer_size, opts.index)
+    fname = os.path.join(opts.latex_path, opts.save_dir, exp.get_plot_name())
+    fig.savefig(fname)
   # print(baselines.shape)
   # print(np.mean(baselines,0), np.std(baselines,0), np.min(baselines,0), np.max(baselines,0))
   # plt.hist([ baselines[:,0], baselines[:,2] ], 50, histtype='step', range=(0,1), cumulative=True)
