@@ -106,7 +106,7 @@ def get_opts():
                       default=0,
                       type=float,
                       help='L1 weight decay regularization')
-  optimizer_types = ['sgd','adam','adadelta','momentum']
+  optimizer_types = ['sgd','adam','adadelta','momentum','adamw']
   parser.add_argument('--optimizer_type',
                       default=optimizer_types[0],
                       choices=optimizer_types,

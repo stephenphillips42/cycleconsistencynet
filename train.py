@@ -70,6 +70,8 @@ def build_optimizer(opts, global_step):
     optimizer = tf.train.MomentumOptimizer(learning_rate,opts.momentum)
   elif opts.optimizer_type == 'sgd':
     optimizer = tf.train.GradientDescentOptimizer(learning_rate)
+  elif opts.optimizer_type == 'adamw':
+    optimizer = tf.contrib.opt.AdamWOptimizer(learning_rate)
 
   return optimizer
 
