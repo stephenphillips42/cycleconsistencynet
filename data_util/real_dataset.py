@@ -165,8 +165,11 @@ class KNNRome16KDataset(Rome16KTripletDataset):
     Dmax = Dinit.max()
     D = (Dinit - Dmin)/(Dmax-Dmin)
     L = np.copy(D)
-    for i in range(L.shape[0]):
-      L[i,L[i].argsort()[:-k]] = 0
+    for i in range(v):
+      for j in range(v):
+        Lsub = L[n*i:n*(i+1),n*j:n*(j+1)]
+        for u in range(n):
+          Lsub[u,Lsub[u].argsort()[:-k]] = 0
     LLT = np.maximum(L,L.T)
 
     # Build dataset options

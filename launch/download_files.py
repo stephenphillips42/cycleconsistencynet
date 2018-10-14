@@ -8,9 +8,12 @@ import matplotlib.pyplot as plt
 
 def get_logs(yaml_name):
   # raw = subprocess.check_output(["kubectl", "get", "pods", "--show-all"])
+  check_name = os.path.splitext(yaml_name)[0]
+  if len(check_name) > 56:
+    check_name = check_name[:56]
   raw = subprocess.check_output(["kubectl", "get", "pods"])
   decoded = [ z.split() for z in raw.decode("utf-8").split("\n") ]
-  log_names = [ w[0] for w in decoded[:-1] if os.path.splitext(yaml_name)[0] in w[0] ]
+  log_names = [ w[0] for w in decoded[:-1] if check_name in w[0] ]
   logs_bytes = [ subprocess.check_output(["kubectl", "logs", log_name]) for log_name in log_names ]
   return [ lb.decode("utf-8").split("\n") for lb in logs_bytes ]
 

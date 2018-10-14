@@ -153,6 +153,23 @@ class Experiment(object):
     """Simple name for saving plots."""
     return self.name[5:].replace('_','-') + '.png'
 
+  def get_arch_type(self, arch_):
+    arch_type = arch_
+    if 'vanilla' in arch_:
+      arch_type = 'Vanilla Type {}'.format(arch_[-1])
+    elif 'longskip' in arch_:
+      arch_type = 'Long Skip Type {}'.format(arch_[-1])
+    elif 'skip' in arch_ :
+      if arch_[-1] in [ '0', '1', '2' ]:
+        arch_type = 'Skip Connections Type {}'.format(1+int(arch_[-1]))
+      else:
+        arch_type = 'Skip Connections Type 0'
+    elif 'spattn' in arch_ :
+      arch_type = 'Sparse GAT Network Type {}'.format(arch_[-1])
+    elif 'attn' in arch_:
+      arch_type = 'GAT Network Type {}'.format(arch_[-1])
+    return arch_type
+
   # TODO: Make this nicer?
   def get_name(self):
     """Easily readble name for plot titles."""
@@ -168,22 +185,7 @@ class Experiment(object):
     else:
       name += 'Data type \\texttt{{{}}}'.format(tokens[idx])
       idx += 1
-    arch_ = tokens[idx]
-    arch_type = arch_
-    if 'vanilla' in arch_:
-      arch_type = 'Vanilla Type {}'.format(arch_[-1])
-    elif 'longskip' in arch_:
-      arch_type = 'Long Skip Type {}'.format(arch_[-1])
-    elif 'skip' in arch_ :
-      if arch_[-1] in [ '0', '1', '2' ]:
-        arch_type = 'Skip Connections Type {}'.format(1+int(arch_[-1]))
-      else:
-        arch_type = 'Skip Connections Type 0'
-    elif 'spattn' in arch_ :
-      arch_type = 'Sparse GAT Network Type {}'.format(arch_[-1])
-    elif 'attn' in arch_:
-      arch_type = 'GAT Network Type {}'.format(arch_[-1])
-    name += ', {} Architecture'.format(arch_type)
+    name += ', {} Architecture'.format(self.get_arch_type(tokens[idx]))
     idx += 1
     while idx < len(tokens):
       if tokens[idx] in [ 'load', 'ld' ]:
@@ -200,6 +202,16 @@ class Experiment(object):
           name += ', Unsupervised'
         elif not str2bool(tokens[idx+1]):
           name += ', Supervised'
+      elif tokens[idx] in [ 'type', 'lrdecaytype' ]:
+        if idx + 1 >= len(tokens):
+          print("ERROR: Name not in right format: {}".format(fname))
+          sys.exit(1)
+        name += ', LR Decay {}'.format(tokens[idx + 1].title())
+      elif tokens[idx] in [ 'steps', 'lrdecaysteps' ]:
+        if idx + 1 >= len(tokens):
+          print("ERROR: Name not in right format: {}".format(fname))
+          sys.exit(1)
+        name += ', LR Decay Steps {}'.format(tokens[idx + 1].title())
       idx += 1
     return name
 

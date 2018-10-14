@@ -214,7 +214,7 @@ def get_opts():
       self.views=[3]
       self.points=[25]
       self.points_scale=1
-      self.knn=5
+      self.knn=4
       self.scale=3
       self.sparse=False
       self.soft_edges=False
