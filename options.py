@@ -11,14 +11,7 @@ import types
 import yaml
 import re
 
-
-def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+import myutils
 
 def get_opts():
   """Parse arguments from command line and get all options for training."""
@@ -54,12 +47,12 @@ def get_opts():
                       help='Directory where all the datasets are')
   parser.add_argument('--load_data',
                       default=True,
-                      type=str2bool,
+                      type=myutils.str2bool,
                       help='Load data or just generate it on the fly. '
                            'Generating slower but you get infinite data.')
   parser.add_argument('--shuffle_data',
                       default=True,
-                      type=str2bool,
+                      type=myutils.str2bool,
                       help='Shuffle the dataset or no?')
 
   # Architecture parameters
@@ -91,7 +84,7 @@ def get_opts():
                       help='Size for batches')
   parser.add_argument('--use_unsupervised_loss',
                       default=False,
-                      type=str2bool,
+                      type=myutils.str2bool,
                       help='Use true adjacency or noisy one in loss')
   loss_types = [ 'l2', 'bce' ]
   parser.add_argument('--loss_type',
@@ -134,7 +127,7 @@ def get_opts():
                       help='Learning rate decay rate')
   parser.add_argument('--learning_rate_continuous',
                       default=False,
-                      type=str2bool,
+                      type=myutils.str2bool,
                       help='Number of epochs before learning rate decay')
   parser.add_argument('--learning_rate_decay_epochs',
                       default=4,
@@ -167,11 +160,11 @@ def get_opts():
   # Logging options
   parser.add_argument('--verbose',
                       default=False,
-                      type=str2bool,
+                      type=myutils.str2bool,
                       help='Print out everything')
   parser.add_argument('--full_tensorboard',
                       default=True,
-                      type=str2bool,
+                      type=myutils.str2bool,
                       help='Display everything on tensorboard?')
   parser.add_argument('--save_summaries_secs',
                       default=120,
@@ -189,7 +182,7 @@ def get_opts():
   # Debugging options
   parser.add_argument('--debug',
                       default=False,
-                      type=str2bool,
+                      type=myutils.str2bool,
                       help='Run in debug mode')
 
 

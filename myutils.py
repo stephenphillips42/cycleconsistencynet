@@ -95,6 +95,14 @@ def get_np_activ(activ):
     return lambda x: np.where(x > 0, x, np.exp(x)-1)
 
 # Miscellaneous
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
 def next_file(directory, fname, suffix):
   fidx = 1
   name = lambda i: os.path.join(directory,"{}{:03d}{}".format(fname,i,suffix))
