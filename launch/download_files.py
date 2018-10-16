@@ -13,9 +13,11 @@ def get_opts():
   parser = argparse.ArgumentParser(description='Train motion estimator')
   # Directory and dataset options
   parser.add_argument('--experiments',
+                      default=[],
                       nargs='+',
                       help='Experiments to test data to run analysis on')
   parser.add_argument('--exclude',
+                      default=[],
                       nargs='+',
                       help='Experiments to exclude')
 
@@ -63,7 +65,6 @@ opts = get_opts()
 print("Getting data...")
 losses = []
 log_names = get_log_names(opts)
-print(log_names)
 for n in range(len(opts.experiments)):
   yaml_name = opts.experiments[n]
   name = os.path.splitext(yaml_name)[0]
