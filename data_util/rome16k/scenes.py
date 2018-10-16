@@ -34,14 +34,26 @@ class Feature(Saver):
 class Camera(Saver):
   def __init__(self, id_num, values=None):
     Saver.__init__(self, ['rot', 'trans', 'focal', 'features' ], id_num, values)
-    self.rot = np.eye(3)
-    self.trans = np.zeros(3)
+    if self.rot == None:
+      self.rot = np.eye(3)
+    else:
+      self.rot = np.array(self.rot)
+    if self.trans == None:
+      self.trans = np.zeros(3)
+    else:
+      self.trans = np.array(self.trans)
 
 class Point(Saver):
   def __init__(self, id_num, values=None):
     Saver.__init__(self, [ 'pos', 'color', 'features' ], id_num, values)
-    self.pos = np.zeros(3)
-    self.color = np.zeros(3, dtype='int32')
+    if self.pos == None:
+      self.pos = np.zeros(3)
+    else:
+      self.pos = np.array(self.pos)
+    if self.color == None:
+      self.color = np.zeros(3, dtype='int32')
+    else:
+      self.color = np.array(self.color)
 
 class Scene(Saver):
   def __init__(self, id_num=0):
@@ -83,8 +95,8 @@ class Scene(Saver):
     }
 
   def load_dict(self, scene_dict):
-    self.cams = [ Camera(c['id'], c) for c in scene_dict['cams'] ]
-    self.points = [ Point(p['id'], p) for p in scene_dict['points'] ]
+    self.cams = [ Camera(c['id'], values=c) for c in scene_dict['cams'] ]
+    self.points = [ Point(p['id'], values=p) for p in scene_dict['points'] ]
     self.features = []
     for f in scene_dict['features']:
       feature = Feature(f['id'], f)

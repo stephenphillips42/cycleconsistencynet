@@ -54,6 +54,10 @@ bundle_file_info = {
     # '4.5.0.0': (79259, 251)
   },
   'test' : {
+    '11.2.0.0': (12, 40),
+    '125.0.0.0': (21, 34),
+    '41.0.0.0': (22, 54),
+    '37.0.0.0': (25, 46),
     '73.0.0.0': (26, 32),
     '33.0.0.1': (31, 13),
     '5.11.0.0': (93, 50),
@@ -66,29 +70,13 @@ bundle_file_info = {
     '56.0.0.0': (477, 30),
     '5.9.0.0': (481, 88),
     '34.1.0.0': (487, 38),
-    '11.2.0.0': (12, 40),
-    '125.0.0.0': (21, 34),
-    '41.0.0.0': (22, 54),
-    '37.0.0.0': (25, 46),
   }
 }
-# bundle_files =  [
-#     '0.0.0.0', '0.3.0.0', '10.0.0.0', '11.0.0.0', '11.2.0.0',
-#     '110.0.0.0', '12.0.0.0', '122.0.0.0', '125.0.0.0', '135.0.0.0',
-#     '15.0.0.0', '16.0.0.0', '167.0.0.0', '17.0.0.0', '20.0.0.0',
-#     '26.1.0.0', '26.2.0.1', '26.4.0.0', '26.5.0.0', '29.0.0.0',
-#     '33.0.0.0', '33.0.0.1', '34.1.0.0', '36.0.0.0', '37.0.0.0',
-#     '38.0.0.0', '38.3.0.0', '4.1.0.0', '4.11.0.0', '4.3.0.0',
-#     '4.5.0.0', '4.6.0.0', '4.8.0.0', '40.0.0.0', '41.0.0.0',
-#     '46.0.0.0', '49.0.0.0', '5.1.0.0', '5.11.0.0', '5.9.0.0',
-#     '54.0.0.0', '55.0.0.0', '56.0.0.0', '57.0.0.0', '60.0.0.0',
-#     '65.0.0.0', '73.0.0.0', '74.0.0.0', '82.0.0.0', '84.0.0.0',
-#     '9.1.0.0', '97.0.0.0', 
-#   ]
+bundle_files = sorted([ k for k in bundle_file_info['test'].keys() ] + \
+                      [ k for k in bundle_file_info['train'].keys() ])
 
 def check_valid_name(bundle_file):
-  return ((bundle_file in bundle_file_info['train']) or \
-          (bundle_file in bundle_file_info['test']))
+  return bundle_file in bundle_files
 
 def scene_name(bundle_file):
   if not check_valid_name(bundle_file):
@@ -104,6 +92,13 @@ def triplets_name(bundle_file, lite=False):
     return 'triplets_lite.{}.pkl'.format(bundle_file)
   else:
     return 'triplets.{}.pkl'.format(bundle_file)
+
+def ktuples_name(bundle_file):
+  if not check_valid_name(bundle_file):
+    print("ERROR: Specified bundle file does not exist: {}".format(bundle_files))
+    sys.exit(1)
+  else:
+    return 'ktuples.{}.pkl'.format(bundle_file)
 
 def parse_sift_gzip(fname):
   with gzip.open(fname) as f:
@@ -121,9 +116,10 @@ def parse_sift_gzip(fname):
     feature_list.append(feature)
   return feature_list
 
-def parse_bundle(bundle_file, max_load=-1):
-  txtname = '../bundle/components/bundle.{}.txt'.format(bundle_file)
-  outname = '../bundle/components/bundle.{}.out'.format(bundle_file)
+def parse_bundle(bundle_file, top_dir, max_load=-1):
+  bundle_dir = os.path.join(top_dir, 'bundle', 'components')
+  txtname = os.path.join(bundle_dir, 'bundle.{}.txt'.format(bundle_file))
+  outname = os.path.join(bundle_dir, 'bundle.{}.out'.format(bundle_file))
   # Load files
   with open(outname, 'r') as f:
     out_lines = []
@@ -143,10 +139,12 @@ def parse_bundle(bundle_file, max_load=-1):
       break
     parse = f[:-1].split(' ')
     fname = parse[0][len('images/'):-len('.jpg')] + ".key.gz"
-    if os.path.exists("../db/{}".format(fname)):
-      feature_list = parse_sift_gzip("../db/{}".format(fname))
+    db_file = os.path.join(top_dir, 'db/{}'.format(fname))
+    if os.path.exists(db_file):
+      feature_list = parse_sift_gzip(db_file)
     else:
-      feature_list = parse_sift_gzip("../query/{}".format(fname))
+      query_file = os.path.join(top_dir, 'query/{}'.format(fname))
+      feature_list = parse_sift_gzip(query_file)
     feature_lists.append(feature_list)
   print("Done")
   # TODO: Make this ID system work
