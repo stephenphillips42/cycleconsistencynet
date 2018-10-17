@@ -147,10 +147,6 @@ def parse_bundle(bundle_file, top_dir, max_load=-1):
       feature_list = parse_sift_gzip(query_file)
     feature_lists.append(feature_list)
   print("Done")
-  # TODO: Make this ID system work
-  # TODO: But really though
-  # fcumlens = np.cumsum(feature_lists_lens)[1:].tolist()
-  # fcumlens.insert(0,0)
 
   meta = out_lines[0]
   num_cams = int(meta[0])
@@ -200,7 +196,6 @@ def parse_bundle(bundle_file, top_dir, max_load=-1):
       feature.cam = cams[cam_id]
       feature.point = point
       feature.id = len(features)
-      # feature.id = fcumlens[cam_id] + feat_id
       # Connect feature to camera and point
       cams[cam_id].features.append(feature)
       point.features.append(feature)
