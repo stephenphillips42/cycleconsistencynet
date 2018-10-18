@@ -16,25 +16,34 @@ import tfutils
 import options
 
 
-def get_loss(opts, sample, output, name='loss'):
+def get_loss(opts, sample, output, return_true_val=False, name='loss'):
   emb = sample['TrueEmbedding']
   output_sim = tfutils.get_sim(output)
+  sim_true = tfutils.get_sim(emb)
   if opts.use_unsupervised_loss:
     v = opts.dataset_params.views[-1]
     p = opts.dataset_params.points[-1]
     b = opts.batch_size 
-    emb_true = sample['AdjMat'] + tf.eye(num_rows=v*p, batch_shape=[b])
+    sim = sample['AdjMat'] + tf.eye(num_rows=v*p, batch_shape=[b])
   else:
-    emb_true = tfutils.get_sim(emb)
+    sim = sim_true
   tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
   tf.summary.image('Embedding Similarity', tf.expand_dims(emb_true, -1))
   if opts.loss_type == 'l2':
-    loss = tf.losses.mean_squared_error(emb_true, output_sim)
+    loss = tf.losses.mean_squared_error(sim, output_sim)
   elif opts.loss_type == 'bce':
-    bce_elements = tf.nn.sigmoid_cross_entropy_with_logits(labels=emb_true, logits=output_sim)
+    bce_elements = tf.nn.sigmoid_cross_entropy_with_logits(labels=sim, logits=output_sim)
     loss = tf.reduce_sum(bce_elements)
   tf.summary.scalar(name, loss)
-  return loss
+  gt_loss = None
+  if return_true_val or opts.full_tensorboard:
+    gt_loss = tf.metrics.mean_squared_error(sim_true, output_sim)
+  if opts.full_tensorboard and opts.use_unsupervised_loss:
+    tf.summary.scalr('GT L2 loss', gt_loss)
+  if return_true_val:
+    return loss, gt_loss
+  else:
+    return loss
 
 def build_optimizer(opts, global_step):
   # Learning parameters post-processing
@@ -125,20 +134,72 @@ def get_intervals(opts):
     test_freq_steps = None
   return train_steps, train_time, test_freq_steps, test_freq
 
-def run_test(opts, sess, test_data):
+def get_test_dict(opts, mydataset, network)
+  test_data = {}
+  test_data['sample'] = mydataset.load_batch('test')
+  test_data['output'] = network(test_data['sample']['Laplacian'],
+                                test_data['sample']['InitEmbeddings'])
+  if opts.use_unsupervised_loss:
+    test_loss, test_gt_loss = get_loss(opts,
+                                 test_data['sample'],
+                                 test_data['output'],
+                                 name='test_loss')
+    test_data['loss'] = test_loss
+    test_data['loss_gt'] = test_gt_loss
+  else:
+    test_data['loss'] = get_loss(opts,
+                                 test_data['sample'],
+                                 test_data['output'],
+                                 name='test_loss')
+  num_batches = 1.0 * opts.dataset_params.sizes['test'] / opts.batch_size
+  test_data['nsteps'] = int(num_batches)
+  return test_data
+
+def run_test(opts, sess, test_data, verbose=True):
   npsave = {}
-  summed_loss, npsave['output'], npsave['input'], npsave['adjmat'], npsave['gt'] = \
-    sess.run([ 
-      test_data['loss'],
-      test_data['output'],
-      test_data['sample']['InitEmbeddings'],
-      test_data['sample']['AdjMat'],
-      test_data['sample']['TrueEmbedding'],
-    ])
-  for _ in range(test_data['nsteps']-1):
-    summed_loss += sess.run(test_data['loss'])
+  teststr = " ------------------- "
+  start_time = time.time()
+  if opts.use_unsupervised_loss:
+    teststr += " Test loss = {:.4e}, GT Loss: {:4e} ({:.01} sec)"
+    summed_loss, \
+    summed_loss_gt, \
+    npsave['output'], \
+    npsave['input'], \
+    npsave['adjmat'], \
+    npsave['gt'] = \
+      sess.run([ 
+        test_data['loss'],
+        test_data['loss_gt'],
+        test_data['output'],
+        test_data['sample']['InitEmbeddings'],
+        test_data['sample']['AdjMat'],
+        test_data['sample']['TrueEmbedding'],
+      ])
+    for _ in range(test_data['nsteps']-1):
+      sl, slgt = sess.run(test_data['loss'], test_data['loss_gt'])
+      summed_loss += sl
+      summed_loss_gt += slgt
+    strargs = (summed_loss / test_data['nsteps'], summed_loss_gt / test_data['nsteps'])
+  else:
+    teststr += " Test loss = {:.4e} ({:.01} sec)"
+    summed_loss, \
+    npsave['output'], \
+    npsave['input'], \
+    npsave['adjmat'], \
+    npsave['gt'] = \
+      sess.run([ 
+        test_data['loss'],
+        test_data['output'],
+        test_data['sample']['InitEmbeddings'],
+        test_data['sample']['AdjMat'],
+        test_data['sample']['TrueEmbedding'],
+      ])
+    for _ in range(test_data['nsteps']-1):
+      summed_loss += sess.run(test_data['loss'])
+    strargs = (summed_loss / test_data['nsteps'], )
   np.savez(myutils.next_file(opts.save_dir, 'test', '.npz'), **npsave)
-  return summed_loss / test_data['nsteps']
+  ctime = time.time()
+  tf.logging.info(teststr.format(*strargs, ctime-start_time))
 
 # TODO: Make this a class to deal with all the variable passing
 def train(opts):
@@ -154,22 +215,12 @@ def train(opts):
   loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
   # Testing
-  test_data = {}
-  test_data['sample'] = mydataset.load_batch('test')
-  test_data['output'] = network(test_data['sample']['Laplacian'],
-                                test_data['sample']['InitEmbeddings'])
-  test_data['loss'] = get_loss(opts,
-                               test_data['sample'],
-                               test_data['output'],
-                               name='test_loss')
-  num_batches = 1.0 * opts.dataset_params.sizes['test'] / opts.batch_size
-  test_data['nsteps'] = int(num_batches)
+  test_data = get_test_dict(opts, mydataset, network)
 
   # Tensorflow and logging operations
   step = 0
   train_steps, train_time, test_freq_steps, test_freq = get_intervals(opts)
   trainstr = "global step {}: loss = {} ({:.04} sec/step, time {:.04})"
-  teststr = " ------------------- Test loss = {:.4e} ({:.01} sec)"
   tf.logging.set_verbosity(tf.logging.INFO)
   # Build session
   with build_session(opts) as sess:
@@ -190,12 +241,9 @@ def train(opts):
                                           ctime - stime))
         if ((test_freq_steps and step % test_freq_steps == 0) or \
             (ctime - ttime > test_freq)):
-          start_time = time.time()
           raw_sess = sess.raw_session()
-          test_loss_ = run_test(opts, raw_sess, test_data)
-          ctime = time.time()
-          ttime = ctime
-          tf.logging.info(teststr.format(test_loss_, ctime-start_time))
+          run_test(opts, raw_sess, test_data)
+          ttime = time.time()
         step += 1
 
 if __name__ == "__main__":

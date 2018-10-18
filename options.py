@@ -86,7 +86,7 @@ def get_opts():
                       default=False,
                       type=myutils.str2bool,
                       help='Use true adjacency or noisy one in loss')
-  loss_types = [ 'l2', 'bce' ]
+  loss_types = [ 'l2', 'bce', 'l1' ]
   parser.add_argument('--loss_type',
                       default=loss_types[0],
                       choices=loss_types,
