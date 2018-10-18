@@ -9,14 +9,15 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.core.util.event_pb2 import SessionLog                 
                  
-from data_util import dataset
+import data_util.dataset
 import model
 import myutils
 import tfutils
 import options
 
 
-def get_loss(opts, sample, output, return_true_val=False, name='loss'):
+def get_loss(opts, sample, output, return_gt=False, name='loss'):
+  print("RETRIEVING WEAPON OF ULTIMATE DESTRUCTION I MEAN LOSS")
   emb = sample['TrueEmbedding']
   output_sim = tfutils.get_sim(output)
   sim_true = tfutils.get_sim(emb)
@@ -28,7 +29,7 @@ def get_loss(opts, sample, output, return_true_val=False, name='loss'):
   else:
     sim = sim_true
   tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
-  tf.summary.image('Embedding Similarity', tf.expand_dims(emb_true, -1))
+  tf.summary.image('Embedding Similarity', tf.expand_dims(sim, -1))
   if opts.loss_type == 'l2':
     loss = tf.losses.mean_squared_error(sim, output_sim)
   elif opts.loss_type == 'bce':
@@ -36,11 +37,11 @@ def get_loss(opts, sample, output, return_true_val=False, name='loss'):
     loss = tf.reduce_sum(bce_elements)
   tf.summary.scalar(name, loss)
   gt_loss = None
-  if return_true_val or opts.full_tensorboard:
-    gt_loss = tf.metrics.mean_squared_error(sim_true, output_sim)
+  if return_gt or opts.full_tensorboard:
+    gt_loss = tf.reduce_mean(tf.square(sim_true - output_sim))
   if opts.full_tensorboard and opts.use_unsupervised_loss:
-    tf.summary.scalr('GT L2 loss', gt_loss)
-  if return_true_val:
+    tf.summary.scalar('GT L2 loss', gt_loss)
+  if return_gt:
     return loss, gt_loss
   else:
     return loss
@@ -134,15 +135,16 @@ def get_intervals(opts):
     test_freq_steps = None
   return train_steps, train_time, test_freq_steps, test_freq
 
-def get_test_dict(opts, mydataset, network)
+def get_test_dict(opts, dataset, network):
   test_data = {}
-  test_data['sample'] = mydataset.load_batch('test')
+  test_data['sample'] = dataset.load_batch('test')
   test_data['output'] = network(test_data['sample']['Laplacian'],
                                 test_data['sample']['InitEmbeddings'])
   if opts.use_unsupervised_loss:
     test_loss, test_gt_loss = get_loss(opts,
                                  test_data['sample'],
                                  test_data['output'],
+                                 return_gt=True,
                                  name='test_loss')
     test_data['loss'] = test_loss
     test_data['loss_gt'] = test_gt_loss
@@ -176,7 +178,7 @@ def run_test(opts, sess, test_data, verbose=True):
         test_data['sample']['TrueEmbedding'],
       ])
     for _ in range(test_data['nsteps']-1):
-      sl, slgt = sess.run(test_data['loss'], test_data['loss_gt'])
+      sl, slgt = sess.run([ test_data['loss'], test_data['loss_gt'] ])
       summed_loss += sl
       summed_loss_gt += slgt
     strargs = (summed_loss / test_data['nsteps'], summed_loss_gt / test_data['nsteps'])
@@ -204,18 +206,18 @@ def run_test(opts, sess, test_data, verbose=True):
 # TODO: Make this a class to deal with all the variable passing
 def train(opts):
   # Get data and network
-  mydataset = dataset.get_dataset(opts)
+  dataset = data_util.dataset.get_dataset(opts)
   network = model.get_network(opts, opts.arch)
   # Training
   if opts.load_data:
-    sample = mydataset.load_batch('train')
+    sample = dataset.load_batch('train')
   else:
-    sample = mydataset.gen_batch('train')
+    sample = dataset.gen_batch('train')
   output = network(sample['Laplacian'], sample['InitEmbeddings'])
   loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
   # Testing
-  test_data = get_test_dict(opts, mydataset, network)
+  test_data = get_test_dict(opts, dataset, network)
 
   # Tensorflow and logging operations
   step = 0
