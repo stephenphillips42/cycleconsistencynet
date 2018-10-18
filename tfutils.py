@@ -30,3 +30,19 @@ def create_bias_initializer(unused_in, unused_out, dtype=tf.float32):
   """Returns a default initializer for the biases of a linear/AddBias module."""
   return tf.zeros_initializer(dtype=dtype)
 
+def bce_loss(labels, logits, add_loss=True):
+  bce_elements = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits)
+  bce_ = tf.reduce_sum(bce_elements)
+  tf.losses.add_loss(bce_)
+  return bce_
+
+def l1_loss(x, y, add_loss=True):
+  l1_ = tf.reduce_mean(tf.abs(x - y))
+  tf.losses.add_loss(l1_)
+  return l1_
+
+def l2_loss(x, y, add_loss=True):
+  l2_ = tf.reduce_mean(tf.square(x - y))
+  tf.losses.add_loss(l2_)
+  return l2_
+

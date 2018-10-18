@@ -15,9 +15,13 @@ import myutils
 import tfutils
 import options
 
+loss_fns = {
+  'bce': tfutils.bce_loss,
+  'l1': tfutils.l1_loss,
+  'l2': tfutils.l2_loss,
+}
 
 def get_loss(opts, sample, output, return_gt=False, name='loss'):
-  print("RETRIEVING WEAPON OF ULTIMATE DESTRUCTION I MEAN LOSS")
   emb = sample['TrueEmbedding']
   output_sim = tfutils.get_sim(output)
   sim_true = tfutils.get_sim(emb)
@@ -30,15 +34,11 @@ def get_loss(opts, sample, output, return_gt=False, name='loss'):
     sim = sim_true
   tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
   tf.summary.image('Embedding Similarity', tf.expand_dims(sim, -1))
-  if opts.loss_type == 'l2':
-    loss = tf.losses.mean_squared_error(sim, output_sim)
-  elif opts.loss_type == 'bce':
-    bce_elements = tf.nn.sigmoid_cross_entropy_with_logits(labels=sim, logits=output_sim)
-    loss = tf.reduce_sum(bce_elements)
+  loss = loss_fns[opts.loss_type](sim, output_sim)
   tf.summary.scalar(name, loss)
   gt_loss = None
   if return_gt or opts.full_tensorboard:
-    gt_loss = tf.reduce_mean(tf.square(sim_true - output_sim))
+    gt_loss = loss_fns[opts.loss_type](sim_true, output_sim, add_loss=False)
   if opts.full_tensorboard and opts.use_unsupervised_loss:
     tf.summary.scalar('GT L2 loss', gt_loss)
   if return_gt:
