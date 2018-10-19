@@ -8,7 +8,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def get_opts():
-  pass
   """Parse arguments from command line and get all options for training."""
   parser = argparse.ArgumentParser(description='Train motion estimator')
   # Directory and dataset options
@@ -52,14 +51,21 @@ def get_logs(log_names, yaml_name):
 def get_loss_values(log):
   loss = []
   test_loss = []
+  gt_loss = []
   for x in log:
     line = x.split()
     if '=' in line:
       if 'Test' in line:
-        test_loss.append(float(line[line.index('=')+1]))
+        test_loss_val = line[line.index('=')+1]
+        if test_loss_val[-1] not in '0123456789.':
+          test_loss_val = test_loss_val[:-1]
+        test_loss.append(float(test_loss_val))
+        if 'GT' in line:
+          gt_loss_val = line[line.index('GT') + 2]
+          gt_loss.append(float(gt_loss_val))
       else:
         loss.append(float(line[line.index('=')+1]))
-  return loss, test_loss
+  return loss, test_loss, gt_loss
 
 opts = get_opts()
 print("Getting data...")
@@ -71,38 +77,48 @@ for n in range(len(opts.experiments)):
   logs = get_logs(log_names, name)
   if len(logs) > 1:
     for l in range(len(logs)):
-      loss, test_loss = np.array(get_loss_values(logs[l]))
-      losses.append((loss,test_loss,"{}-{}".format(name,l),name))
+      train_loss, test_loss, gt_loss = np.array(get_loss_values(logs[l]))
+      loss_name ="{}-{}".format(name,l)
+      losses.append((train_loss, test_loss, gt_loss, loss_name, name))
   elif len(logs) == 0:
     print("ERROR - {} has no logs".format(yaml_name))
     sys.exit(1)
   else:
-    loss, test_loss = np.array(get_loss_values(logs[0]))
-    losses.append((loss, test_loss, name, name))
+    loss, test_loss, gt_loss = np.array(get_loss_values(logs[0]))
+    losses.append((loss, test_loss, gt_loss, name, name))
 
-print([ (name, len(loss), len(test_loss)) for loss, test_loss, name, _ in losses ])
+print([ (name, len(l), len(tl), len(gtl)) for l, tl, gtl, name, _ in losses ])
 path="/home/stephen/cycleconsistencynet/save/save"
-for loss, test_loss, name, pathname in losses:
-  dirpath = "../logs/save-{}".format(name)
+for loss, test_loss, gt_loss, loss_name, path_name in losses:
+  print("Loss {}".format(loss_name))
+  dirpath = "../logs/save-{}".format(loss_name)
   if not os.path.exists(dirpath):
-    print("Here")
     subprocess.call([
       "scp",
       "-r",
-      "stephen@kostas-ap.grasp.upenn.edu:{}-{}".format(path,pathname),
+      "stephen@kostas-ap.grasp.upenn.edu:{}-{}".format(path,path_name),
       dirpath
     ])
     np.save(os.path.join(dirpath, 'loss.npy'), loss)
     np.save(os.path.join(dirpath, 'test_loss.npy'), test_loss)
+    if gt_loss:
+      np.save(os.path.join(dirpath, 'gt_loss.npy'), gt_loss)
 
-fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2)
+nplots = 2
+if any([ loss_vals[2] != [] for loss_vals in losses ]):
+  nplots = 3
+fig, ax = plt.subplots(nrows=1, ncols=nplots)
 for i in range(len(losses)):
-  ax0.plot(losses[i][0], label=losses[i][2])
-  ax1.plot(losses[i][1], label=losses[i][2])
-ax0.legend()
-ax1.legend()
+  ax[0].plot(losses[i][0], label=losses[i][3])
+  ax[1].plot(losses[i][1], label=losses[i][3])
+  if nplots == 3:
+    ax[2].plot(losses[i][2], label=losses[i][3])
+ax[0].legend()
+ax[1].legend()
+if len(ax) > 2:
+  ax[2].legend()
 plt.show()
 print("\n".join([
-        "{}, {}: {} ({})".format(n, l[-1], tl[-1], len(l)) for l, tl, n, _ in losses
+        "{}, {}: {} ({})".format(n, l[-1], tl[-1], len(l)) for l, tl, _, n, _ in losses
       ]))
 
