@@ -13,6 +13,32 @@ import re
 
 import myutils
 
+dataset_choices = [
+  'synth_3view', 'synth_small', 'synth_4view', 'synth_5view', 'synth_6view',
+  'noise_3view',
+  'noise_gauss', 'noise_symgauss',
+  'noise_pairwise', 'noise_pairwise3', 'noise_pairwise5',
+  'noise_pairwise3view5', 'noise_pairwise3view6', 'noise_pairwise5view5',
+  'noise_largepairwise3', 'noise_largepairwise5',
+  'synth_pts50', 'synth_pts100',
+  'noise_outlier1', 'noise_outlier2', 'noise_outlier4', 'noise_outlier8',
+  'rome16kknn0', 
+]
+
+arch_choices = [
+  'vanilla', 'vanilla0', 'vanilla1',
+  'skip', 'skip0', 'skip1',
+  'longskip0', 'longskip1',
+  'attn0', 'attn1', 'attn2',
+  'spattn0', 'spattn1', 'spattn2',
+]
+
+activation_types = ['relu','leakyrelu','tanh', 'elu']
+loss_types = [ 'l2', 'bce', 'l1' ]
+optimizer_types = ['sgd','adam','adadelta','momentum','adamw']
+lr_decay_types = ['exponential','fixed','polynomial']
+
+
 def get_opts():
   """Parse arguments from command line and get all options for training."""
   parser = argparse.ArgumentParser(description='Train motion estimator')
@@ -26,17 +52,6 @@ def get_opts():
   parser.add_argument('--rome16k_dir',
                       default='/NAS/data/stephen/Rome16K',
                       help='Directory for storing Rome16K dataset (Very specific)')
-  dataset_choices = [
-    'synth_3view', 'synth_small', 'synth_4view', 'synth_5view', 'synth_6view',
-    'noise_3view',
-    'noise_gauss', 'noise_symgauss',
-    'noise_pairwise', 'noise_pairwise3', 'noise_pairwise5',
-    'noise_pairwise3view5', 'noise_pairwise3view6', 'noise_pairwise5view5',
-    'noise_largepairwise3', 'noise_largepairwise5',
-    'synth_pts50', 'synth_pts100',
-    'noise_outlier1', 'noise_outlier2', 'noise_outlier4', 'noise_outlier8',
-    'rome16kknn0', 
-  ]
   # 'synth_noise1', 'synth_noise2'
   parser.add_argument('--dataset',
                       default=dataset_choices[0],
@@ -56,13 +71,6 @@ def get_opts():
                       help='Shuffle the dataset or no?')
 
   # Architecture parameters
-  arch_choices = [
-    'vanilla', 'vanilla0', 'vanilla1',
-    'skip', 'skip0', 'skip1',
-    'longskip0', 'longskip1',
-    'attn0', 'attn1', 'attn2',
-    'spattn0', 'spattn1', 'spattn2',
-  ]
   parser.add_argument('--architecture',
                       default=arch_choices[0],
                       choices=arch_choices,
@@ -71,7 +79,6 @@ def get_opts():
                       default=12,
                       type=int,
                       help='Dimensionality of the output')
-  activation_types = ['relu','leakyrelu','tanh', 'elu']
   parser.add_argument('--activation_type',
                       default=activation_types[0],
                       choices=activation_types,
@@ -86,7 +93,6 @@ def get_opts():
                       default=False,
                       type=myutils.str2bool,
                       help='Use true adjacency or noisy one in loss')
-  loss_types = [ 'l2', 'bce', 'l1' ]
   parser.add_argument('--loss_type',
                       default=loss_types[0],
                       choices=loss_types,
@@ -99,7 +105,6 @@ def get_opts():
                       default=0,
                       type=float,
                       help='L1 weight decay regularization')
-  optimizer_types = ['sgd','adam','adadelta','momentum','adamw']
   parser.add_argument('--optimizer_type',
                       default=optimizer_types[0],
                       choices=optimizer_types,
@@ -112,7 +117,6 @@ def get_opts():
                       default=0.6,
                       type=float,
                       help='Learning rate for gradient descent')
-  lr_decay_types = ['exponential','fixed','polynomial']
   parser.add_argument('--learning_rate_decay_type',
                       default=lr_decay_types[0],
                       choices=lr_decay_types,
