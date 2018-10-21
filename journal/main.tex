@@ -756,15 +756,40 @@ LR Decay Polynomial, LR Decay Steps 5e-1 & 6.78e-01 $\pm$ 3.33e-01 & 3.18e-01 $\
 \end{table}
 
 
+\entry{2018}{10}{08}
+\subsubsection*{Rome16K Unsupervised Experiments}
+
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-loss-l2-unsup-true}
+  \label{fig:rome16kknn0-loss-l2-unsup-true-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for best performing of this set}
+\end{figure}
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-loss-l2-unsup-false}
+  \label{fig:rome16kknn0-loss-l2-unsup-false-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for worst performing of this set}
+\end{figure}
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{figures/rome16kknn0-loss-l1-unsup-true}
+  \label{fig:rome16kknn0-loss-l1-unsup-true-sub1}
+  \caption{Sample embedding, similarity matrix, histogram, and loss curves for random experiment of this set}
+\end{figure}
+\begin{table}[H]
+  \caption{Numerical results}
+      \begin{tabular}{|l|c|c|c|} \hline
+                                      &  Same Point Similarities  &  Different Point Similarities  \\ \hline
+Baseline   & 8.83e-01 $\pm$ 1.26e-01 & 4.67e-01 $\pm$ 1.32e-01 \\ \hline
+Data type \texttt{rome16kknn0}, Loss L1, Supervised   & 5.62e-01 $\pm$ 4.12e-01 & 4.63e-02 $\pm$ 1.31e-01 \\ \hline
+Data type \texttt{rome16kknn0}, Loss L1, Unsupervised   & 6.89e-01 $\pm$ 3.50e-01 & 5.79e-02 $\pm$ 1.62e-01 \\ \hline
+Data type \texttt{rome16kknn0}, Loss L2, Supervised   & 7.84e-01 $\pm$ 2.54e-01 & 3.16e-01 $\pm$ 2.74e-01 \\ \hline
+Data type \texttt{rome16kknn0}, Loss L2, Unsupervised   & 7.21e-01 $\pm$ 2.88e-01 & 1.09e-01 $\pm$ 1.45e-01 \\ \hline
+      \end{tabular}
+      \label{fig:tab1}
+\end{table}
+
+
 
 \end{document}
-
-
-
-
-
-
-
 
 
 

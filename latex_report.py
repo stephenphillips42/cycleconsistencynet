@@ -11,7 +11,7 @@ import tqdm
 # import yaml
 
 import myutils
-# import options
+import options
 
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
@@ -69,7 +69,7 @@ class Experiment(object):
     self.folder = folder
     self.name = os.path.split(folder)[1]
     self.extention = extention
-    self.verbose = False
+    self.verbose = verbose
 
   def get_losses(self, use_time=False):
     loss = np.load(os.path.join(self.folder, 'loss.npy'))
@@ -182,28 +182,34 @@ class Experiment(object):
     """Easily readble name for plot titles."""
     tokens = self.name.split('-')
     if tokens[0] != 'save':
-      print("ERROR: Name not in right format: {}".format(fname))
+      print("ERROR: Name not in right format: {}".format(fname), file=sys.stderr)
       sys.exit(1)
     name = ""
     idx = 1
     if tokens[idx] == 'synth':
-      name += 'Data type \\texttt{{synth{}}}'.format(tokens[idx+1])
-      idx += 2
+      idx += 1
+      name += 'Data type \\texttt{{synth{}}}'.format(tokens[idx])
     else:
       name += 'Data type \\texttt{{{}}}'.format(tokens[idx])
-      idx += 1
-    name += ', {} Architecture'.format(self.get_arch_type(tokens[idx]))
     idx += 1
     while idx < len(tokens):
-      if tokens[idx] in [ 'load', 'ld' ]:
+      if tokens[idx] in options.arch_choices:
+        name += ', {} Architecture'.format(self.get_arch_type(tokens[idx]))
+      elif tokens[idx] in [ 'load', 'ld' ]:
         if idx+1 < len(tokens) and not str2bool(tokens[idx+1]):
           name += ', Data generation'
           idx += 1
-      elif tokens[idx] in [ 'relu', 'leakyrelu', 'elu', 'tanh' ]:
+      elif tokens[idx] in options.activation_types:
         name += ', Activ. {}'.format(tokens[idx].title())
+      elif tokens[idx] in [ 'loss' ]:
+        if idx + 1 >= len(tokens):
+          print("ERROR: Name not in right format: {}".format(fname), file=sys.stderr)
+          sys.exit(1)
+        name += ', Loss {}'.format(tokens[idx+1].title())
+        idx += 1
       elif tokens[idx] == 'unsup':
         if idx + 1 >= len(tokens):
-          print("ERROR: Name not in right format: {}".format(fname))
+          print("ERROR: Name not in right format: {}".format(fname), file=sys.stderr)
           sys.exit(1)
         if str2bool(tokens[idx+1]):
           name += ', Unsupervised'
@@ -211,12 +217,12 @@ class Experiment(object):
           name += ', Supervised'
       elif tokens[idx] in [ 'type', 'lrdecaytype' ]:
         if idx + 1 >= len(tokens):
-          print("ERROR: Name not in right format: {}".format(fname))
+          print("ERROR: Name not in right format: {}".format(fname), file=sys.stderr)
           sys.exit(1)
         name += ', LR Decay {}'.format(tokens[idx + 1].title())
       elif tokens[idx] in [ 'steps', 'lrdecaysteps' ]:
         if idx + 1 >= len(tokens):
-          print("ERROR: Name not in right format: {}".format(fname))
+          print("ERROR: Name not in right format: {}".format(fname), file=sys.stderr)
           sys.exit(1)
         name += ', LR Decay Steps {}'.format(tokens[idx + 1].title())
       idx += 1
@@ -231,12 +237,8 @@ class Experiment(object):
     adjmat = ld['adjmat']
     n = len(emb_gt)
     stats = []
-    if self.verbose:
-      for i in tqdm.tqdm(range(n)):
-        stats.append(self.get_sample_stats(emb_init[i], emb_gt[i], emb_out[i]))
-    else:
-      for i in range(n):
-        stats.append(self.get_sample_stats(emb_init[i], emb_gt[i], emb_out[i]))
+    for i in tqdm.tqdm(range(n), disable=not self.verbose):
+      stats.append(self.get_sample_stats(emb_init[i], emb_gt[i], emb_out[i]))
     return np.mean(np.array(stats), 0)
 
   def get_sample_stats(self, emb_init, emb_gt, emb_out):
@@ -295,12 +297,9 @@ class LatexGenerator(object):
     self.experiments = []
     self.index = opts.index
     self.viewer_size = opts.viewer_size
-    if opts.verbose:
-      for exp_ in tqdm.tqdm(opts.experiments):
-        self.experiments.append(Experiment(exp_, verbose=opts.verbose))
-    else:
-      for exp_ in opts.experiments:
-        self.experiments.append(Experiment(exp_, verbose=opts.verbose))
+    self.verbose = opts.verbose
+    for exp_ in tqdm.tqdm(opts.experiments, disable=not self.verbose):
+      self.experiments.append(Experiment(exp_, verbose=opts.verbose))
 
   def save_images_and_output_latex(self, exp, caption="Typical sample", index=0):
     latex_string = "\\begin{{figure}}[H]\n"
@@ -342,8 +341,8 @@ class LatexGenerator(object):
   def build_final_latex(self):
     ##### Get experiments
     experiments = []
-    for exp_ in tqdm.tqdm(opts.experiments):
-      experiments.append(Experiment(exp_, verbose=True))
+    for exp_ in tqdm.tqdm(opts.experiments, disable=not self.verbose):
+      experiments.append(Experiment(exp_, verbose=self.verbose))
       
     ##### Get representatives
     losses = [ exp.get_losses()[1][-1] for exp in experiments ]
@@ -401,7 +400,7 @@ if __name__ == "__main__":
     print(latex.build_final_latex())
   else:
     if opts.plot_generate == '':
-      print("ERROR: No experiments or plot_generate - nothing to do")
+      print("ERROR: No experiments or plot_generate - nothing to do", file=sys.stderr)
       sys.exit(1)
     print()
     exp = Experiment(opts.plot_generate, extention='eps')
