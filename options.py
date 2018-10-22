@@ -34,7 +34,7 @@ arch_choices = [
 ]
 
 activation_types = ['relu','leakyrelu','tanh', 'elu']
-loss_types = [ 'l2', 'bce', 'l1' ]
+loss_types = [ 'l2', 'bce', 'l1', 'l1l2' ]
 optimizer_types = ['sgd','adam','adadelta','momentum','adamw']
 lr_decay_types = ['exponential','fixed','polynomial']
 

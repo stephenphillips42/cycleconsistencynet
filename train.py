@@ -19,6 +19,7 @@ loss_fns = {
   'bce': tfutils.bce_loss,
   'l1': tfutils.l1_loss,
   'l2': tfutils.l2_loss,
+  'l1l2': tfutils.l2_loss,
 }
 
 def get_loss(opts, sample, output, return_gt=False, name='loss'):
@@ -36,15 +37,12 @@ def get_loss(opts, sample, output, return_gt=False, name='loss'):
   tf.summary.image('Embedding Similarity', tf.expand_dims(sim, -1))
   loss = loss_fns[opts.loss_type](sim, output_sim)
   tf.summary.scalar(name, loss)
-  gt_l1_loss = None
-  gt_l2_loss = None
-  if return_gt or opts.full_tensorboard:
+  if return_gt:
     gt_l1_loss = loss_fns['l1'](sim_true, output_sim, add_loss=False)
     gt_l2_loss = loss_fns['l2'](sim_true, output_sim, add_loss=False)
-  if opts.full_tensorboard and opts.use_unsupervised_loss:
-    tf.summary.scalar('GT L1 loss', gt_l1_loss)
-    tf.summary.scalar('GT L2 loss', gt_l2_loss)
-  if return_gt:
+    if opts.full_tensorboard and opts.use_unsupervised_loss:
+      tf.summary.scalar('GT L1 loss', gt_l1_loss)
+      tf.summary.scalar('GT L2 loss', gt_l2_loss)
     return loss, gt_l1_loss, gt_l2_loss
   else:
     return loss
@@ -163,56 +161,30 @@ def get_test_dict(opts, dataset, network):
   return test_data
 
 def run_test(opts, sess, test_data, verbose=True):
-  # TODO: Seriously we need to find a more elegant way of doing this...
+  # Setup
   npsave = {}
   teststr = " ------------------- "
   teststr += " Test loss = {:.4e} "
+  npsave_keys = [ 'output', 'input', 'adjmat', 'gt' ]
+  test_data_vals = [ test_data['output'], test_data['sample']['InitEmbeddings'], 
+                     test_data['sample']['AdjMat'], test_data['sample']['TrueEmbedding'] ]
+  test_vals = [ test_data['loss'] ]
   start_time = time.time()
   if opts.use_unsupervised_loss:
     teststr += ", GT L1 Loss = {:4e} , GT L2 Loss  = {:4e} "
-    summed_loss, \
-    summed_loss_gt_l1, \
-    summed_loss_gt_l2, \
-    npsave['output'], \
-    npsave['input'], \
-    npsave['adjmat'], \
-    npsave['gt'] = \
-      sess.run([ 
-        test_data['loss'],
-        test_data['loss_gt_l1'],
-        test_data['loss_gt_l2'],
-        test_data['output'],
-        test_data['sample']['InitEmbeddings'],
-        test_data['sample']['AdjMat'],
-        test_data['sample']['TrueEmbedding'],
-      ])
-    for _ in range(test_data['nsteps']-1):
-      sl, slgtl1, slgtl2 = sess.run([ test_data['loss'], 
-                                      test_data['loss_gt_l1'], 
-                                      test_data['loss_gt_l2'] ])
-      summed_loss += sl
-      summed_loss_gt_l1 += slgtl1
-      summed_loss_gt_l2 += slgtl2
-    strargs = (summed_loss / test_data['nsteps'], \
-               summed_loss_gt_l1 / test_data['nsteps'], \
-               summed_loss_gt_l2 / test_data['nsteps'])
-  else:
-    summed_loss, \
-    npsave['output'], \
-    npsave['input'], \
-    npsave['adjmat'], \
-    npsave['gt'] = \
-      sess.run([ 
-        test_data['loss'],
-        test_data['output'],
-        test_data['sample']['InitEmbeddings'],
-        test_data['sample']['AdjMat'],
-        test_data['sample']['TrueEmbedding'],
-      ])
-    for _ in range(test_data['nsteps']-1):
-      summed_loss += sess.run(test_data['loss'])
-    strargs = (summed_loss / test_data['nsteps'], )
+    test_vals += [ test_data['loss_gt_l1'], test_data['loss_gt_l2'] ]
   teststr += "({:.03} sec)"
+  summed_vals = [ 0 for range(len(test_vals)) ]
+  # Run experiment
+  run_outputs = sess.run(test_vals + test_data_vals)
+  for t in range(len(test_vals)):
+    summed_vals[t] += run_outputs[t]
+  npsave = { k: v for k, v in zip(npsave_keys, run_output[len(test_vals):]) }
+  for _ in range(test_data['nsteps']-1):
+    run_outputs = sess.run(test_vals)
+    for t in range(len(test_vals)):
+      summed_vals[t] += run_outputs[t]
+  strargs = (sv / test_data['nsteps'] for sv in summed_vals)
   np.savez(myutils.next_file(opts.save_dir, 'test', '.npz'), **npsave)
   ctime = time.time()
   tf.logging.info(teststr.format(*strargs, ctime-start_time))
