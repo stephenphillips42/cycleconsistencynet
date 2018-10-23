@@ -46,6 +46,9 @@ def get_opts():
   parser.add_argument('--save_dir',
                       default=None,
                       help='Directory to save out logs and checkpoints')
+  parser.add_argument('--checkpoint_start_dir',
+                      default=None,
+                      help='Place to load from if not loading from save_dir')
   parser.add_argument('--data_dir',
                       default='/NAS/data/stephen/',
                       help='Directory for saving/loading dataset')
@@ -313,6 +316,9 @@ def get_opts():
   # Save out options
   if not os.path.exists(opts.save_dir):
     os.makedirs(opts.save_dir)
+  if opts.checkpoint_start_dir and not os.path.exists(opts.checkpoint_start_dir):
+    print("ERROR: Checkpoint Directory {} does not exist".format(opts.checkpoint_start_dir))
+    return
   with open(os.path.join(opts.save_dir, 'options.yaml'), 'w') as yml:
     yml.write(yaml.dump(opts.__dict__))
 

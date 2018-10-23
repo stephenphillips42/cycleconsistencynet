@@ -22,6 +22,12 @@ loss_fns = {
   'l1l2': tfutils.l2_loss,
 }
 
+log_file = None
+def log(string):
+  tf.logging.info(string)
+  log_file.write(string)
+  log_file.write('\n')
+
 def get_loss(opts, sample, output, return_gt=False, name='loss'):
   emb = sample['TrueEmbedding']
   output_sim = tfutils.get_sim(output)
@@ -96,12 +102,19 @@ def get_train_op(opts, loss):
                             learning_rate=opts.weight_decay)
     reg_step = reg_optimizer.minimize(reg_loss, global_step=global_step)
     with tf.control_dependencies([reg_step]):
-      train_op = optimizer.minimize(loss, global_step=global_step)
+      gvs = optimizer.compute_gradients(loss)
+      capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
+      train_op = optimizer.apply_gradients(capped_gvs)
   else:
-    train_op = optimizer.minimize(loss, global_step=global_step)
+    gvs = optimizer.compute_gradients(loss)
+    capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
+    train_op = optimizer.apply_gradients(capped_gvs)
   return train_op
   
 def build_session(opts):
+  checkpoint_dir = opts.save_dir
+  if opts.checkpoint_start_dir is not None:
+    checkpoint_dir = opts.checkpoint_start_dir
   saver_hook = tf.train.CheckpointSaverHook(opts.save_dir,
                                             save_secs=opts.save_interval_secs)
   merged = tf.summary.merge_all()
@@ -112,7 +125,7 @@ def build_session(opts):
   config = tf.ConfigProto()
   config.gpu_options.allow_growth = True
   return tf.train.SingularMonitoredSession(
-            checkpoint_dir=opts.save_dir,
+            checkpoint_dir=checkpoint_dir,
             hooks=all_hooks,
             config=config)
 
@@ -187,7 +200,7 @@ def run_test(opts, sess, test_data, verbose=True):
   strargs = (sv / test_data['nsteps'] for sv in summed_vals)
   np.savez(myutils.next_file(opts.save_dir, 'test', '.npz'), **npsave)
   ctime = time.time()
-  tf.logging.info(teststr.format(*strargs, ctime-start_time))
+  log(teststr.format(*strargs, ctime-start_time))
 
 # TODO: Make this a class to deal with all the variable passing
 def train(opts):
@@ -223,10 +236,10 @@ def train(opts):
         _, loss_ = sess.run([ train_op, loss ])
         ctime = time.time()
         if (step % opts.log_steps) == 0:
-          tf.logging.info(trainstr.format(step,
-                                          loss_,
-                                          ctime - start_time,
-                                          ctime - stime))
+          log(trainstr.format(step,
+                                loss_,
+                                ctime - start_time,
+                                ctime - stime))
         if ((test_freq_steps and step % test_freq_steps == 0) or \
             (ctime - ttime > test_freq)):
           raw_sess = sess.raw_session()
@@ -236,5 +249,7 @@ def train(opts):
 
 if __name__ == "__main__":
   opts = options.get_opts()
+  log_file = open(os.path.join(opts.save_dir, 'logfile.log'), 'w')
   train(opts)
+  log_file.close()
 

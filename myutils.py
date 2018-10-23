@@ -101,6 +101,7 @@ def str2bool(v):
     elif v.lower() in ('no', 'false', 'f', 'n', '0'):
         return False
     else:
+        import argparse
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 def next_file(directory, fname, suffix):
