@@ -305,6 +305,8 @@ def get_opts():
     arch.skip_layers = [ 5, 10, len(arch.layer_lens) - 1 ]
   if opts.architecture in [ 'spattn0', 'spattn1', 'spattn2' ]:
     arch.sparse = True
+  if opts.loss_type == 'bce':
+    arch.normalize_emb = False
   setattr(opts, 'arch', arch)
 
   # Post processing
