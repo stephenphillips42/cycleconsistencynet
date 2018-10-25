@@ -174,12 +174,12 @@ def run_test(opts, sess, test_data, verbose=True):
     teststr += ", GT L1 Loss = {:4e} , GT L2 Loss  = {:4e} "
     test_vals += [ test_data['loss_gt_l1'], test_data['loss_gt_l2'] ]
   teststr += "({:.03} sec)"
-  summed_vals = [ 0 for range(len(test_vals)) ]
+  summed_vals = [ 0 for x in range(len(test_vals)) ]
   # Run experiment
   run_outputs = sess.run(test_vals + test_data_vals)
   for t in range(len(test_vals)):
     summed_vals[t] += run_outputs[t]
-  npsave = { k: v for k, v in zip(npsave_keys, run_output[len(test_vals):]) }
+  npsave = { k: v for k, v in zip(npsave_keys, run_outputs[len(test_vals):]) }
   for _ in range(test_data['nsteps']-1):
     run_outputs = sess.run(test_vals)
     for t in range(len(test_vals)):
