@@ -37,13 +37,15 @@ class GraphConvLayerNetwork(snt.AbstractModule):
         regularizers=regularizers,
         name="{}/embed_lin".format(name))
     ]
+    self.normalize_emb = arch.normalize_emb
 
   def _build(self, laplacian, init_embeddings):
     """Applying this graph network to sample"""
     output = init_embeddings
     for layer in self._layers:
       output = layer(laplacian, output)
-    output = tf.nn.l2_normalize(output, axis=2)
+    if self.normalize_emb:
+      output = tf.nn.l2_normalize(output, axis=2)
     return output
 
 class GraphLongSkipLayerNetwork(snt.AbstractModule):
@@ -89,6 +91,7 @@ class GraphLongSkipLayerNetwork(snt.AbstractModule):
         name="{}/skip".format(name))
       for skip_idx in self._skip_layer_idx
     ]
+    self.normalize_emb = arch.normalize_emb
 
   def _build(self, laplacian, init_embeddings):
     """Applying this graph network to sample"""
@@ -100,7 +103,8 @@ class GraphLongSkipLayerNetwork(snt.AbstractModule):
         sk += 1
       else:
         output = layer(laplacian, output)
-    output = tf.nn.l2_normalize(output, axis=2)
+    if self.normalize_emb:
+      output = tf.nn.l2_normalize(output, axis=2)
     return output
 
 
@@ -135,13 +139,15 @@ class GraphSkipLayerNetwork(snt.AbstractModule):
         regularizers=final_regularizers,
         name="{}/embed_lin".format(name))
     ]
+    self.normalize_emb = arch.normalize_emb
 
   def _build(self, laplacian, init_embeddings):
     """Applying this graph network to sample"""
     output = init_embeddings
     for layer in self._layers:
       output = layer(laplacian, output)
-    output = tf.nn.l2_normalize(output, axis=2)
+    if self.normalize_emb:
+      output = tf.nn.l2_normalize(output, axis=2)
     return output
 
 class GraphAttentionLayerNetwork(snt.AbstractModule):
@@ -177,13 +183,15 @@ class GraphAttentionLayerNetwork(snt.AbstractModule):
         regularizers=final_regularizers,
         name="{}/embed_lin".format(name))
     ]
+    self.normalize_emb = arch.normalize_emb
 
   def _build(self, laplacian, init_embeddings):
     """Applying this graph network to sample"""
     output = init_embeddings
     for layer in self._layers:
       output = layer(laplacian, output)
-    output = tf.nn.l2_normalize(output, axis=2)
+    if self.normalize_emb:
+      output = tf.nn.l2_normalize(output, axis=2)
     return output
 
 
