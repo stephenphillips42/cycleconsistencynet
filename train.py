@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.core.util.event_pb2 import SessionLog                 
                  
-import data_util.dataset
+import data_util.datasets
 import model
 import myutils
 import tfutils
@@ -205,7 +205,7 @@ def run_test(opts, sess, test_data, verbose=True):
 # TODO: Make this a class to deal with all the variable passing
 def train(opts):
   # Get data and network
-  dataset = data_util.dataset.get_dataset(opts)
+  dataset = data_util.datasets.get_dataset(opts)
   network = model.get_network(opts, opts.arch)
   # Training
   if opts.load_data:
