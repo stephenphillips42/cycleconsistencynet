@@ -32,7 +32,7 @@ def create_bias_initializer(unused_in, unused_out, dtype=tf.float32):
 
 def bce_loss(labels, logits, add_loss=True):
   bce_elements = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=logits)
-  bce_ = tf.reduce_sum(bce_elements)
+  bce_ = tf.reduce_mean(bce_elements)
   if add_loss:
     tf.losses.add_loss(bce_)
   return bce_
