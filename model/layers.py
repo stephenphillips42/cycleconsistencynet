@@ -166,6 +166,8 @@ class EmbeddingLinearLayer(AbstractGraphLayer):
                               initializer=self._initializers["w"],
                               partitioner=self._partitioners.get("w", None),
                               regularizer=self._regularizers.get("w", None))
+    if self._w not in tf.get_collection('weights'):
+      tf.add_to_collection('weights', self._w)
     outputs = tfutils.matmul(inputs, self._w)
 
     if self._use_bias:
@@ -176,6 +178,8 @@ class EmbeddingLinearLayer(AbstractGraphLayer):
                                 initializer=self._initializers["b"],
                                 partitioner=self._partitioners.get("b", None),
                                 regularizer=self._regularizers.get("b", None))
+      if self._b not in tf.get_collection('biases'):
+        tf.add_to_collection('biases', self._b)
       outputs += self._b
 
     return outputs
@@ -311,6 +315,8 @@ class GraphConvLayer(AbstractGraphLayer):
                               initializer=self._initializers["w"],
                               partitioner=self._partitioners.get("w", None),
                               regularizer=self._regularizers.get("w", None))
+    if self._w not in tf.get_collection('weights'):
+      tf.add_to_collection('weights', self._w)
     outputs_ = tfutils.matmul(inputs, self._w)
     outputs = tfutils.batch_matmul(laplacian, outputs_)
 
@@ -322,6 +328,8 @@ class GraphConvLayer(AbstractGraphLayer):
                                 initializer=self._initializers["b"],
                                 partitioner=self._partitioners.get("b", None),
                                 regularizer=self._regularizers.get("b", None))
+      if self._b not in tf.get_collection('biases'):
+        tf.add_to_collection('biases', self._b)
       outputs += self._b
 
 
@@ -470,12 +478,16 @@ class GraphSkipLayer(AbstractGraphLayer):
                               initializer=self._initializers["w"],
                               partitioner=self._partitioners.get("w", None),
                               regularizer=self._regularizers.get("w", None))
+    if self._w not in tf.get_collection('weights'):
+      tf.add_to_collection('weights', self._w)
     self._u = tf.get_variable("u",
                               shape=weight_shape,
                               dtype=dtype,
                               initializer=self._initializers["u"],
                               partitioner=self._partitioners.get("u", None),
                               regularizer=self._regularizers.get("u", None))
+    if self._u not in tf.get_collection('weights'):
+      tf.add_to_collection('weights', self._u)
     preactiv_ = tfutils.matmul(inputs, self._w)
     preactiv = tfutils.batch_matmul(laplacian, preactiv_)
     skip = tfutils.matmul(inputs, self._u)
@@ -488,12 +500,16 @@ class GraphSkipLayer(AbstractGraphLayer):
                                 initializer=self._initializers["b"],
                                 partitioner=self._partitioners.get("b", None),
                                 regularizer=self._regularizers.get("b", None))
+      if self._b not in tf.get_collection('biases'):
+        tf.add_to_collection('biases', self._b)
       self._c = tf.get_variable("c",
                                 shape=bias_shape,
                                 dtype=dtype,
                                 initializer=self._initializers["c"],
                                 partitioner=self._partitioners.get("c", None),
                                 regularizer=self._regularizers.get("c", None))
+      if self._c not in tf.get_collection('biases'):
+        tf.add_to_collection('biases', self._c)
       preactiv += self._b
       skip += self._c
 
@@ -674,6 +690,8 @@ class GraphAttentionLayer(AbstractGraphLayer):
               initializer=self._initializers[k],
               partitioner=self._partitioners.get(k, None),
               regularizer=self._regularizers.get(k, None))
+      if self.weights[k] not in tf.get_collection('weights'):
+        tf.add_to_collection('weights', self.weights[k])
 
     if self._use_bias:
       for k, s in self.bias_keys:
@@ -685,6 +703,8 @@ class GraphAttentionLayer(AbstractGraphLayer):
                 initializer=self._initializers[k],
                 partitioner=self._partitioners.get(k, None),
                 regularizer=self._regularizers.get(k, None))
+      if self.weights[k] not in tf.get_collection('biases'):
+        tf.add_to_collection('biases', self.weights[k])
 
     preactiv_ = tfutils.matmul(inputs, self.weights["w"])
     f1_ = tfutils.matmul(inputs, self.weights["f1"])

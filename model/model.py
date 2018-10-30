@@ -13,14 +13,15 @@ from model import networks
 
 def get_regularizers(opts):
   regularizer_fn = None
+  bias_fn = tf.contrib.layers.l2_regularizer(0.0)
   if opts.weight_decay <= 0 and opts.weight_l1_decay <= 0:
     return None
   elif opts.weight_decay > 0 and opts.weight_l1_decay <= 0:
     regularizer_fn = \
-        lambda r_l2, r_l1: tf.contrib.layers.l2_regularizer(1.0)
+        lambda r_l2, r_l1: tf.contrib.layers.l2_regularizer(r_l2)
   elif opts.weight_decay <= 0 and opts.weight_l1_decay > 0:
     regularizer_fn = \
-        lambda r_l2, r_l1: tf.contrib.layers.l1_regularizer(1.0)
+        lambda r_l2, r_l1: tf.contrib.layers.l1_regularizer(r_l1)
   elif opts.weight_decay <= 0 and opts.weight_l1_decay > 0:
     regularizer_fn = \
         lambda r_l2, r_l1: tf.contrib.layers.l1_l2_regularizer(r_l1/r_l2, 1.0)
@@ -29,10 +30,10 @@ def get_regularizers(opts):
           "u" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
           "f1" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
           "f2" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
-          "b" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay),
-          "c" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay),
-          "d1" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
-          "d2" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
+          "b" :  bias_fn,
+          "c" :  bias_fn,
+          "d1" : bias_fn, 
+          "d2" : bias_fn, 
       }
   if opts.architecture in ['vanilla', 'vanilla0', 'vanilla1']:
     return { k: all_regs[k] for k in [ "w", "b" ] }
