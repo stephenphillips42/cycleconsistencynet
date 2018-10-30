@@ -24,21 +24,7 @@ def get_regularizers(opts):
   elif opts.weight_decay <= 0 and opts.weight_l1_decay > 0:
     regularizer_fn = \
         lambda r_l2, r_l1: tf.contrib.layers.l1_l2_regularizer(r_l1/r_l2, 1.0)
-  if opts.architecture in ['vanilla', 'vanilla0', 'vanilla1']:
-    return {
-          "w" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
-          "b" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay),
-      }
-  elif opts.architecture in ['skip', 'skip0', 'skip1', 'longskip0', 'longskip1']:
-    return {
-          "w" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
-          "u" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
-          "b" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay),
-          "c" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay),
-      }
-  elif opts.architecture in ['attn0', 'attn1', 'attn2', \
-                             'spattn0', 'spattn1', 'spattn2']:
-    return {
+  all_regs = {
           "w" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
           "u" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
           "f1" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
@@ -48,6 +34,13 @@ def get_regularizers(opts):
           "d1" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
           "d2" : regularizer_fn(opts.weight_decay, opts.weight_l1_decay), 
       }
+  if opts.architecture in ['vanilla', 'vanilla0', 'vanilla1']:
+    return { k: all_regs[k] for k in [ "w", "b" ] }
+  elif opts.architecture in ['skip', 'skip0', 'skip1', 'longskip0', 'longskip1']:
+    return { k: all_regs[k] for k in [ "w", "u", "b", "c" ] }
+  elif opts.architecture in ['attn0', 'attn1', 'attn2', \
+                             'spattn0', 'spattn1', 'spattn2']:
+    return all_regs
 
 def get_network(opts, arch):
   regularizers = None
