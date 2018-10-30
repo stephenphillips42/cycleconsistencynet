@@ -231,6 +231,8 @@ class GraphSimDataset(object):
     assert mode in params.sizes, "Mode {} not supported".format(mode)
     data_source_name = mode + '-[0-9][0-9].tfrecords'
     data_sources = glob.glob(os.path.join(self.data_dir, mode, data_source_name))
+    if opts.shuffle_data and mode != 'test':
+      np.random.shuffle(data_sources) # Added to help the shuffle
     # Build dataset provider
     keys_to_features = { k: v.get_feature_read()
                          for k, v in self.features.items() }
