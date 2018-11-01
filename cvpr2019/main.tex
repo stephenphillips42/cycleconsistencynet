@@ -6,7 +6,6 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{amssymb}
-
 % Include other packages here, before hyperref.
 \usepackage[outdir=./]{epstopdf}
 
@@ -21,7 +20,9 @@
 \def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
 
 %% Custom control sequences
+\let\oldPr\Pr
 \newcommand{\bR}{\mathbb{R}}
+\renewcommand*{\Pr}[1]{\mathbb{P}\left( #1 \right)}
 \newcommand{\mat}[1]{\mathbf{#1}}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
@@ -32,7 +33,7 @@
 \begin{document}
 
 %%%%%%%%% TITLE
-\title{Learning Multi-Image Matching using Cycle Consistency}
+\title{Learning Multiple View Feature Representations}
 
 \author{Stephen Phillips, Kostas Daniilidis \\
 GRASP Labratory, University of Pennsylvania\\
@@ -59,7 +60,7 @@ GRASP Labratory, University of Pennsylvania\\
 \begin{abstract}
    % Put abstract here
    % OK I hate this start but we will work on it.
-   In this work we present a learning technique for refining multi-image matches in an unsupervised fashion.
+   (Work in progress) In this work we present a learning technique for refining multi-image matches in an unsupervised fashion.
    We formulate the multi-image matching problem as a graph embedding problem then use recent work in Graph Neural Networks to learn the appropriate embedding function.
    Since ground truth correspondence is difficult or expensive to come by in many real world datasets, we use cycle consistency as our loss function.
    Additional losses can be added if more information is available in the training set for better test performance.
@@ -70,8 +71,27 @@ GRASP Labratory, University of Pennsylvania\\
 %%%%%%%%% BODY TEXT
 \section{Introduction}
 
-% Insert Introduction here
-TODO
+% TODO: Add more citations
+Feature matching is an essential part of many geometric computer vision applications.
+Much work has been done on image matching for the last several decades \cite{fischler1981random}.
+However we still have not fully answered the question: What are the best features of an image to capture multiple views of the same scene?
+Recently deep learning has revolutionized how image features are computed \cite{yi2016lift}, and we would like to leverage this to compute better scene features.
+Typically when applied to this area, deep neural networks (DNNs) are trained with photometric losses.
+Photometric losses make the brightness constancy assumption - can we learn using multi-view constraints directly?
+
+Unfortunately there are obstacles to applying multi-view constraints directly to learning. 
+To train networks, we need a large amount of labelled data.
+In the case of multi-image feature matching, one would need to hand label point correspondences between images, which is difficult and expensive to obtain.
+Mutli-view constraints are formulated in terms of sparse features, thus traditional convolutional deep neural nets (CNNs) are not designed to handle such input.
+
+In this work we propose to solve these problems using a Graph Neural Network (GNN) to operate on the correspondence graph, agnostic to the method used to compute the correspondence graph. We use an self-supervised loss, the cycle consistency loss, to train the network. We also add in side geometric losses used to help training, where the geometric information is not available at train time.
+Our contributions our:
+\begin{itemize}
+\item A novel architecture for feature multi-image feature matching using GNNs with graph embeddings
+\item Using the self-supervised cycle consistency loss
+\item Test geometric consistency losses toward the training
+\item Perform experiments on the Rome16K dataset to test the effectiveness of our baseline
+\end{itemize}
 
 
 
@@ -107,21 +127,32 @@ TODO
 
 %------------------------------------------------------------------------
 \section{Method}
-Our goal is to find correspondences between multiple (more than two) images.
-There are many techniques for finding such matchins in a pairwise setting, such as graph matching \cite{suh2015subgraph, hu2016distributable} or even learning techniques \cite{yi2018learning}. However, when only doing pairwise matching, errors can accumulate between the images. Our goal is to take a set of pairwise matches and to correct the accumulated pairwise matches.
+Our goal is to learn optimal features that capture multiple image views.
+We assume we have an initial set of features matches, represented as a graph, $\mathcal{G} = (\mathcal{V}, \mathcal{E})$.
+Each vertex $v$ of the graph is a feature, with its assocated descriptor $f_v$. 
+The graph is represented by its Weighted Adjacency Matrix $A(\mathcal{G}) \in \bR^{n \times n}$, and its degree matrix $D(\mathcal{G}) \in \bR^{n \times n}$ (positive diagonal).
+Combined the features $f_v$ from each of the vertices we can get an embedding matrix $E_0$.
+We can also add other knowledge we will have at test time.
+Putative correspondences are computed from these, and represented by weighted edges, the weight giving the strength of the match.
+While there are many interesting methods for computing these putative correspondences, we do not explore them in this work.
+The graph structure does not have the properties of a Eulcidean domain (such as an image) we cannot use standard CNNs to learn features for this task.
+Thus we need to use graph convolutions to learn feature representations on this space.
 
-\subsection{Multi-Image Matching}
-In this section we first describe the multi-image matching problem and cycle consistency.
-We are given a set of $n$ images $\mathcal{I} = \left\{ I_1, I_2, \ldots, I_n \right\}$.
-Associated with each image $I_i$ is a set of $m_i$ features $\mat{Z}_i = \left\{ z_{i1}, z_{i2}, z_{i3}, \ldots, z_{i m_i} \right\}$.
-Each feature corresponding to interesting points in the scene from the vantage point of that image.
-We also assume that some pairwise matching algorithm has given us a set of matches between the images, represented as a partial permutation matrix, $\mat{M}_{ij} \in \bR^{m_i \times m_j}$, where $(\mat{M}_{ij})_{kl} = 1$ if the features match, and 0 otherwise.
-Naturally, the matches are symmetric so $\mat{M}_{ij} = \mat{M}_{ji}$.
-As is typical in the multi-image matching problem, we do not assume anything about how these pairwise matches were computed. 
-
-However, as the $\mat{M}_{ij}$ are computed pairwise, no global concistency is guaranteed among them if there are errors. 
-Thus we need a way to determine the global consistency of these matches.
-This is where cycle consitency comes in.
+\subsection{Graph Neural Networks}
+Much attention has been given to graph neural networks (GNNs) recently
+\cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2016semi, scarselli2009graph, gama2018mimo, gama2018convolutional}.
+For our purpose we will need a method that can handle different graph structures as input, thus we cannot resort to spectral graph convolution methods.
+Since our goal is to describe correspondence of each of the nodes, we also cannot use pooling of the nodes.
+\begin{align}
+      L =&\; (D + I)^{-1/2} (A + I) (D + I)^{-1/2} \\
+E_{k+1} =&\; \sigma\left(L E_k W_k \right)
+\end{align}
+Here $\sigma$ is the non-linearity (typically a $relu$), and $W_k$ are the learned weights. 
+The matrix $L$ is analogous to the graph Laplacian, and is used to encode the structure of the graph.
+It is with $L$ that the graph convolution is performed.
+However, this is limited to convolutions over a one-hop neighborhood of a node.
+For simplicity we restrict ourselves to this for now, though in principle we could use higher hop neighborhoods \cite{gama2018convolutional}.
+To train this we use a cycle consistency.
 
 \subsection{Cycle Consistency}
 If the pairwise matches are globally consistent, then we can say that, for all $i, j, k$:
@@ -139,63 +170,15 @@ Then the cycle consistency becomes:
 \mat{M}_{ij} = \mat{X}_{i}\mat{X}_{j}^\top
 \label{eq:cycconsist2}
 \end{equation}
-This can be more concisely described using the match matrices $\mat{M}$ and $\mat{X}$:
+
+In the case, we try to learn embeddings that map to the $\mat{X}_i$ - learn the universe of features via our embeddings.
+Thus our loss would be 
 \begin{equation}
-\mat{M} = \begin{pmatrix}
-\mat{M}_{11} & \mat{M}_{12} & \hdots & \mat{M}_{1n} \\
-\mat{M}_{21} & \mat{M}_{22} & \hdots & \mat{M}_{2n} \\
-   \vdots    &     \vdots   & \ddots &    \vdots    \\
-\mat{M}_{n1} & \mat{M}_{n2} & \hdots & \mat{M}_{nn}
-\end{pmatrix}, \;
-\mat{X} = \begin{pmatrix}
-\mat{X}_{1}  \\
-\mat{X}_{2}  \\
-   \vdots     \\
-\mat{X}_{n} 
-\end{pmatrix}
-\label{eq:matchmat}
+\mathcal{L}(A, E_n) = \mathcal{D}(A, E_nE_n^\top)
 \end{equation}
-Now we define cycle consistency as:
-\begin{equation}
-\mat{M} = \mat{X} \mat{X}^\top
-\label{eq:cycconsist3}
-\end{equation}
-In practice of course, $M$ has errors, and in fact the $\mat{M}_{ij}$ are typically not given as permutations but as matrices of similarity scores.
-We denote this noisy version of the matches $\widetilde{\mat{M}}$.
-Thus we can treat this as a low rank factorization problem on $\widetilde{\mat{M}}$, with permutation (or soft permutation) constraints on $\mat{X}$, as done in \cite{zhou2015multi, leonardos2016distributed, pachauri2013solving}:
-\begin{align}
-\argmin_{\mat{X}} \mathcal{L}(\mat{X})
-=&\; \mathcal{D}\left(\widetilde{\mat{M}}, \mat{X}\mat{X}^\top\right) + \mathcal{R}(\mat{X}) \nonumber \\
-\mathrm{s.t.} &\; \mat{X} \in \mathcal{X} \label{eq:genericloss}
-\end{align}
-Here $\mathcal{D}$ denotes some distance function and $\mathcal{R}$ denotes a regularizer on $\mat{X}$.
-
-In previous work, the optimization is done directly.
-Here we use learning to adapt to the statistics of the noise of the matching matrices.
-Using Equation \ref{eq:genericloss} We have enough for a loss function to train a learning algorithm.
-However, our input doesn't match typical image or sequence format most modern learning algorithms rely on.
-Thus we need a different type of architecture to be able to perform learning on this task.
-
-\subsection{Graph Neural Networks}
-Now we show how to reformulate the problem in terms of graphs, and show how Graph Neural Networks can be applied to solve it.
-To see how this is equivalent to a graph problem, we can simply view the $\widetilde{\mat{M}}$ as the adjacency matrix of a graph.
-They cycle consistecy constraint is equivalent to there being $k$ disjoint subgraphs, with $k$ being the size of your `universe' of features. 
-Ideally we would want to output a refined graph with the correct disjoint subgraphs corresponding to the ground truth features.
-One could optimize for this, however, as we wish to use a learning algorithm, outputting a full graph would be difficult.
-Instead we learn an embedding, equivalent to $\mat{X}$ in the previous section.
-
-Graph Neural Networks (Graph NNs) have gotten more attention recently in the Machine Learning community \cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2016semi, scarselli2009graph, gama2018mimo, gama2018convolutional}.
-Graph NNs have a long history and there are many varitions of it. 
-However, we need one that can handle a different graphs as input and outputs an embedding on each node.
-Here we follow the formulation from \cite{kipf2016semi} due to its simplicity, however there are many alternate architectures or formulations one could use in principle.
-For this formulation, it is assumed we have some initial embedding on the graph $\mat{X}_0$ and some function of the adjacency matrix $A$ and degree matrix $D$, $L = (D+I)^{-1/2}(A+I)(D+I)^{-1/2}$.
-The use of $L$ is more for convience, what is most important is that it is a function of the adjacency matrix.
-Thus our update state is from the graph embedding on layer $l$ to layer $l + 1$:
-\begin{equation*}
-\mat{X}_{l+1} = \sigma\left( L X_l W_l \right)
-\label{eq:gnnupdate}
-\end{equation*}
-This can be viewed as a linear combination of 
+Here $\mathcal{D}$ could be an $L_2$ loss, $L_1$ loss, or many others. 
+This essential models that features $i$ and $j$ match with probability $(E_n)_i \cdot (E_n)_j$
+which is proporitional to $A_{ij}$ with some noise.
 
 
 %------------------------------------------------------------------------
@@ -210,33 +193,41 @@ This can be viewed as a linear combination of
   \label{fig:short}
 \end{figure*}
 
-TODO
-% \begin{table}
-% \begin{center}
-% \begin{tabular}{|l|c|}
-% \hline
-% Method & Frobnability \\
-% \hline\hline
-% Theirs & Frumpy \\
-% Yours & Frobbly \\
-% Ours & Makes one's heart Frob\\
-% \hline
-% \end{tabular}
-% \end{center}
-% \caption{Results.   Ours is better.}
-% \end{table}
+\subsection{Rome 16K Graph Dataset}
+% Filler for now.
+% TODO: Actually run tests on all these with different loss functions
+We extract image triplets, quadtruplets, and quintuplets with overlap of 80 points or more to test our algorithm on. For the normal datasets, we extracted 80 points established as corresponding in the bundle adjument given in the Rome16K dataset. For the outlier datasets, we take 79 correspondences and 1 non-corresponding point in each image.
+
+We test with various loss functions, including ablation studies on various geometric loss functions.
+
+% leaderConsensus.m  MatchALSTestErrors.txt  mmatch_CVX_ALS.m  mmatch_QP_PG.m  mmatch_spectral.m  PGDDS.m  PGDDSTestErrors.txt  print_errors.py  run_tests.m  SpectralTestErrors.txt
+\begin{table*}
+\begin{center}
+\begin{tabular}{|l|c|c|c|}
+\hline
+Method & L1 Loss & L2 Loss & BCE Loss \\
+\hline\hline\hline
+Spectral                                  & 1.000e-3 & 1.000e-3 & 1.000e-3 \\ \hline
+MatchALS                                  & 1.000e-3 & 1.000e-3 & 1.000e-3 \\ \hline
+PGDDS                                     & 1.000e-3 & 1.000e-3 & 1.000e-3 \\ \hline
+GNN, 12 Layers, w/o Geometric Side Losses & 1.000e-3 & 1.000e-3 & 1.000e-3 \\ \hline
+GNN, 12 Layers, w/ Geometric Side Losses  & 1.000e-3 & 1.000e-3 & 1.000e-3 \\ \hline
+
+\hline
+\end{tabular}
+\end{center}
+\caption{
+Results on Rome16k Correspondence graphs.
+Losses tested against ground truth correspondence graph adjacency matrices.
+Our method was not trained on ground truth corresopndences but on unsupervised methods.
+}
+\end{table*}
 
 
 %------------------------------------------------------------------------
 \section{Conclusion}
 
-You must include your signed IEEE copyright release form when you submit
-your finished paper. We MUST have this form before your paper can be
-published in the proceedings.
-
-Please direct any questions to the production editor in charge of these
-proceedings at the IEEE Computer Society Press: Phone (714) 821-8380, or
-Fax (714) 761-1784.
+We have shown a novel method for training feature matching. 
 
 {\small
 \bibliographystyle{ieee}
