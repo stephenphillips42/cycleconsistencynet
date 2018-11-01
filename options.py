@@ -99,7 +99,11 @@ def get_opts():
   parser.add_argument('--loss_type',
                       default=loss_types[0],
                       choices=loss_types,
-                      help='')
+                      help='Loss function to use for training')
+  parser.add_argument('--use_end_bias',
+                      default=False,
+                      type=myutils.str2bool,
+                      help='NOT IMPLEMENTED YET: Use bias in dot product')
   parser.add_argument('--weight_decay',
                       default=4e-5,
                       type=float,

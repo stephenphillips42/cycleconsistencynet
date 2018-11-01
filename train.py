@@ -28,9 +28,27 @@ def log(string):
   log_file.write(string)
   log_file.write('\n')
 
+# TODO: Make this not a hack
+# HACK!!
+end_bias_global = None
+def get_end_bias():
+  global end_bias_global
+  if end_bias_global is None:
+    with tf.variable_scope("end_variables", reuse=tf.AUTO_REUSE):
+      end_bias_global = tf.get_variable('end_bias', 
+                                        initializer=tf.zeros((1,),
+                                        dtype=tf.float32))
+    if end_bias_global not in tf.get_collection('biases'):
+      tf.add_to_collection('biases', end_bias_global)
+  return end_bias_global
+# END HACK!!
+
 def get_loss(opts, sample, output, return_gt=False, name='loss'):
   emb = sample['TrueEmbedding']
   output_sim = tfutils.get_sim(output)
+  if opts.use_end_bias:
+    end_bias = get_end_bias()
+    output_sim = output_sim + end_bias
   sim_true = tfutils.get_sim(emb)
   if opts.use_unsupervised_loss:
     v = opts.dataset_params.views[-1]
@@ -44,8 +62,11 @@ def get_loss(opts, sample, output, return_gt=False, name='loss'):
   loss = loss_fns[opts.loss_type](sim, output_sim)
   tf.summary.scalar(name, loss)
   if return_gt:
-    gt_l1_loss = loss_fns['l1'](sim_true, output_sim, add_loss=False)
-    gt_l2_loss = loss_fns['l2'](sim_true, output_sim, add_loss=False)
+    output_sim_gt = output_sim
+    if opts.loss_type == 'bce':
+      output_sim_gt = tf.sigmoid(output_sim)
+    gt_l1_loss = loss_fns['l1'](sim_true, output_sim_gt, add_loss=False)
+    gt_l2_loss = loss_fns['l2'](sim_true, output_sim_gt, add_loss=False)
     if opts.full_tensorboard and opts.use_unsupervised_loss:
       tf.summary.scalar('GT L1 loss', gt_l1_loss)
       tf.summary.scalar('GT L2 loss', gt_l2_loss)
@@ -181,6 +202,10 @@ def run_test(opts, sess, test_data, verbose=True):
   npsave_keys = [ 'output', 'input', 'adjmat', 'gt' ]
   test_data_vals = [ test_data['output'], test_data['sample']['InitEmbeddings'], 
                      test_data['sample']['AdjMat'], test_data['sample']['TrueEmbedding'] ]
+  if opts.use_end_bias:
+    end_bias = get_end_bias()
+    test_data_vals += [ end_bias ]
+    npsave_keys += [ 'end_bias' ]
   test_vals = [ test_data['loss'] ]
   start_time = time.time()
   if opts.use_unsupervised_loss:
@@ -249,7 +274,7 @@ def train(opts):
 
 if __name__ == "__main__":
   opts = options.get_opts()
-  log_file = open(os.path.join(opts.save_dir, 'logfile.log'), 'w')
+  log_file = open(os.path.join(opts.save_dir, 'logfile.log'), 'a')
   train(opts)
   log_file.close()
 
