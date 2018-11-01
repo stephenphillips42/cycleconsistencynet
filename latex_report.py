@@ -28,6 +28,10 @@ def get_latex_opts():
                       default=False,
                       type=str2bool,
                       help='Print everything or not')
+  parser.add_argument('--just_view',
+                      default=False,
+                      type=str2bool,
+                      help='Just view, do not save')
   parser.add_argument('--index',
                       default=0,
                       type=int,
@@ -298,6 +302,7 @@ class LatexGenerator(object):
     self.index = opts.index
     self.viewer_size = opts.viewer_size
     self.verbose = opts.verbose
+    self.just_view = opts.just_view
     for exp_ in tqdm.tqdm(opts.experiments, disable=not self.verbose):
       self.experiments.append(Experiment(exp_, verbose=opts.verbose))
 
@@ -309,7 +314,11 @@ class LatexGenerator(object):
     latex_string += "\\end{{figure}}\n"
     fname = os.path.join(self.save_dir, exp.get_plot_name())
     fig = exp.generate_plot(self.viewer_size, index)
-    fig.savefig(os.path.join(self.top_dir, fname))
+    if self.just_view:
+      print(exp.get_plot_name())
+      plt.show()
+    else:
+      fig.savefig(os.path.join(self.top_dir, fname))
     # plt.show()
     return latex_string.format(fname[:-4], exp.get_latex_name(), caption)
 
