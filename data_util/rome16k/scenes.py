@@ -33,24 +33,30 @@ class Feature(Saver):
 
 class Camera(Saver):
   def __init__(self, id_num, values=None):
-    Saver.__init__(self, ['rot', 'trans', 'focal', 'features' ], id_num, values)
-    if self.rot == None:
+    Saver.__init__(self, ['rot','trans','focal','k1','k2','imsize','features'], id_num, values)
+    if self.rot is None:
       self.rot = np.eye(3)
     else:
       self.rot = np.array(self.rot)
-    if self.trans == None:
+    if self.trans is None:
       self.trans = np.zeros(3)
     else:
       self.trans = np.array(self.trans)
+    if self.k1 is None:
+      self.k1 = 0
+    if self.k2 is None:
+      self.k2 = 0
+    if self.imsize is None:
+      self.imsize = (-1,-1)
 
 class Point(Saver):
   def __init__(self, id_num, values=None):
     Saver.__init__(self, [ 'pos', 'color', 'features' ], id_num, values)
-    if self.pos == None:
+    if self.pos is None:
       self.pos = np.zeros(3)
     else:
       self.pos = np.array(self.pos)
-    if self.color == None:
+    if self.color is None:
       self.color = np.zeros(3, dtype='int32')
     else:
       self.color = np.array(self.color)
