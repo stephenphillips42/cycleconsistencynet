@@ -40,7 +40,7 @@ def get_build_scene_opts():
   parser.add_argument('--verbose',
                       default=True,
                       type=myutils.str2bool,
-                      help='Maximum tuple size')
+                      help='Print out everything')
 
   opts = parser.parse_args()
   return opts

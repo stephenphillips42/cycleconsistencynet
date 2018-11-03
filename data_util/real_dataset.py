@@ -14,29 +14,30 @@ from data_util import parent_dataset
 from data_util import tf_helpers
 from data_util.rome16k import parse
 
-class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
+class Rome16KTupleDataset(parent_dataset.GraphSimDataset):
   """Abstract base class for Rome16K cycle consistency graphs"""
 
-  def __init__(self, opts, params):
+  def __init__(self, opts, params, tuple_size=3):
     parent_dataset.GraphSimDataset.__init__(self, opts, params)
     self.rome16k_dir = opts.rome16k_dir
+    self.tuple_size = tuple_size
     del self.features['Mask']
     del self.features['MaskOffset']
     self.dataset_params.sizes['train'] = \
-        sum([x[0] for _, x in parse.bundle_file_info['train'].items()])
+        sum([x[tuple_size-1] for _, x in parse.bundle_file_info['train'].items()])
     self.dataset_params.sizes['test'] = \
-        sum([x[0] for _, x in parse.bundle_file_info['test'].items()])
+        sum([x[tuple_size-1] for _, x in parse.bundle_file_info['test'].items()])
 
   def gen_sample(self):
     print("ERROR: Cannot generate sample - need to load data")
     sys.exit(1)
 
-  def gen_sample_from_triplet(self, scene, triplet):
+  def gen_sample_from_tuple(self, scene, tupl):
     print("ERROR: Not implemented in abstract base class")
     sys.exit(1)
 
-  def triplet_fname(self, bundle_file):
-    return os.path.join(self.rome16k_dir, parse.triplets_name(bundle_file))
+  def tuple_fname(self, bundle_file):
+    return os.path.join(self.rome16k_dir, parse.tuples_name(bundle_file))
 
   def convert_dataset(self, out_dir, mode):
     """Writes synthetic flow data in .mat format to a TF record file."""
@@ -56,15 +57,15 @@ class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
     for bundle_file in parse.bundle_file_info[mode]:
       scene_name = '{}/{}'.format(self.rome16k_dir, parse.scene_name(bundle_file))
       scene = parse.load_scene(scene_name)
-      with open(self.triplet_fname(bundle_file), 'rb') as f:
-        triplets = pickle.load(f)
-      for triplet in triplets:
+      with open(self.tuples_fname(bundle_file), 'rb') as f:
+        tuples = pickle.load(f)[self.tuple_size-1]
+      for tupl in triplets:
         if file_idx > self.MAX_IDX:
           file_idx = 0
           if writer: writer.close()
           writer = tf.python_io.TFRecordWriter(outfile(record_idx))
           record_idx += 1
-        loaded_features = self.gen_sample_from_triplet(scene, triplet)
+        loaded_features = self.gen_sample_from_tuple(scene, tupl)
         features = self.process_features(loaded_features)
         example = tf.train.Example(features=tf.train.Features(feature=features))
         writer.write(example.SerializeToString())
@@ -91,8 +92,8 @@ class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
       scene = parse.load_scene(scene_name)
       with open(self.triplet_fname(bundle_file), 'rb') as f:
         triplets = pickle.load(f)
-      for triplet in triplets:
-        features = self.gen_sample_from_triplet(scene, triplet)
+      for tupl in tuples:
+        features = self.gen_sample_from_tuple(scene, tupl)
         np.savez(outfile(index), **features)
         index += 1
         pbar.update()
@@ -131,18 +132,18 @@ class Rome16KTripletDataset(parent_dataset.GraphSimDataset):
     values = iterator.get_next()
     return dict(zip(keys, values))
 
-class KNNRome16KDataset(Rome16KTripletDataset):
+class KNNRome16KDataset(Rome16KTupleDataset):
   def __init__(self, opts, params):
-    Rome16KTripletDataset.__init__(self, opts, params)
+    super(KNNRome16KDataset, self).__init__(opts, params, tuple_size=3)
 
-  def gen_sample_from_triplet(self, scene, triplet):
+  def gen_sample_from_tuple(self, scene, tupl):
     # Parameters
     k = self.dataset_params.knn
     n = self.dataset_params.points[-1]
     v = self.dataset_params.views[-1]
     mask = np.kron(np.ones((v,v))-np.eye(v),np.ones((n,n)))
     cam_pt = lambda i: set([ f.point for f in scene.cams[i].features ])
-    point_set = cam_pt(triplet[0]) & cam_pt(triplet[1]) & cam_pt(triplet[2])
+    point_set = cam_pt(tupl[0]) & cam_pt(tupl[1]) & cam_pt(tupl[2])
     # Build features
     feat_perm = np.random.permutation(len(point_set))[:n]
     features = [] 
@@ -150,11 +151,14 @@ class KNNRome16KDataset(Rome16KTripletDataset):
       fset = [ ([ f for f in p.features if f.cam.id == camid  ])[0] for p in point_set ]
       fset = sorted(fset, key=lambda x: x.id)
       features.append([ fset[x] for x in feat_perm ])
+    # Build descriptors
     descs_ = [ np.array([ f.desc for f in feats ]) for feats in features ]
     rids = [ np.random.permutation(len(ff)) for ff in descs_ ]
     perm_mats = [ np.eye(len(perm))[perm] for perm in rids ]
     perm = la.block_diag(*perm_mats)
     descs = np.dot(perm,np.concatenate(descs_))
+
+    # Build Graph
     desc_norms = np.sum(descs**2, 1).reshape(-1, 1)
     ndescs = descs / desc_norms
     Dinit = np.dot(ndescs,ndescs.T)
@@ -171,7 +175,7 @@ class KNNRome16KDataset(Rome16KTripletDataset):
     LLT = np.maximum(L,L.T)
 
     # Build dataset options
-    InitEmbeddings = ndescs
+    InitEmbeddings = np.concatenate([ ndescs,xy_pos_, scale_ ], axis=1)
     AdjMat = LLT*mask
     Degrees = np.diag(np.sum(AdjMat,0))
     TrueEmbedding = np.concatenate(perm_mats,axis=0)
@@ -188,4 +192,88 @@ class KNNRome16KDataset(Rome16KTripletDataset):
       'NumViews': v,
       'NumPoints': n,
     }
+
+class GeomKNNRome16KDataset(Rome16KTupleDataset):
+  def __init__(self, opts, params):
+    super(KNNRome16KDataset, self).__init__(self, opts, params, tuple_size=5)
+    self.features.update({
+      'Rotations':
+           tf_helpers.TensorFeature(
+                         key='Rotations',
+                         shape=[tuple_size, 3, 3],
+                         dtype=self.dtype,
+                         description='Mask offset for loss'),
+      'Translations':
+           tf_helpers.TensorFeature(
+                         key='Translations',
+                         shape=[tuple_size, 3],
+                         dtype=self.dtype,
+                         description='Mask offset for loss'),
+    })
+
+  def gen_sample_from_tuple(self, scene, tupl):
+    # Parameters
+    k = self.dataset_params.knn
+    n = self.dataset_params.points[-1]
+    v = self.dataset_params.views[-1]
+    mask = np.kron(np.ones((v,v))-np.eye(v),np.ones((n,n)))
+    cam_pt = lambda i: set([ f.point for f in scene.cams[i].features ])
+    point_set = cam_pt(tupl[0]) & cam_pt(tupl[1]) & cam_pt(tupl[2])
+    # Build features
+    feat_perm = np.random.permutation(len(point_set))[:n]
+    features = [] 
+    for camid in triplet:
+      fset = [ ([ f for f in p.features if f.cam.id == camid  ])[0] for p in point_set ]
+      fset = sorted(fset, key=lambda x: x.id)
+      features.append([ fset[x] for x in feat_perm ])
+    # Build descriptors
+    xy_pos = [ np.array([ f.pos for f in feats ]) for feats in features ]
+    scale = [ np.array([ f.scale_ for f in feats ]) for feats in features ]
+    descs_ = [ np.array([ f.desc for f in feats ]) for feats in features ]
+    rids = [ np.random.permutation(len(ff)) for ff in descs_ ]
+    perm_mats = [ np.eye(len(perm))[perm] for perm in rids ]
+    perm = la.block_diag(*perm_mats)
+    descs = np.dot(perm,np.concatenate(descs_))
+
+    # Build Graph
+    desc_norms = np.sum(descs**2, 1).reshape(-1, 1)
+    ndescs = descs / desc_norms
+    Dinit = np.dot(ndescs,ndescs.T)
+    # Rescaling
+    Dmin = Dinit.min()
+    Dmax = Dinit.max()
+    D = (Dinit - Dmin)/(Dmax-Dmin)
+    L = np.copy(D)
+    for i in range(v):
+      for j in range(v):
+        Lsub = L[n*i:n*(i+1),n*j:n*(j+1)]
+        for u in range(n):
+          Lsub[u,Lsub[u].argsort()[:-k]] = 0
+    LLT = np.maximum(L,L.T)
+
+    # Build dataset options
+    InitEmbeddings = np.concatenate([ ndescs,xy_pos_, scale_ ], axis=1)
+    AdjMat = LLT*mask
+    Degrees = np.diag(np.sum(AdjMat,0))
+    TrueEmbedding = np.concatenate(perm_mats,axis=0)
+    Ahat = AdjMat + np.eye(*AdjMat.shape)
+    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
+    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
+    Rotations = np.stack([ scene.cams[i] for i in tupl ], axis=0)
+    Translations = np.stack([ scene.trans[i] for i in tupl ], axis=0)
+
+    ret_val = {
+      'InitEmbeddings': InitEmbeddings.astype(self.dtype),
+      'AdjMat': AdjMat.astype(self.dtype),
+      'Degrees': Degrees.astype(self.dtype),
+      'Laplacian': Laplacian.astype(self.dtype),
+      'TrueEmbedding': TrueEmbedding.astype(self.dtype),
+      'Rotations': Rotations,
+      'Translations': Translations,
+      'NumViews': v,
+      'NumPoints': n,
+    }
+    print(ret_val)
+    sys.exit(0)
+    return ret_val
 
