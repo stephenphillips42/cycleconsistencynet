@@ -1,0 +1,92 @@
+\section{Method Old}
+Our goal is to find correspondences between multiple (more than two) images.
+There are many techniques for finding such matchins in a pairwise setting, such as graph matching \cite{suh2015subgraph, hu2016distributable} or even learning techniques \cite{yi2018learning}. However, when only doing pairwise matching, errors can accumulate between the images. Our goal is to take a set of pairwise matches and to correct the accumulated pairwise matches.
+
+\subsection{Multi-Image Matching}
+In this section we first describe the multi-image matching problem and cycle consistency.
+We are given a set of $n$ images $\mathcal{I} = \left\{ I_1, I_2, \ldots, I_n \right\}$.
+Associated with each image $I_i$ is a set of $m_i$ features $\mat{Z}_i = \left\{ z_{i1}, z_{i2}, z_{i3}, \ldots, z_{i m_i} \right\}$.
+Each feature corresponding to interesting points in the scene from the vantage point of that image.
+We also assume that some pairwise matching algorithm has given us a set of matches between the images, represented as a partial permutation matrix, $\mat{M}_{ij} \in \bR^{m_i \times m_j}$, where $(\mat{M}_{ij})_{kl} = 1$ if the features match, and 0 otherwise.
+Naturally, the matches are symmetric so $\mat{M}_{ij} = \mat{M}_{ji}$.
+As is typical in the multi-image matching problem, we do not assume anything about how these pairwise matches were computed. 
+
+However, as the $\mat{M}_{ij}$ are computed pairwise, no global concistency is guaranteed among them if there are errors. 
+Thus we need a way to determine the global consistency of these matches.
+This is where cycle consitency comes in.
+
+\subsection{Cycle Consistency}
+If the pairwise matches are globally consistent, then we can say that, for all $i, j, k$:
+\begin{equation}
+\mat{M}_{ij} = \mat{M}_{ik} \mat{M}_{kj}
+\label{eq:cycconsist1}
+\end{equation}
+In other words, the matches between two images stays the same no matter what path is taken to get there. 
+This constraint is known as \textit{cycle concistency}, and has been used in a number of recent works to optimze for global consistency \cite{zhou2015multi, wang2017multi, leonardos2016distributed}.
+Stated in this form, there are $O(n^3)$ cycle consistency constraints to check.
+A more elegant way to represent cycle consistency is to first create a `universe' of features that all images match to.
+Then one can match each set of features $X_i$ to the universe, denoted $\mat{X}_i$.
+Then the cycle consistency becomes:
+\begin{equation}
+\mat{M}_{ij} = \mat{X}_{i}\mat{X}_{j}^\top
+\label{eq:cycconsist2}
+\end{equation}
+This can be more concisely described using the match matrices $\mat{M}$ and $\mat{X}$:
+\begin{equation}
+\mat{M} = \begin{pmatrix}
+\mat{M}_{11} & \mat{M}_{12} & \hdots & \mat{M}_{1n} \\
+\mat{M}_{21} & \mat{M}_{22} & \hdots & \mat{M}_{2n} \\
+   \vdots    &     \vdots   & \ddots &    \vdots    \\
+\mat{M}_{n1} & \mat{M}_{n2} & \hdots & \mat{M}_{nn}
+\end{pmatrix}, \;
+\mat{X} = \begin{pmatrix}
+\mat{X}_{1}  \\
+\mat{X}_{2}  \\
+   \vdots     \\
+\mat{X}_{n} 
+\end{pmatrix}
+\label{eq:matchmat}
+\end{equation}
+Now we define cycle consistency as:
+\begin{equation}
+\mat{M} = \mat{X} \mat{X}^\top
+\label{eq:cycconsist3}
+\end{equation}
+In practice of course, $M$ has errors, and in fact the $\mat{M}_{ij}$ are typically not given as permutations but as matrices of similarity scores.
+We denote this noisy version of the matches $\widetilde{\mat{M}}$.
+Thus we can treat this as a low rank factorization problem on $\widetilde{\mat{M}}$, with permutation (or soft permutation) constraints on $\mat{X}$, as done in \cite{zhou2015multi, leonardos2016distributed, pachauri2013solving}:
+\begin{align}
+\argmin_{\mat{X}} \mathcal{L}(\mat{X})
+=&\; \mathcal{D}\left(\widetilde{\mat{M}}, \mat{X}\mat{X}^\top\right) + \mathcal{R}(\mat{X}) \nonumber \\
+\mathrm{s.t.} &\; \mat{X} \in \mathcal{X} \label{eq:genericloss}
+\end{align}
+Here $\mathcal{D}$ denotes some distance function and $\mathcal{R}$ denotes a regularizer on $\mat{X}$.
+
+In previous work, the optimization is done directly.
+Here we use learning to adapt to the statistics of the noise of the matching matrices.
+Using Equation \ref{eq:genericloss} We have enough for a loss function to train a learning algorithm.
+However, our input doesn't match typical image or sequence format most modern learning algorithms rely on.
+Thus we need a different type of architecture to be able to perform learning on this task.
+
+\subsection{Graph Neural Networks}
+Now we show how to reformulate the problem in terms of graphs, and show how Graph Neural Networks can be applied to solve it.
+To see how this is equivalent to a graph problem, we can simply view the $\widetilde{\mat{M}}$ as the adjacency matrix of a graph.
+They cycle consistecy constraint is equivalent to there being $k$ disjoint subgraphs, with $k$ being the size of your `universe' of features. 
+Ideally we would want to output a refined graph with the correct disjoint subgraphs corresponding to the ground truth features.
+One could optimize for this, however, as we wish to use a learning algorithm, outputting a full graph would be difficult.
+Instead we learn an embedding, equivalent to $\mat{X}$ in the previous section.
+
+Graph Neural Networks (Graph NNs) have gotten more attention recently in the Machine Learning community \cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2016semi, scarselli2009graph, gama2018mimo, gama2018convolutional}.
+Graph NNs have a long history and there are many varitions of it. 
+However, we need one that can handle a different graphs as input and outputs an embedding on each node.
+Here we follow the formulation from \cite{kipf2016semi} due to its simplicity, however there are many alternate architectures or formulations one could use in principle.
+For this formulation, it is assumed we have some initial embedding on the graph $\mat{X}_0$ and some function of the adjacency matrix $A$ and degree matrix $D$, $L = (D+I)^{-1/2}(A+I)(D+I)^{-1/2}$.
+The use of $L$ is more for convience, what is most important is that it is a function of the adjacency matrix.
+Thus our update state is from the graph embedding on layer $l$ to layer $l + 1$:
+\begin{equation*}
+\mat{X}_{l+1} = \sigma\left( L X_l W_l \right)
+\label{eq:gnnupdate}
+\end{equation*}
+This can be viewed as a linear combination of 
+
+

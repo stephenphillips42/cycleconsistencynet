@@ -48,7 +48,7 @@ def get_build_scene_opts():
   parser.add_argument('--verbose',
                       default=1,
                       type=int,
-                      help='How much progress to print out')
+                      help='Print out everything')
 
   opts = parser.parse_args()
   return opts
