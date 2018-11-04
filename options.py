@@ -22,7 +22,8 @@ dataset_choices = [
   'noise_largepairwise3', 'noise_largepairwise5',
   'synth_pts50', 'synth_pts100',
   'noise_outlier1', 'noise_outlier2', 'noise_outlier4', 'noise_outlier8',
-  'rome16kknn0', 
+  'rome16kknn0',
+  'rome16kgeom0',
 ]
 
 arch_choices = [
@@ -276,6 +277,11 @@ def get_opts():
     if num_out:
       dataset_params.num_outliers = int(num_out.group(0))
   elif opts.dataset == 'rome16kknn0':
+    dataset_params.points=[80] 
+    dataset_params.descriptor_dim=128
+    # The dataset size is undermined until loading
+    dataset_params.sizes={ 'train': -1, 'test': -1 }
+  elif opts.dataset == 'rome16kgeom0':
     dataset_params.points=[80] 
     dataset_params.descriptor_dim=128
     # The dataset size is undermined until loading

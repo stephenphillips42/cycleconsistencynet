@@ -175,7 +175,7 @@ class KNNRome16KDataset(Rome16KTupleDataset):
     LLT = np.maximum(L,L.T)
 
     # Build dataset options
-    InitEmbeddings = np.concatenate([ ndescs,xy_pos_, scale_ ], axis=1)
+    InitEmbeddings = np.concatenate(ndescs, axis=1)
     AdjMat = LLT*mask
     Degrees = np.diag(np.sum(AdjMat,0))
     TrueEmbedding = np.concatenate(perm_mats,axis=0)
@@ -195,8 +195,15 @@ class KNNRome16KDataset(Rome16KTupleDataset):
 
 class GeomKNNRome16KDataset(Rome16KTupleDataset):
   def __init__(self, opts, params):
-    super(KNNRome16KDataset, self).__init__(self, opts, params, tuple_size=5)
+    super(KNNRome16KDataset, self).__init__(self, opts, params, tuple_size=3)
+    e = params.descriptor_dim
     self.features.update({
+      'InitEmbeddings':
+           tf_helpers.TensorFeature(
+                         key='InitEmbeddings',
+                         shape=[d, e + 2 + 1 + 1],
+                         dtype=self.dtype,
+                         description='Initial embeddings for optimization'),
       'Rotations':
            tf_helpers.TensorFeature(
                          key='Rotations',
@@ -227,13 +234,27 @@ class GeomKNNRome16KDataset(Rome16KTupleDataset):
       fset = sorted(fset, key=lambda x: x.id)
       features.append([ fset[x] for x in feat_perm ])
     # Build descriptors
-    xy_pos = [ np.array([ f.pos for f in feats ]) for feats in features ]
-    scale = [ np.array([ f.scale_ for f in feats ]) for feats in features ]
+    # xy_pos = [ np.array([ [ f.pos ] for f in feats ]) for feats in features ]
+    xy_pos_ = [] 
+    # Save out calibrated features
+    for feats in features:
+      sz = feats[0].cam.imsize
+      focal = feats[0].cam.focal
+      # Feature positions are row, column, so this calibrates them
+      xy_pos_.append(np.array([ [ (f.pos[1] - sz[0]/2)/focal,
+                                  (sz[1]/2 - f.pos[0])/focal ]
+                                  for f in feats ]))
+    scale_ = [ np.array([ f.scale for f in feats ]) for feats in features ]
+    orien_ = [ np.array([ f.orien for f in feats ]) for feats in features ]
     descs_ = [ np.array([ f.desc for f in feats ]) for feats in features ]
     rids = [ np.random.permutation(len(ff)) for ff in descs_ ]
+    # Apply permutation to features
     perm_mats = [ np.eye(len(perm))[perm] for perm in rids ]
     perm = la.block_diag(*perm_mats)
     descs = np.dot(perm,np.concatenate(descs_))
+    xy_pos = np.dot(perm,np.concatenate(xy_pos_))
+    scale = np.dot(perm,np.concatenate(scale_))
+    orien = np.dot(perm,np.concatenate(orien_))
 
     # Build Graph
     desc_norms = np.sum(descs**2, 1).reshape(-1, 1)
@@ -252,15 +273,15 @@ class GeomKNNRome16KDataset(Rome16KTupleDataset):
     LLT = np.maximum(L,L.T)
 
     # Build dataset options
-    InitEmbeddings = np.concatenate([ ndescs,xy_pos_, scale_ ], axis=1)
+    InitEmbeddings = np.concatenate([ndescs,xy_pos,scale,orien], axis=1)
     AdjMat = LLT*mask
     Degrees = np.diag(np.sum(AdjMat,0))
     TrueEmbedding = np.concatenate(perm_mats,axis=0)
     Ahat = AdjMat + np.eye(*AdjMat.shape)
     Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
     Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
-    Rotations = np.stack([ scene.cams[i] for i in tupl ], axis=0)
-    Translations = np.stack([ scene.trans[i] for i in tupl ], axis=0)
+    Rotations = np.stack([ scene.cams[i].rot for i in tupl ], axis=0)
+    Translations = np.stack([ scene.cams[i].trans for i in tupl ], axis=0)
 
     ret_val = {
       'InitEmbeddings': InitEmbeddings.astype(self.dtype),

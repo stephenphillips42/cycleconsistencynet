@@ -27,4 +27,6 @@ def get_dataset(opts):
     return noisy_dataset.GraphSimOutlierDataset(opts, opts.dataset_params)
   elif opts.dataset in [ 'rome16kknn0' ]:
     return real_dataset.KNNRome16KDataset(opts, opts.dataset_params)
+  elif opts.dataset in [ 'rome16kgeom0' ]:
+    return real_dataset.GeomKNNRome16KDataset(opts, opts.dataset_params)
 
