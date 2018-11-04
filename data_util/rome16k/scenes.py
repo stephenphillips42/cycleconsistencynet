@@ -15,7 +15,6 @@ class Saver(object):
     dict_['id'] = self.id
     return dict_
 
-
   def output(self, obj):
     if type(obj) is np.ndarray:
       return obj.tolist()
@@ -30,24 +29,19 @@ class Saver(object):
 class Feature(Saver):
   def __init__(self, id_num, values=None):
     Saver.__init__(self, ['desc', 'pos', 'scale', 'orien', 'point', 'cam'], id_num, values)
+    self.desc = np.array(self.desc or np.zeros(128))
+    self.pos = np.array(self.pos or np.zeros(2))
+    self.scale = self.scale or 0
+    self.orien = self.orien or 0
 
 class Camera(Saver):
   def __init__(self, id_num, values=None):
     Saver.__init__(self, ['rot','trans','focal','k1','k2','imsize','features'], id_num, values)
-    if self.rot is None:
-      self.rot = np.eye(3)
-    else:
-      self.rot = np.array(self.rot)
-    if self.trans is None:
-      self.trans = np.zeros(3)
-    else:
-      self.trans = np.array(self.trans)
-    if self.k1 is None:
-      self.k1 = 0
-    if self.k2 is None:
-      self.k2 = 0
-    if self.imsize is None:
-      self.imsize = (-1,-1)
+    self.rot = np.array(self.rot or np.eye(3))
+    self.trans = np.array(self.trans or np.zeros(3))
+    self.k1 = self.k1 or 0
+    self.k2 = self.k2 or 0
+    self.imsize = self.imsize or (-1,-1)
 
 class Point(Saver):
   def __init__(self, id_num, values=None):
