@@ -69,7 +69,7 @@ class Camera(Saver):
     p_uncal, p_proj = np.array(p_uncal), np.array(p_proj)
     self.center = np.mean(p_uncal, 0) - np.mean(p_proj, 0)
     for f in self.features:
-      f.pos = (f.get_uncentered_calib() - self.center)/self.focal
+      f.pos = -(f.get_uncentered_calib() - self.center)/self.focal
 
 class Point(Saver):
   def __init__(self, id_num, values=None):
@@ -137,4 +137,6 @@ class Scene(Saver):
         self.points[p_idx].features = [ feature ]
       else:
         self.points[p_idx].features.append(feature)
+    for c in self.cams:
+      c.center_points()
 
