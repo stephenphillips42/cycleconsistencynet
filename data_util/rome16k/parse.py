@@ -140,7 +140,7 @@ def parse_sift_gzip(fname):
   for k in range(n):
     sift_ = [ [ float(z) for z in x.split(' ') if z != '' ] for x in f_list[(8*k+1):(8*k+9)] ]
     feature = scenes.Feature(0) # To fill in ID later
-    feature.pos = np.array(sift_[0][:2])
+    feature.pos_uncal = np.array(sift_[0][:2])
     feature.scale = np.array(sift_[0][2])
     feature.orien = np.array(sift_[0][3])
     feature.desc = np.array(sum(sift_[2:], sift_[1]))
