@@ -245,6 +245,11 @@ def parse_bundle(bundle_file, top_dir, get_imsize=True, max_load=-1, verbose=Fal
     points.append(point)
   myprint("Done")
 
+  myprint("Centering points for each camera...")
+  for c in cams:
+    c.center_points()
+  myprint("Done")
+
   # Create save
   scene = scenes.Scene()
   scene.cams = cams
