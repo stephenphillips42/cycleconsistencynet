@@ -13,7 +13,7 @@ test_fns = { ...
 
 disp_string =  [ '%06d Errors: ' ...
                  'Overlap: %.03e, Precision: %.03e, Recall: %.03e, ' ...
-                 'L1: %.03e,  L2: %.03e\n' ];
+                 'L1: %.03e,  L2: %.03e, BCE: %.03e\n' ];
 
 for test_fn_index = 1:size(test_fns,1)
   test_fn = test_fns{test_fn_index,2};
@@ -25,9 +25,9 @@ for test_fn_index = 1:size(test_fns,1)
       W = squeeze(test_mats.AdjMat(index,:,:)) + eye(n);
       Xgt = squeeze(test_mats.TrueEmbedding(index,:,:));
       Agt = Xgt*Xgt';
-      Ah = test_fn(W);
-      [overlap, precision, recall, l1, l2] = testOutput_full(Ah,Agt,p);
-      fprintf(fid, disp_string, index, overlap, precision, recall, l1, l2);
+      Ah = max(0,min(1,test_fn(W)));
+      [overlap, precision, recall, l1, l2, bce] = testOutput_full(Ah,Agt,p);
+      fprintf(fid, disp_string, index, overlap, precision, recall, l1, l2, bce);
     end
   end
   fprintf('\n')
@@ -65,11 +65,12 @@ end
 %% test_mats = load(fname);
 %% 
 
-function [overlap, precision, recall, l1, l2] = testOutput_full(Ah,Agt,p)
+function [overlap, precision, recall, l1, l2, bce] = testOutput_full(Ah,Agt,p)
 
 [overlap, precision, recall] = evalMMatch(triu(Ah,1),triu(Agt,1),false);
-l1 = mean(mean(abs(Ah-Agt)));
-l2 = mean(mean((Ah-Agt).^2));
+l1  = mean2(abs(Ah-Agt));
+l2  = mean2((Ah-Agt).^2);
+bce = mean2(Agt.*log2(eps+Ah) + (1-Agt).*log2(eps+1-Ah));
 
 end
 
