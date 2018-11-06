@@ -1,3 +1,13 @@
+%%%% Rome 16K
+@inproceedings{li2010location,
+  title={Location recognition using prioritized feature matching},
+  author={Li, Yunpeng and Snavely, Noah and Huttenlocher, Daniel P},
+  booktitle={European conference on computer vision},
+  pages={791--804},
+  year={2010},
+  organization={Springer}
+}
+
 %%%% Image Matching
 @article{fischler1981random,
   title={Random sample consensus: a paradigm for model fitting with applications to image analysis and automated cartography},
@@ -9,30 +19,63 @@
   year={1981},
   publisher={ACM}
 }
-@inproceedings{yi2016lift,
-  title={LIFT: Learned invariant feature transform},
-  author={Yi, Kwang Moo and Trulls, Eduard and Lepetit, Vincent and Fua, Pascal},
-  booktitle={European Conference on Computer Vision},
-  pages={467--483},
-  year={2016},
+
+@article{lowe2004distinctive,
+  title={Distinctive image features from scale-invariant keypoints},
+  author={Lowe, David G},
+  journal={International journal of computer vision},
+  volume={60},
+  number={2},
+  pages={91--110},
+  year={2004},
+  publisher={Springer}
+}
+
+@inproceedings{bay2006surf,
+  title={SURF: Speeded up robust features},
+  author={Bay, Herbert and Tuytelaars, Tinne and Van Gool, Luc},
+  booktitle={European conference on computer vision},
+  pages={404--417},
+  year={2006},
   organization={Springer}
 }
 
-@inproceedings{brachmann2017dsac,
-  title={DSAC-differentiable RANSAC for camera localization},
-  author={Brachmann, Eric and Krull, Alexander and Nowozin, Sebastian and Shotton, Jamie and Michel, Frank and Gumhold, Stefan and Rother, Carsten},
-  booktitle={IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-  volume={3},
-  year={2017}
+@article{calonder2012brief,
+  title={BRIEF: Computing a local binary descriptor very fast},
+  author={Calonder, Michael and Lepetit, Vincent and Ozuysal, Mustafa and Trzcinski, Tomasz and Strecha, Christoph and Fua, Pascal},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume={34},
+  number={7},
+  pages={1281--1298},
+  year={2012},
+  publisher={IEEE}
 }
 
-% For Satalites
-@inproceedings{workman2015wide,
-  title={Wide-area image geolocalization with aerial reference imagery},
-  author={Workman, Scott and Souvenir, Richard and Jacobs, Nathan},
-  booktitle={Proceedings of the IEEE International Conference on Computer Vision},
-  pages={3961--3969},
+@article{mur2015orb,
+  title={ORB-SLAM: a versatile and accurate monocular SLAM system},
+  author={Mur-Artal, Raul and Montiel, Jose Maria Martinez and Tardos, Juan D},
+  journal={IEEE Transactions on Robotics},
+  volume={31},
+  number={5},
+  pages={1147--1163},
+  year={2015},
+  publisher={IEEE}
+}
+
+%%%% Graph or Pairwise Matching
+@inproceedings{suh2015subgraph,
+  title={Subgraph matching using compactness prior for robust feature correspondence},
+  author={Suh, Yumin and Adamczewski, Kamil and Mu Lee, Kyoung},
+  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
+  pages={5070--5078},
   year={2015}
+}
+
+@article{hu2016distributable,
+  title={Distributable Consistent Multi-Graph Matching},
+  author={Hu, Nan and Thibert, Boris and Guibas, Leonidas},
+  journal={arXiv preprint arXiv:1611.07191},
+  year={2016}
 }
 
 %%%% Cycle Consistency
@@ -81,6 +124,57 @@
   pages={70--81},
   year={2017},
   organization={Springer}
+}
+
+%%% Learning feature matching
+@inproceedings{zagoruyko2015learning,
+  title={Learning to compare image patches via convolutional neural networks},
+  author={Zagoruyko, Sergey and Komodakis, Nikos},
+  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
+  pages={4353--4361},
+  year={2015}
+}
+
+@inproceedings{yi2016lift,
+  title={LIFT: Learned invariant feature transform},
+  author={Yi, Kwang Moo and Trulls, Eduard and Lepetit, Vincent and Fua, Pascal},
+  booktitle={European Conference on Computer Vision},
+  pages={467--483},
+  year={2016},
+  organization={Springer}
+}
+
+@inproceedings{brachmann2017dsac,
+  title={DSAC-differentiable RANSAC for camera localization},
+  author={Brachmann, Eric and Krull, Alexander and Nowozin, Sebastian and Shotton, Jamie and Michel, Frank and Gumhold, Stefan and Rother, Carsten},
+  booktitle={IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  volume={3},
+  year={2017}
+}
+
+@inproceedings{choy2016universal,
+  title={Universal correspondence network},
+  author={Choy, Christopher B and Gwak, JunYoung and Savarese, Silvio and Chandraker, Manmohan},
+  booktitle={Advances in Neural Information Processing Systems},
+  pages={2414--2422},
+  year={2016}
+}
+
+@inproceedings{yi2018learning,
+  title={Learning to Find Good Correspondences},
+  author={Yi, Kwang Moo and Trulls, Eduard and Ono, Yuki and Lepetit, Vincent and Salzmann, Mathieu and Fua, Pascal},
+  booktitle={Proceedings of the 2018 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  number={CONF},
+  year={2018}
+}
+
+% For Satalites
+@inproceedings{workman2015wide,
+  title={Wide-area image geolocalization with aerial reference imagery},
+  author={Workman, Scott and Souvenir, Richard and Jacobs, Nathan},
+  booktitle={Proceedings of the IEEE International Conference on Computer Vision},
+  pages={3961--3969},
+  year={2015}
 }
 
 %%%% Graph Neural Networks
@@ -144,33 +238,24 @@
   organization={IEEE}
 }
 
-
-%%%% Graph or Pairwise Matching
-@inproceedings{suh2015subgraph,
-  title={Subgraph matching using compactness prior for robust feature correspondence},
-  author={Suh, Yumin and Adamczewski, Kamil and Mu Lee, Kyoung},
-  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
-  pages={5070--5078},
-  year={2015}
-}
-
-@article{hu2016distributable,
-  title={Distributable Consistent Multi-Graph Matching},
-  author={Hu, Nan and Thibert, Boris and Guibas, Leonidas},
-  journal={arXiv preprint arXiv:1611.07191},
-  year={2016}
-}
-
-@inproceedings{yi2018learning,
-  title={Learning to Find Good Correspondences},
-  author={Yi, Kwang Moo and Trulls, Eduard and Ono, Yuki and Lepetit, Vincent and Salzmann, Mathieu and Fua, Pascal},
-  booktitle={Proceedings of the 2018 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-  number={CONF},
+@article{battaglia2018relational,
+  title={Relational inductive biases, deep learning, and graph networks},
+  author={Battaglia, Peter W and Hamrick, Jessica B and Bapst, Victor and Sanchez-Gonzalez, Alvaro and Zambaldi, Vinicius and Malinowski, Mateusz and Tacchetti, Andrea and Raposo, David and Santoro, Adam and Faulkner, Ryan and others},
+  journal={arXiv preprint arXiv:1806.01261},
   year={2018}
 }
 
 
 %%%% Other
+@inproceedings{tron2014quotient,
+  title={On the quotient representation for the essential manifold},
+  author={Tron, Roberto and Daniilidis, Kostas},
+  booktitle={Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition},
+  pages={1574--1581},
+  year={2014}
+}
+
+
 @inproceedings{zhu2015single,
   title={Single image pop-up from discriminatively learned parts},
   author={Zhu, Menglong and Zhou, Xiaowei and Daniilidis, Kostas},
