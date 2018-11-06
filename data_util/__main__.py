@@ -3,7 +3,7 @@ import numpy as np
 import os
 
 import options
-from data_util import dataset
+from data_util import datasets
 from data_util import noisy_dataset
 from data_util import real_dataset
 
@@ -11,7 +11,7 @@ opts = options.get_opts()
 print("Generating Pose Graphs")
 if not os.path.exists(opts.data_dir):
   os.makedirs(opts.data_dir)
-mydataset = dataset.get_dataset(opts)
+mydataset = datasets.get_dataset(opts)
 
 types = [
   'train',
