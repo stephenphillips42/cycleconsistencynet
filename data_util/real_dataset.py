@@ -165,7 +165,7 @@ class KNNRome16KDataset(Rome16KTupleDataset):
     descs = np.dot(perm,np.concatenate(descs_))
 
     # Build Graph
-    desc_norms = np.sum(descs**2, 1).reshape(-1, 1)
+    desc_norms = np.sqrt(np.sum(descs**2, 1).reshape(-1, 1))
     ndescs = descs / desc_norms
     Dinit = np.dot(ndescs,ndescs.T)
     # Rescaling
@@ -225,6 +225,11 @@ class GeomKNNRome16KDataset(Rome16KTupleDataset):
                          description='Mask offset for loss'),
     })
 
+  def build_mask(self):
+    p = self.n_pts
+    v = self.n_views
+    return tf.convert_to_tensor(1-np.kron(np.eye(v), np.ones((p,p))))
+
   def gen_sample_from_tuple(self, scene, tupl):
     # Parameters
     k = self.dataset_params.knn
@@ -254,7 +259,7 @@ class GeomKNNRome16KDataset(Rome16KTupleDataset):
     scale = np.dot(perm,np.concatenate(scale_)).reshape(-1,1)
     orien = np.dot(perm,np.concatenate(orien_)).reshape(-1,1)
     # Build Graph
-    desc_norms = np.sum(descs**2, 1).reshape(-1, 1)
+    desc_norms = np.sqrt(np.sum(descs**2, 1).reshape(-1, 1))
     ndescs = descs / desc_norms
     Dinit = np.dot(ndescs,ndescs.T)
     # Rescaling

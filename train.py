@@ -19,7 +19,7 @@ loss_fns = {
   'bce': tfutils.bce_loss,
   'l1': tfutils.l1_loss,
   'l2': tfutils.l2_loss,
-  'l1l2': tfutils.l2_loss,
+  'l1l2': tfutils.l1l2_loss,
 }
 
 log_file = None
