@@ -2,6 +2,8 @@
 *.sh
 *.pyc
 stdout.log
+# Ignore exteral imports for experiments
+external/*
 # Ignore log folders
 save/*
 launch/*yaml
