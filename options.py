@@ -105,6 +105,10 @@ def get_opts():
                       default=False,
                       type=myutils.str2bool,
                       help='NOT IMPLEMENTED YET: Use bias in dot product')
+  parser.add_argument('--geometric_loss',
+                      default=-1,
+                      type=float,
+                      help='Weight to use on the geometric loss')
   parser.add_argument('--weight_decay',
                       default=4e-5,
                       type=float,
@@ -320,6 +324,8 @@ def get_opts():
     arch.sparse = True
   if opts.loss_type == 'bce':
     arch.normalize_emb = False
+  if opts.dataset not in [ 'rome16kgeom0' ]:
+    opts.geometric_loss = 0
   setattr(opts, 'arch', arch)
 
   # Post processing

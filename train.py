@@ -19,7 +19,7 @@ loss_fns = {
   'bce': tfutils.bce_loss,
   'l1': tfutils.l1_loss,
   'l2': tfutils.l2_loss,
-  'l1l2': tfutils.l1l2_loss,
+  'l1l2': tfutils.l1_l2_loss,
 }
 
 log_file = None
@@ -43,6 +43,23 @@ def get_end_bias():
   return end_bias_global
 # END HACK!!
 
+# TODO: Should this be here or elsewhere?
+def get_geometric_loss(opts, sample, output_sim, name='geo_loss'):
+  b = opts.batch_size
+  v = opts.dataset_params.views[-1]
+  p = opts.dataset_params.points[-1]
+  # Build rotation matrices
+  batch_size = tf.shape(sample['Rotations'])[0]
+  R = tf.reshape(tf.tile(sample['Rotations'], [ 1, 1, p, 1 ]), [-1, v*p, 3, 3])
+  T = tf.reshape(tf.tile(sample['Translations'], [ 1, 1, p ]), [-1, v*p, 3])
+  X = tf.concat([ sample['InitEmbeddings'][...,-4:-2],
+                  tf.tile(tf.ones((1,v*p,1)), [ batch_size, 1, 1 ]) ], axis=-1)
+  RX = tf.einsum('bvik,bvk->bvi',R,X)
+  TcrossRX = tf.cross(T, RX)
+  E_part = tfutils.batch_matmul(RX, tf.transpose(TcrossRX, perm=[0, 2, 1]))
+  E = E_part + tf.transpose(E_part, [0, 2, 1])
+  return opts.geometric_loss * tf.reduce_mean(tf.multiply(output_sim, E), name=name)
+
 def get_loss(opts, sample, output, return_gt=False, name='loss'):
   emb = sample['TrueEmbedding']
   output_sim = tfutils.get_sim(output)
@@ -57,9 +74,17 @@ def get_loss(opts, sample, output, return_gt=False, name='loss'):
     sim = sample['AdjMat'] + tf.eye(num_rows=v*p, batch_shape=[b])
   else:
     sim = sim_true
-  tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
-  tf.summary.image('Embedding Similarity', tf.expand_dims(sim, -1))
+  if opts.full_tensorboard:
+    tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
+    tf.summary.image('Embedding Similarity', tf.expand_dims(sim, -1))
   loss = loss_fns[opts.loss_type](sim, output_sim)
+  if opts.full_tensorboard:
+    tf.summary.scalar('reconstruction loss', loss)
+  if opts.geometric_loss > 0:
+    geo_loss = get_geometric_loss(opts, sample, output_sim)
+    if opts.full_tensorboard:
+      tf.summary.scalar('geometric loss', geo_loss)
+    loss += geo_loss
   tf.summary.scalar(name, loss)
   if return_gt:
     output_sim_gt = output_sim
