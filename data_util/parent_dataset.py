@@ -248,6 +248,8 @@ class GraphSimDataset(object):
       dataset = dataset.shuffle(buffer_size=5*opts.batch_size)
     if opts.batch_size > 1:
       dataset = dataset.batch(opts.batch_size)
+      # TODO: Is this the optimal buffer_size?
+      dataset = dataset.prefetch(buffer_size=opts.batch_size)
 
     iterator = dataset.make_one_shot_iterator()
     sample = iterator.get_next()

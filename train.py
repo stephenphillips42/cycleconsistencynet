@@ -258,10 +258,11 @@ def train(opts):
   dataset = data_util.datasets.get_dataset(opts)
   network = model.get_network(opts, opts.arch)
   # Training
-  if opts.load_data:
-    sample = dataset.load_batch('train')
-  else:
-    sample = dataset.gen_batch('train')
+  with tf.device('/cpu:0'):
+    if opts.load_data:
+      sample = dataset.load_batch('train')
+    else:
+      sample = dataset.gen_batch('train')
   output = network(sample['Laplacian'], sample['InitEmbeddings'])
   loss = get_loss(opts, sample, output)
   train_op = get_train_op(opts, loss)
