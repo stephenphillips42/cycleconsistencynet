@@ -38,7 +38,7 @@
 %%%%%%%%% TITLE
 % \title{All Graphs Lead to Rome: \\
 % Cycle Consistent Multi-View Representations Using Graph CNNs}
-\title{All Graphs Lead to Rome: Learning Multi-View Cycle Concistency with Graph CNNs}
+\title{All Graphs Lead to Rome: Learning Geometric and Cycle Consistent Representations with Graph CNNs}
 
 \author{Stephen Phillips, Kostas Daniilidis \\
 GRASP Labratory, University of Pennsylvania\\
@@ -243,11 +243,29 @@ Thus our loss would be
 \end{equation}
 Here $\mathcal{D}$ could be an $L_2$ loss, $L_1$ loss, or many others. 
 
+\begin{figure}[t]
+\begin{center}
+  \includegraphics[width=0.8\linewidth]{figures/GeometricConsistency.pdf}
+\end{center}
+  \caption{
+    Illustration of the Geometric loss.
+    We compute the errors on each feature match to determine their validity.
+    Errors are computed via absolute distance from the epipolar line, as expressed by equation \ref{eq:essential_constraint} via the epipolar constraint.
+  }
+\label{fig:cycconsistex}
+\label{fig:onecol}
+\end{figure}
+
 \subsection{Geometric Side Information}
 One of the main advantages of this approach over more traditional optimization based approaches is the ability to add geometric side information into the loss at training time, even if it is not available at test time.
 The simplest way to add this, and the approach we use here, is using the epipolar constraint.
 The epipolar constraint describes how two features corresponding to the same point.
-We use the two pose epipolar constraint \cite{tron2014quotient} on corresponding feature locations $X_i$ and $X_j$ in cameras $i$ and $j$:
+Given a relative pose $(R_{ij}, T_{ij})$ between two cameras $i$ and $j$  (transforms $j$ to $i$) the epipolar on corresponding feature locations $X_i$ and $X_j$:
+\begin{equation}
+X_{i}^\top \cross{T_{ij}}R_{ij} X_{j} = 0
+\label{eq:essential_constraint_rel}
+\end{equation}
+In this work we use the two pose epipolar constraint \cite{tron2014quotient}:
 \begin{equation}
 X_{i}^\top R_{i}^\top \cross{T_{j} - T_{i}}R_{j} X_{j} = 0
 \label{eq:essential_constraint}
@@ -261,7 +279,8 @@ Given the matrix of correspondences between camera $i$ and $j$, $\mat{M}_{ij}$, 
 \end{equation}
 For our purposes, since we use low rank embeddings of the $\mat{M}_{ij}$, the loss would look like:
 \begin{align}
-\mathcal{L}_{geom}(\mat{E}) =&\; \sum_{i,j} (\mat{E})_{i} \cdot (\mat{E})_{j} (\mat{G})_{ij} \\
+\mathcal{L}_{geom}(\mat{E})
+=&\; \mathrm{tr}(\mat{G}^\top \mat{E}\mat{E}^\top) = \sum_{i,j} (\mat{E})_{i} \cdot (\mat{E})_{j} (\mat{G})_{ij} \\
 (\mat{G})_{ij} =&\; \left|X_{i}^\top R_{c(i)}^\top \cross{T_{c(j)} - T_{c(i)}}R_{c(j)} X_{j}\right| \nonumber
 \label{eq:geom_cost2}
 \end{align}
@@ -271,6 +290,21 @@ While this is all we use in this work, in principle you could use higher order c
 
 %------------------------------------------------------------------------
 \section{Experiments}
+
+\begin{figure*}
+\begin{center}
+  % \fbox{\rule{0pt}{2in} \rule{.9\linewidth}{0pt}}
+  \includegraphics[width=0.8\linewidth]{figures/TrainingCurves.pdf}
+  \end{center}
+    \caption{
+      Training curves with and without Geometric Training loss.
+      The training loss dramatically improves training time and performance.
+      Shown as horizontal lines are the state of the art optimization based baselines.
+      Even with a simple network we compare well with them.
+      NOTE TO READERS: This figure needs to be cleaned up.
+    }
+  \label{fig:short}
+\end{figure*}
 
 \begin{figure*}
 \begin{center}
