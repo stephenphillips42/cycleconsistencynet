@@ -30,6 +30,7 @@ arch_choices = [
   'vanilla', 'vanilla0', 'vanilla1',
   'skip', 'skip0', 'skip1',
   'longskip0', 'longskip1',
+  'normedskip0', 'normedskip1',
   'attn0', 'attn1', 'attn2',
   'spattn0', 'spattn1', 'spattn2',
 ]
@@ -302,6 +303,7 @@ def get_opts():
       self.activ = opts.activation_type
       self.attn_lens = []
       self.skip_layers = []
+      self.start_normed = -1
       self.normalize_emb = True
       self.sparse = False
   arch = ArchParams(opts)
@@ -311,17 +313,19 @@ def get_opts():
     arch.layer_lens=[ 2**min(5+k,9) for k in range(5) ]
   elif opts.architecture in ['vanilla1', 'skip1', 'attn2', 'spattn2']:
     arch.layer_lens=[ 2**min(5+k,9) for k in range(5) ]
-  elif opts.architecture in ['longskip0']:
+  elif opts.architecture in ['longskip0', 'normedskip0']:
     arch.layer_lens=[ 32, 64, 128, 256, 512, 512, 512,
                       512, 512, 512, 1024, 1024 ]
     arch.skip_layers = [ len(arch.layer_lens)//2, len(arch.layer_lens) - 1 ]
-  elif opts.architecture in ['longskip1']:
+  elif opts.architecture in ['longskip1', 'normedskip1']:
     arch.layer_lens=[ 32, 64, 128, 256, 512, 512,
                       512, 512, 512, 1024, 1024,
                       512, 512, 512, 1024, 1024 ]
     arch.skip_layers = [ 5, 10, len(arch.layer_lens) - 1 ]
   if opts.architecture in [ 'spattn0', 'spattn1', 'spattn2' ]:
     arch.sparse = True
+  if opts.architecture in [ 'normedskip0', 'normedskip1' ]:
+    arch.start_normed = 1
   if opts.loss_type == 'bce':
     arch.normalize_emb = False
   if opts.dataset not in [ 'rome16kgeom0' ]:
