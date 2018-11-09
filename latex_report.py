@@ -358,8 +358,9 @@ class LatexGenerator(object):
     min_idx = np.argmin(losses)
     max_idx = np.argmax(losses)
     rnd_idx = min_idx
-    while rnd_idx in [ min_idx, max_idx ]:
-      rnd_idx = np.random.randint(len(losses))
+    if len(losses) > 2:
+      while rnd_idx in [ min_idx, max_idx ]:
+        rnd_idx = np.random.randint(len(losses))
 
     ##### Create Latex String
     latex_string = ""
