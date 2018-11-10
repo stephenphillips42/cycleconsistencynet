@@ -303,7 +303,8 @@ def get_opts():
       self.activ = opts.activation_type
       self.attn_lens = []
       self.skip_layers = []
-      self.start_normed = -1
+      self.start_normed = 1
+      self.group_size = 32
       self.normalize_emb = True
       self.sparse = False
   arch = ArchParams(opts)
@@ -324,8 +325,9 @@ def get_opts():
     arch.skip_layers = [ 5, 10, len(arch.layer_lens) - 1 ]
   if opts.architecture in [ 'spattn0', 'spattn1', 'spattn2' ]:
     arch.sparse = True
-  if opts.architecture in [ 'normedskip0', 'normedskip1' ]:
-    arch.start_normed = 1
+  # TODO: If other types of group_norm architectures
+  # if opts.architecture in [ 'normedskip0', 'normedskip1' ]:
+  #   arch.start_normed = 1
   if opts.loss_type == 'bce':
     arch.normalize_emb = False
   if opts.dataset not in [ 'rome16kgeom0' ]:
