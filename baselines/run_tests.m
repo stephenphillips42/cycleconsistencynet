@@ -5,65 +5,52 @@ p = 80;
 n = p*v;
 dimGroups = [ p, p, p ];
 
+%  'MatchALSLimited', @(W)  mmatch_CVX_ALS(W, dimGroups, 'maxrank', p, 'maxiter', 15); ...
 test_fns = { ...
  'MatchALS', @(W)  mmatch_CVX_ALS(W, dimGroups, 'maxrank', p, 'maxiter', 400); ...
- 'Spectral', @(W)  mmatch_spectral(W, dimGroups, p); ...
+ 'Spectral', @(W)  myspectral(W, p); ...
  'PGDDS', @(W) PGDDS(W, dimGroups, p); ...
 };
 
 disp_string =  [ '%06d Errors: ' ...
-                 'Overlap: %.03e, Precision: %.03e, Recall: %.03e, ' ...
-                 'L1: %.03e,  L2: %.03e, BCE: %.03e\n' ];
+                 'L1: %.03e, L2: %.03e, BCE: %.03e\n' ];
 
 for test_fn_index = 1:size(test_fns,1)
   test_fn = test_fns{test_fn_index,2};
-  fid = fopen(sprintf('%sTestErrors.txt', test_fns{test_fn_index,1}), 'w');
+  fid = fopen(sprintf('%sTestErrors.log', test_fns{test_fn_index,1}), 'w');
+  fprintf('%s Method:\n', test_fns{test_fn_index,1})
+  test_index = 0;
   for mat_index = 1:length(mat_files)
     test_mats = load(mat_files{mat_index});
-    for index = 1:size(test_mats.AdjMat, 1)
-      fprintf('Matrix %03d of %03d, file %05d of %05d\r', mat_index, length(mat_files), index, size(test_mats.AdjMat, 1))
+    mat_length = size(test_mats.AdjMat, 1);
+    for index = 1:mat_length
+      fprintf('Matrix %03d of %03d, file %05d of %05d\r', mat_index, length(mat_files), index, mat_length)
       W = squeeze(test_mats.AdjMat(index,:,:)) + eye(n);
       Xgt = squeeze(test_mats.TrueEmbedding(index,:,:));
       Agt = Xgt*Xgt';
       Ah = max(0,min(1,test_fn(W)));
-      [overlap, precision, recall, l1, l2, bce] = testOutput_full(Ah,Agt,p);
-      fprintf(fid, disp_string, index, overlap, precision, recall, l1, l2, bce);
+      [l1, l2, bce] = testOutput_soft(Ah,Agt,p);
+      fprintf(fid, disp_string, test_index, l1, l2, bce);
+      % fprintf(disp_string, test_index, l1, l2, bce)
+      test_index = test_index + 1;
     end
   end
   fprintf('\n')
   fclose(fid);
 end
 
-% figure;
-% subplot(1,2+size(test_fns,1),1);
-% imagesc(W);
-% axis equal;
-% title('AdjMat')
-% subplot(1,2+size(test_fns,1),2);
-% imagesc(Agt);
-% axis equal;
-% title('Ground Truth')
-% for index = 1:size(test_fns, 1)
-%   Ah = test_fns{index,2}(W);
-%   fprintf('%s Errors\n', test_fns{index,1});
-%   testOutput(Ah);
-%   subplot(1,2+size(test_fns,1),2+index);
-%   imagesc(Ah);
-%   axis equal;
-%   title(test_fns{index,1})
-% end
 
 disp('Finished');
 
 end
 
-%%
-%% fname = fullfile(test_data_dir, sprintf('test-data-%02d.mat',index))
-%% index = 1;
-%% test_data_dir = '/mount/data/Rome16K/test_data'
-%% fname = fullfile(test_data_dir, sprintf('test-data-%02d.mat',index));
-%% test_mats = load(fname);
-%% 
+function [l1, l2, bce] = testOutput_soft(Ah,Agt,p)
+
+l1  = mean2(abs(Ah-Agt));
+l2  = mean2((Ah-Agt).^2);
+bce = -mean2(Agt.*log2(eps+Ah) + (1-Agt).*log2(eps+1-Ah));
+
+end
 
 function [overlap, precision, recall, l1, l2, bce] = testOutput_full(Ah,Agt,p)
 
@@ -109,6 +96,39 @@ if verbose
 end
 end
 
+function run_tests_old(mat_files)
+v = 3;
+p = 80;
+n = p*v;
+dimGroups = [ p, p, p ];
+test_fns = { ...
+ 'MatchALS', @(W)  mmatch_CVX_ALS(W, dimGroups, 'maxrank', p, 'maxiter', 400); ...
+ 'Spectral', @(W)  mmatch_spectral(W, dimGroups, p); ...
+ 'PGDDS', @(W) PGDDS(W, dimGroups, p); ...
+};
+disp_string =  [ '%06d Errors: ' ...
+                 'Overlap: %.03e, Precision: %.03e, Recall: %.03e, ' ...
+                 'L1: %.03e,  L2: %.03e, BCE: %.03e\n' ];
+for test_fn_index = 1:size(test_fns,1)
+  test_fn = test_fns{test_fn_index,2};
+  fid = fopen(sprintf('%sTestErrors.txt', test_fns{test_fn_index,1}), 'w');
+  for mat_index = 1:length(mat_files)
+    test_mats = load(mat_files{mat_index});
+    for index = 1:size(test_mats.AdjMat, 1)
+      fprintf('Matrix %03d of %03d, file %05d of %05d\r', mat_index, length(mat_files), index, size(test_mats.AdjMat, 1))
+      W = squeeze(test_mats.AdjMat(index,:,:)) + eye(n);
+      Xgt = squeeze(test_mats.TrueEmbedding(index,:,:));
+      Agt = Xgt*Xgt';
+      Ah = max(0,min(1,test_fn(W)));
+      [overlap, precision, recall, l1, l2, bce] = testOutput_full(Ah,Agt,p);
+      fprintf(fid, disp_string, index, overlap, precision, recall, l1, l2, bce);
+    end
+  end
+  fprintf('\n')
+  fclose(fid);
+end
+disp('Finished');
+end
 
 
 

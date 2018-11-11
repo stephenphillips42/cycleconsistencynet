@@ -11,3 +11,4 @@ __pycache__/
 figs/*
 logs/*
 baselines/*txt
+baselines/*log
