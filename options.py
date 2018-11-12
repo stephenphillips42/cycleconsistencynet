@@ -23,7 +23,7 @@ dataset_choices = [
   'synth_pts50', 'synth_pts100',
   'noise_outlier1', 'noise_outlier2', 'noise_outlier4', 'noise_outlier8',
   'rome16kknn0',
-  'rome16kgeom0',
+  'rome16kgeom0', 'rome16kgeom4view0',
 ]
 
 arch_choices = [
@@ -98,6 +98,10 @@ def get_opts():
                       default=False,
                       type=myutils.str2bool,
                       help='Use true adjacency or noisy one in loss')
+  parser.add_argument('--use_abs_value',
+                      default=False,
+                      type=myutils.str2bool,
+                      help='Use absolute value on the output similarities')
   parser.add_argument('--loss_type',
                       default=loss_types[0],
                       choices=loss_types,
@@ -287,6 +291,12 @@ def get_opts():
     # The dataset size is undermined until loading
     dataset_params.sizes={ 'train': -1, 'test': -1 }
   elif opts.dataset == 'rome16kgeom0':
+    dataset_params.points=[80] 
+    dataset_params.descriptor_dim=128
+    # The dataset size is undermined until loading
+    dataset_params.sizes={ 'train': -1, 'test': -1 }
+  elif opts.dataset == 'rome16kgeom4view0':
+    dataset_params.views = [4]
     dataset_params.points=[80] 
     dataset_params.descriptor_dim=128
     # The dataset size is undermined until loading

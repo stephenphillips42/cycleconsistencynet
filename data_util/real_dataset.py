@@ -24,9 +24,11 @@ class Rome16KTupleDataset(parent_dataset.GraphSimDataset):
     del self.features['Mask']
     del self.features['MaskOffset']
     self.dataset_params.sizes['train'] = \
-        sum([x[tuple_size-2] for _, x in parse.bundle_file_info['train'].items()])
+        sum([ min(int(x[1]*1.5), x[tuple_size-2])
+              for _, x in parse.bundle_file_info['train'].items() ])
     self.dataset_params.sizes['test'] = \
-        sum([x[tuple_size-2] for _, x in parse.bundle_file_info['test'].items()])
+        sum([ min(int(x[1]*1.5), x[tuple_size-2])
+              for _, x in parse.bundle_file_info['test'].items()  ])
 
   def gen_sample(self):
     print("ERROR: Cannot generate sample - need to load data")
@@ -39,7 +41,7 @@ class Rome16KTupleDataset(parent_dataset.GraphSimDataset):
   def scene_fname(self, bundle_file):
     return os.path.join(self.rome16k_dir, 'scenes', parse.scene_fname(bundle_file))
 
-  def tuple_fname(self, bundle_file):
+  def tuples_fname(self, bundle_file):
     return os.path.join(self.rome16k_dir, 'scenes', parse.tuples_fname(bundle_file))
 
   def convert_dataset(self, out_dir, mode):
@@ -59,17 +61,30 @@ class Rome16KTupleDataset(parent_dataset.GraphSimDataset):
     pbar = tqdm.tqdm(total=params.sizes[mode])
     for bundle_file in parse.bundle_file_info[mode]:
       scene_name = self.scene_fname(bundle_file)
+      np.random.seed(hash(scene_name) % 2**32)
       scene = parse.load_scene(scene_name)
       tuples_fname = self.tuples_fname(bundle_file)
       with open(tuples_fname, 'rb') as f:
-        tuples = pickle.load(f)[self.tuple_size-2]
+        tuples_all = pickle.load(f)
+        if self.tuple_size == 3:
+          tuples = tuples_all[1]
+        else:
+          tuples_sel = tuples_all[self.tuple_size-2]
+          n_select = int(1.5*len(tuples_all[1])) # TODO: Make this less hacky??
+          if n_select > len(tuples_sel):
+            tuples = tuples_all[self.tuple_size-2]
+          else:
+            tuples = np.array(tuples_sel)
+            tuples_idx = np.random.choice(np.arange(len(tuples)),
+                                          size=n_select, replace=False)
+            tuples = np.sort(tuples[np.sort(tuples_idx)]).tolist()
+
       for tupl in tuples:
         if file_idx > self.MAX_IDX:
           file_idx = 0
           if writer: writer.close()
           writer = tf.python_io.TFRecordWriter(outfile(record_idx))
           record_idx += 1
-        # np.random.seed((hash(scene_name) + hash(tupl)) % 2**32)
         loaded_features = self.gen_sample_from_tuple(scene, tupl)
         features = self.process_features(loaded_features)
         example = tf.train.Example(features=tf.train.Features(feature=features))
@@ -95,7 +110,7 @@ class Rome16KTupleDataset(parent_dataset.GraphSimDataset):
     for bundle_file in parse.bundle_file_info['test']:
       scene_name = self.scene_fname(bundle_file)
       scene = parse.load_scene(scene_name)
-      with open(self.tuple_fname(bundle_file), 'rb') as f:
+      with open(self.tuples_fname(bundle_file), 'rb') as f:
         tuples = pickle.load(f)[self.tuple_size-2]
       for tupl in tuples:
         # np.random.seed((hash(scene_name) + hash(tupl)) % 2**32)
@@ -201,7 +216,7 @@ class KNNRome16KDataset(Rome16KTupleDataset):
 
 class GeomKNNRome16KDataset(Rome16KTupleDataset):
   def __init__(self, opts, params):
-    super(GeomKNNRome16KDataset, self).__init__(opts, params, tuple_size=3)
+    super(GeomKNNRome16KDataset, self).__init__(opts, params, tuple_size=params.views[-1])
     d = self.n_pts*self.n_views
     e = params.descriptor_dim
     self.features.update({
