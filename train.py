@@ -66,6 +66,8 @@ def get_loss(opts, sample, output, return_gt=False, name='loss'):
   if opts.use_end_bias:
     end_bias = get_end_bias()
     output_sim = output_sim + end_bias
+  if opts.use_abs_value:
+    output_sim = tf.abs(output_sim)
   sim_true = tfutils.get_sim(emb)
   if opts.use_unsupervised_loss:
     v = opts.dataset_params.views[-1]
