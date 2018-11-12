@@ -10,6 +10,7 @@ import myutils
 import options
 
 from model import networks
+from model import skip_networks
 
 def get_regularizers(opts):
   regularizer_fn = None
@@ -53,17 +54,22 @@ def get_network(opts, arch):
                     arch,
                     regularizers=get_regularizers(opts))
   elif opts.architecture in ['skip', 'skip0', 'skip1']:
-    network = networks.GraphSkipLayerNetwork(
+    network = skip_networks.GraphSkipLayerNetwork(
                     opts,
                     arch,
                     regularizers=get_regularizers(opts))
   elif opts.architecture in ['longskip0', 'longskip1']:
-    network = networks.GraphLongSkipLayerNetwork(
+    network = skip_networks.GraphLongSkipLayerNetwork(
                     opts,
                     arch,
                     regularizers=get_regularizers(opts))
   elif opts.architecture in ['normedskip0', 'normedskip1']:
-    network = networks.GraphLongSkipNormedNetwork(
+    network = skip_networks.GraphLongSkipNormedNetwork(
+                    opts,
+                    arch,
+                    regularizers=get_regularizers(opts))
+  elif opts.architecture in ['normedskip2', 'normedskip3']:
+    network = skip_networks.GraphSkipHopNormedNetwork(
                     opts,
                     arch,
                     regularizers=get_regularizers(opts))
