@@ -40,7 +40,7 @@ def get_build_scene_opts():
   parser.add_argument('--max_points',
                       default=150,
                       type=int,
-                      help='Minimum overlap of points for connection')
+                      help='Maximum overlap of points for connection')
   parser.add_argument('--max_tuple_size',
                       default=4,
                       type=int,
