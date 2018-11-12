@@ -57,7 +57,7 @@ def get_geometric_loss(opts, sample, output_sim, name='geo_loss'):
   RX = tf.einsum('bvik,bvk->bvi',R,X)
   TcrossRX = tf.cross(T, RX)
   E_part = tfutils.batch_matmul(RX, tf.transpose(TcrossRX, perm=[0, 2, 1]))
-  E = E_part + tf.transpose(E_part, [0, 2, 1])
+  E = tf.abs(E_part + tf.transpose(E_part, [0, 2, 1]))
   return opts.geometric_loss * tf.reduce_mean(tf.multiply(output_sim, E), name=name)
 
 def get_loss(opts, sample, output, return_gt=False, name='loss'):
