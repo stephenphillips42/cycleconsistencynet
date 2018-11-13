@@ -98,6 +98,11 @@ def get_opts():
                       default=False,
                       type=myutils.str2bool,
                       help='Use true adjacency or noisy one in loss')
+  # TODO: Combine next two to add post-processing option
+  parser.add_argument('--use_clamping',
+                      default=False,
+                      type=myutils.str2bool,
+                      help='Use clamping to [0, 1] on the output similarities')
   parser.add_argument('--use_abs_value',
                       default=False,
                       type=myutils.str2bool,
