@@ -225,6 +225,7 @@ The matrix $\widetilde{L}$ is analogous to the graph Laplacian (with better nume
 $\widetilde{L}$ is used to encode the structure of the graph and is used to perform the actual graph convolution.
 We use many layers, and thus the receptive field of the final embedding is quite large, even without the pooling operations.
 For simplicity we restrict ourselves to this for now, though in principle we could use higher hop neighborhoods \cite{gama2018convolutional}, or more complicated aggregation structures \cite{battaglia2018relational}.
+For faster training, we use group normalization \cite{wu2018group} and skip connections.
 The final output $\mat{E}_n$ gives us a new descriptor for every node.
 In the next sections we will discuss the loss functions to train this network.
 
@@ -305,7 +306,7 @@ While this is all we use in this work, in principle you could use higher order c
 \begin{figure*}
 \begin{center}
   % \fbox{\rule{0pt}{2in} \rule{.9\linewidth}{0pt}}
-  \includegraphics[width=0.8\linewidth]{figures/TrainingCurves.pdf}
+  \includegraphics[width=0.8\linewidth]{figures/TrainingCurvesFull.pdf}
   \end{center}
     \caption{
       Training curves with and without Geometric Training loss.
@@ -381,7 +382,7 @@ We also include ablation studies on various geometric loss functions for the geo
 \begin{center}
 \begin{tabular}{|l|c|c|c|}
 \hline
-Method & L1 Loss & L2 Loss & BCE Loss \\
+Method                                    & L1 Loss                 & L2 Loss                 & BCE Loss \\
 \hline\hline\hline
 Spectral                                  & 5.368e-2 $\pm$ 5.274e-3 & 1.754e-2 $\pm$ 3.688e-3 & 1.143e-1 $\pm$ 2.774e-2 \\ \hline
 MatchALS                                  & 6.715e-3 $\pm$ 3.035e-3 & 6.696e-3 $\pm$ 3.035e-3 & 2.254e-1 $\pm$ 1.043e-1 \\ \hline
@@ -397,9 +398,6 @@ Losses tested against ground truth correspondence graph adjacency matrices.
 Our method was not trained on ground truth corresopndences but on unsupervised methods.
 }
 \end{table*}
-
-
-
 
 
 %------------------------------------------------------------------------
