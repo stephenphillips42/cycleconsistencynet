@@ -42,16 +42,20 @@ def get_test_losses(opts, sample, output, return_gt=False, name='loss'):
     end_bias = get_end_bias()
     output_sim = output_sim + end_bias
   if opts.loss_type == 'bce':
-    output_sim_sigmoid = tf.sigmoid(output_sim)
-    gt_l1_loss = loss_fns['l1'](sim_true, output_sim_sigmoid, add_loss=False)
-    gt_l2_loss = loss_fns['l2'](sim_true, output_sim_sigmoid, add_loss=False)
-    gt_bce_loss = loss_fns['bce'](sim_true, output_sim, add_loss=False)
+    osim = tf.sigmoid(output_sim)
+    osim_log = output_sim
   else:
-    output_sim_log = tf.log(tf.abs(output_sim) + 1e-9)
-    gt_l1_loss = loss_fns['l1'](sim_true, output_sim, add_loss=False)
-    gt_l2_loss = loss_fns['l2'](sim_true, output_sim, add_loss=False)
-    gt_bce_loss = loss_fns['bce'](sim_true, output_sim_log, add_loss=False)
-  return gt_l1_loss, gt_l2_loss, gt_bce_loss
+    osim = output_sim
+    osim_log = tf.log(tf.abs(output_sim) + 1e-9)
+  gt_l1_loss = loss_fns['l1'](sim_true, osim, add_loss=False)
+  gt_l2_loss = loss_fns['l2'](sim_true, osim, add_loss=False)
+  gt_bce_loss = loss_fns['bce'](sim_true, oslim_log, add_loss=False)
+  num_same = tf.reduce_sum(sim_true)
+  num_diff = tf.reduce_sum(1-sim_true)
+  ssame_m, ssame_var = tf.weighted_moments(osim, None, sim_true)
+  sdiff_m, sdiff_var = tf.weighted_moments(osim, None, 1-sim_true)
+
+  return gt_l1_loss, gt_l2_loss, gt_bce_loss, ssame_m, ssame_var, sdiff_m, sdiff_var
 
 def build_test_session(opts):
   config = tf.ConfigProto()
@@ -72,7 +76,11 @@ def test_values(opts):
 
   # Tensorflow and logging operations
   disp_string =  '{:06d} Errors: ' \
-                 'L1: {:.03e},  L2: {:.03e}, BCE: {:.03e}'
+                 'L1: {:.03e},  L2: {:.03e}, BCE: {:.03e} ' \
+                 'Same sim: {.03e} +/- {.03e} ' \
+                 'Diff sim: {.03e} +/- {.03e}' 
+
+
   # Build session
   glob_str = os.path.join(opts.dataset_params.data_dir, 'np_test', '*npz')
   npz_files = sorted(glob.glob(glob_str))
