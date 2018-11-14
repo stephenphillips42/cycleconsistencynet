@@ -216,7 +216,7 @@ As input to our method we are given the graph Laplacian $\mat{L} \in \bR^{n \tim
 \end{equation}
 and an initial embedding $\mat{E}_0 \in \bR^{n \times m_0}$.
 Many older methods assume $\mat{L}$ is known a-priori \cite{bruna2013spectral}, and thus can encode graph convolutions using the eigenvectors of $L$.
-We do not have this luxury, and thus we use more modern non-spectral methods GNNs:
+We do not have this luxury, and thus we use non-spectral GNNs:
 \begin{equation}
 \mat{E}_{i+1} =\; P\left(\sigma\left( \sum_k \mat{L}^k \mat{E}_i \mat{W}_{i,k} \right)\right)
 \end{equation}
@@ -239,6 +239,22 @@ The final output $\mat{E}_n$ gives us a new descriptor for every node.
 In the next sections we will discuss the loss functions to train this network.
 
 \subsection{Cycle Consistency}
+
+\begin{figure}[t]
+\begin{center}
+  \includegraphics[width=0.9\linewidth]{figures/UniverseOfFeatures.pdf}
+\end{center}
+  \caption{
+    Illustration of the universe of features.
+    Each feature in each image corresponds to a 3D point in the scene.
+    Therefore, we can get the points to have a cycle consistent embedding by mapping each feature in each image to the one-hot vector of its corresponding 3D point.
+    While there can be many features, there are much fewer 3D points and thus this corrsponds to a low rank factorization of the corrspondence matrix.
+    Best viewed in color.
+  }
+\label{fig:universefeatures}
+\label{fig:onecol}
+\end{figure}
+
 Let $\mat{M}$ be the noiseless set of matches between our features, with $\mat{M}_{ij}$ being the matches between image $i$ and image $j$.
 If the pairwise matches are globally consistent, then we can say that, for all $i, j, k$:
 \begin{equation}
@@ -248,7 +264,7 @@ If the pairwise matches are globally consistent, then we can say that, for all $
 In other words, the matches between two images stays the same no matter what path is taken to get there. 
 This constraint is known as \textit{cycle concistency}, and has been used in a number of works to optimize for global consistency \cite{zhou2015multi, wang2017multi, leonardos2016distributed}.
 Stated in this form, there are $O(n^3)$ cycle consistency constraints to check.
-A more elegant way to represent cycle consistency is to first create a `universe' of features that all images match to.
+A more elegant way to represent cycle consistency is to first create a `universe' of features that all images match to (see figure \ref{fig:universefeatures}).
 Then, one can match the $i^{th}$ set of features to the universe using a matrix $\mat{X}_i$.
 Then the cycle consistency becomes:
 \begin{equation}
@@ -261,6 +277,8 @@ We try to learn $\mat{E}$ to approximate $\mat{X}$ - in other words the final em
 \mathcal{L}(\mat{A}, \mat{E}_n) = \mathcal{D}(\mat{A}, \mat{E}_n\mat{E}_n^\top)
 \end{equation}
 Here $\mathcal{D}$ could be an $L_2$ loss, $L_1$ loss, or many others.
+
+\subsection{Geometric Side Information}
 
 \begin{figure}[t]
 \begin{center}
@@ -276,7 +294,6 @@ Here $\mathcal{D}$ could be an $L_2$ loss, $L_1$ loss, or many others.
 \label{fig:onecol}
 \end{figure}
 
-\subsection{Geometric Side Information}
 One of the main advantages of this approach over more traditional optimization based approaches is the ability to add geometric side information into the loss at training time, even if it is not available at test time.
 The simplest way to add geometric side losses, and the approach we use here, is to use the epipolar constraint.
 The epipolar constraint describes how the positions of features in different images corresponding to the same point should be related.
@@ -323,6 +340,7 @@ In future work we will invistigate using higher order constraints, such as the t
     }
   \label{fig:short}
 \end{figure*}
+
 
 \begin{figure*}
 \begin{center}
