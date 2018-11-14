@@ -73,13 +73,11 @@ GRASP Labratory, University of Pennsylvania\\
 % must be no longer than eight pages in length. The references section
 
 %%%%%%%%% ABSTRACT
+% We present a learning technique for refining multi-image feature matches in an unsupervised fashion.
 \begin{abstract}
-   % Put abstract here
-   % OK I hate this start but we will work on it.
-   (Work in progress) In this work we present a learning technique for refining multi-image matches in an unsupervised fashion.
-   We formulate the multi-image matching problem as a graph embedding problem then use recent work in Graph Neural Networks to learn the appropriate embedding function.
-   Since ground truth correspondence is difficult or expensive to come by in many real world datasets, we use cycle consistency as our loss function.
-   Additional losses can be added if more information is available in the training set for better test performance.
+   In this work we formulate the multi-image matching problem as a graph embedding problem then use a Graph Neural Network to learn an appropriate embedding function for aligning image features.
+   Since ground truth correspondence is difficult or expensive to come by in many real world datasets, we use cycle consistency to train our network in an unsupervised fashion.
+   Additional geometric side losses can be added if the information is available in the training set for better test performance.
    To the best of our knowledge, no other works have used learning for multi-image feature matching.
    Our experiments show that our method is competitive with other optimization based approaches.
 \end{abstract}
@@ -87,15 +85,19 @@ GRASP Labratory, University of Pennsylvania\\
 %%%%%%%%% BODY TEXT
 \section{Introduction}
 
-% TODO: Add more citations
-Feature matching is an essential part of many geometric computer vision applications.
-Much work has been done on image matching for the last several decades \cite{fischler1981random}.
+Feature matching is an essential part of Structure from Motion and many geometric computer vision applications.
+The goal in multi-image feature matching is to take 2D image locations from three or more images and find which ones correspond to the same point in the 3D scene.
+Methods such as SIFT feature matching \cite{lowe2004distinctive} and RANSAC \cite{fischler1981random} have been standard for solving this for decades now.
 However we still have not fully answered the question: What are the best image features to describe multiple views of the same scene?
-Recently deep learning has revolutionized how image features are computed \cite{yi2016lift}, and we would like to leverage this to compute better scene features.
-Typically when applied to this area, deep neural networks (DNNs) are trained with photometric losses.
-Photometric losses make the brightness constancy assumption, which is not as robust as feature matching.
+
+Recently deep learning has revolutionized how image features are computed \cite{yi2016lift}. 
+We would like to leverage this to compute better scene features.
+Typically when applied to this area, deep neural networks (DNNs) are trained with photometric losses, directly using pixel color values.
+Using pixel values directly is not that robust due to the many confounding factors in the environment, such as lighting and view-point changes.
+Extracting features from the image is more robust to these confounding factors.
 Can we learn using multi-view constraints directly?
 
+% Photometric losses make the brightness constancy assumption, which is not as robust as feature matching.
 \begin{figure}[t]
 \begin{center}
   % \fbox{\rule{0pt}{2in} \rule{0.9\linewidth}{0pt}}
@@ -103,13 +105,13 @@ Can we learn using multi-view constraints directly?
 \end{center}
   \caption{
     Example of multi-image matching, with images from Rome16K dataset \cite{li2010location}.
-    Shown is an example of an error in matching leading to an inconsistency cycle.
-    In this work, we show how to learn this multi-view matching problem.
+    In this example, an error in matching leads to an inconsistent cycle. 
+    Ideally these pairwise matches would be consistent 
+    In this work, we show how to learn this multi-view matching problem using cycle consistency.
   }
 \label{fig:cycconsistex}
 \label{fig:onecol}
 \end{figure}
-
 
 Unfortunately, there are obstacles to applying multi-view constraints directly to learning. 
 To train networks, we need a large amount of labelled data.
@@ -118,16 +120,16 @@ Multi-view constraints are formulated in terms of sparse features, thus traditio
 In the case of multi-image feature matching, geometric constraints would be helpful in rejecting outlier matches.
 
 In this work, we propose to solve these problems using a Graph Neural Network (GNN) to operate on the correspondence graph.
-The method proposed works on the correspondence graph, agnostic to how correspondnces were computed.
+The proposed method works on the correspondence graph, which is agnostic to how the correspondnces were computed.
 
-We use a self-supervised loss, the cycle consistency loss, to train the network.
+We use a unsupervised loss, the cycle consistency loss, to train the network.
 We also add in side geometric losses to help training, which works even when the geometric information is not available at test time.
 Our contributions are:
 \begin{itemize}
-\item A novel architecture for multi-image feature matching using GNNs with graph embeddings
-\item The use of the self-supervised cycle consistency loss
-\item Test geometric consistency losses toward the training
-\item Perform experiments on the Rome16K \cite{li2010location} dataset to test the effectiveness of our method compared to the optimization based baselines
+\item We use novel architecture to solve multi-image feature matching problem using GNNs with graph embeddings
+\item We use the unsupervised cycle consistency loss to train a network to solve the multi-image matching problem
+\item We show the effectiveness of geometric side losses in training the network
+\item We perform experiments on the Rome16K \cite{li2010location} dataset to test the effectiveness of our method compared to the optimization based baselines
 \end{itemize}
 
 
@@ -143,18 +145,20 @@ Multi-image matching has traditionally been done using optimization based method
 \cite{pachauri2013solving} and \cite{arrigoni2017synchronization} use the eigenvectors of the matching matrix to obtain a low dimensional embedding. 
 Thus they are robust to small Gaussian noise but not to stronger noise.
 \cite{zhou2015multi} and \cite{wang2017multi} use most sophisticated optimization techniques on the matching matrix and thus are quite robust.
-However, they use a centralized scheme and thus are not appropriate in a distributed setting,
-as done in \cite{leonardos2016distributed}.
+However, they use a centralized scheme and thus are not appropriate in a distributed setting, as done in \cite{leonardos2016distributed}.
 There are also density based optimization techniques to compute multi-image correspondence, such as in \cite{tron2017fast}.
 
-Previous attempts to improve image matching techniques using machine learning have focused on learning the descriptors given ground truth correspondence from curated datasets \cite{zagoruyko2015learning, yi2016lift, brachmann2017dsac}. This approach is limited if you do not have the ability to get the ground truth correspondences.
+Previous attempts to improve image matching techniques using machine learning have focused on learning the descriptors given ground truth correspondence from curated datasets \cite{zagoruyko2015learning, yi2016lift, brachmann2017dsac}.
+This approach is limited if you do not have the ability to get the ground truth correspondences.
 There are other methods to build correspondences \cite{choy2016universal}, but it only handles two-view constraints and requires dense correspondences.
-Most similar to ours, \cite{yi2018learning} attempts to improve correspondences by learning match probabilites for RANSAC to speed up test time running. However, they only focus on two view tests and do not exploit the advantages of the correspondence structure.
+Most similar to ours, \cite{yi2018learning} attempts to improve correspondences by learning match probabilites for RANSAC to speed up test time running.
+However, they only focus on two view tests and do not exploit the advantages of the correspondence structure.
 
-Graph neural networks have been getting more attention recently 
-\cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2016semi, scarselli2009graph, gama2018mimo, gama2018convolutional, battaglia2018relational}.
-Classical so-called Spectral methods used the eigenvectors of graph Laplacian to compute convolutions \cite{bronstein2017geometric}, but this requires a fixed graph structure known a-priori.  
-Non-spectral methods do not have this requirement \cite{bronstein2017geometric, kipf2016semi, scarselli2009graph, gama2018convolutional}. Most of these simply use polynomials of the graph Laplacian to compute neighborhood averages. \cite{gama2018mimo} and \cite{gama2018convolutional} formalize this notion and generalize it beyond the use of the graph Laplacian. More sophisticated aggregation techniques and global information passing can also be used as discussed in \cite{battaglia2018relational}.
+Graph neural networks have been getting more attention recently \cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2016semi, scarselli2009graph, gama2018mimo, gama2018convolutional, battaglia2018relational}.
+Classical so-called Spectral methods used the eigenvectors of graph Laplacian to compute convolutions \cite{bronstein2017geometric}, but requires a fixed graph structure known a-priori.  
+Non-spectral methods do not require a-priori knowledge \cite{bronstein2017geometric, kipf2016semi, scarselli2009graph, gama2018convolutional}.
+Most of these simply use polynomials of the graph Laplacian to compute neighborhood averages. \cite{gama2018mimo} and \cite{gama2018convolutional} formalize this notion and generalize it beyond the use of the graph Laplacian.
+More sophisticated aggregation techniques and global information passing can also be used as discussed in \cite{battaglia2018relational}.
 
 %------------------------------------------------------------------------
 \begin{figure*}[t]
@@ -167,10 +171,9 @@ Non-spectral methods do not have this requirement \cite{bronstein2017geometric, 
     The graph of matches is put to a Graph Convolutional Neural Network (GCN) \cite{kipf2016semi} then creates a low rank embedding of the Adjacency Matrix of the graph.
     The GCN operates on an embedding over the nodes the graph.
     The colors on the nodes of the graph in the GCN represent the values of the embedding.
-    The final embedding is used to construct a pairwise similarity matrix, which ideally should be a low dimensional representation of the graph adjacency matrix i.e. should be a cycle consistent version of the graph adjacency matrix.
+    The final embedding is used to construct a pairwise similarity matrix, which ideally should be a low dimensional cycle consistent representation of the graph adjacency matrix.
     We train the network using a reconstruction loss on the similarity matrix.
-    In addition we can use geometric information at to assist training the network, even if we do not have that geometric information at testing time.
-    This can be epipolar constraints on the point locations or higher order geometric constraints.
+    In addition we can use geometric information at to assist training the network, even if we do not have that geometric information at testing time such as epipolar constraints on the point locations or higher order geometric constraints.
   }
 \label{fig:pipeline}
 \label{fig:onecol}
@@ -185,16 +188,20 @@ We denote the $i^{th}$ row of a matrix $(\mat{A})_i$.
 We assume we have an initial set of feature matches represented as a graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$.
 Each vertex $v$ of the graph is a feature with its associated descriptor $f_v$. 
 The graph is represented by its Weighted Adjacency Matrix $\mat{A}(\mathcal{G}) \in \bR^{n \times n}$ and its positive diagonal degree matrix $\mat{D}(\mathcal{G}) \in \bR^{n \times n}$ (denoted $\mat{A}$ and $\mat{D}$ for brevity).
-We can get an embedding matrix $E_0$ by combining the features $f_v$ from each of the vertices.
-We use $E_0$ as our initializiation for our learning algorithm.
+We can get our an embedding matrix $\mat{E}_0$ by concatenating the features $f_v$ from each of the vertices.
+We use $\mat{E}_0$ as our initializiation for our learning algorithm.
 We can also add any additional knowledge we have into the embedding (e.g. scale, orientation, etc.).
 Putative correspondences are computed from these features and represented by weighted edges in which the weight gives the strength of the match.
 While there are many interesting methods for computing these putative correspondences \cite{suh2015subgraph, yi2018learning}, we do not explore them in this work.
 
-In the absence of noise or outliers, this graph would have $p$ disjoint connected components, where $p$ is the number of co-visible points in the world.
-Each feature would only have edges to other features corresponding to the same point.
+In the absense of noise or outliers, this graph would have a connected component for each visible point in the world.
+These components should be mutually disjoint. 
+In other words each feature would only have edges to other features corresponding to the same point.
 Since features in this case represent unique location in the scene, no points in the same image would have edges between them.
-Typically putative correspondences match probabilistically, meaning a feature in one image matches to many features in another.
+In the noisy case we expect this structure to be corrupted and thus we need to refine out the erroneous edges.
+
+To compute this matching graph, we do pairwise feature matching between the images, creating putative correspondences for each of the features.
+Typically these putative correspondences are matched probabilistically, meaning a feature in one image matches to many features in another.
 This could come from repeated structures in the scene, ambiguity from the low-level feature descriptors, or just an error in the matching algorithm.
 Filtering out these noisy matches is our primary learning goal.
 
@@ -203,28 +210,30 @@ Thus we cannot use standard CNNs to learn features for this task.
 Thus we need to use graph convolutions to learn feature representations on this space, which we explore in this next section.
 
 \subsection{Graph Neural Networks}
-Much attention has been given to graph neural networks (GNNs) recently
-\cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2016semi, scarselli2009graph, gama2018mimo, gama2018convolutional, battaglia2018relational}.
-Modern GNNs use non-spectral methods, such as the following:
-\begin{align}
-      \mat{L} =&\; I - \mat{D}^{-1/2} \mat{A} \mat{D}^{-1/2} \\
-\mat{E}_{i+1} =&\; P\left(\sigma\left( \sum_k \mat{L}^k \mat{E}_i \mat{W}_{i,k} \right)\right)
-\end{align}
-The matrix $L$ is the graph Laplacian, use to encode the graph structure, and $\mat{W}_{k,i}$ are the learned weights of layer $i$.
+As input to our method we are given the graph Laplacian $\mat{L} \in \bR^{n \times n}$ to encode the graph structure:
+\begin{equation}
+  \mat{L} =\; \mat{I} - \mat{D}^{-1/2} \mat{A} \mat{D}^{-1/2} \\
+\end{equation}
+and an initial embedding $\mat{E}_0 \in \bR^{n \times m_0}$.
+Many older methods assume $\mat{L}$ is known a-priori \cite{bruna2013spectral}, and thus can encode graph convolutions using the eigenvectors of $L$.
+We do not have this luxery, and thus we use more modern non-spectral methods GNNs:
+\begin{equation}
+\mat{E}_{i+1} =\; P\left(\sigma\left( \sum_k \mat{L}^k \mat{E}_i \mat{W}_{i,k} \right)\right)
+\end{equation}
 The degree of the polynomial determines the number of hops away from a node one layer can access.
-Here $\sigma$ is the non-linearity (typically a ReLU) and $P$ is the `pooling' operation, known as graph coarsening \cite{bronstein2017geometric, gama2018mimo}.
-As we need an embedding over the whole graph, we cannot perform graph coarsening, and thus we only perform the non-linearity step.
-
+Here $\sigma$ is the non-linearity (typically a ReLU), $\mat{W}_{k,i}$ are the learned weights of layer $i$,  and $P$ is the `pooling' operation, known as graph coarsening \cite{bronstein2017geometric, gama2018mimo}.
+In the feature matching problem, we require an embedding for each vertex.
+Therefore we cannot perform graph coarsening, and thus we only perform the non-linearity step.
 We instead use a modification of the approach in \cite{kipf2016semi}:
 \begin{align}
       \widetilde{\mat{L}} =&\; (\mat{D} + \mat{I})^{-1/2} (\mat{A} + \mat{I}) (\mat{D} + \mat{I})^{-1/2} \\
 \mat{E}_{l+1} =&\; \sigma\left(\widetilde{\mat{L}} \mat{E}_i \mat{W}_i \right)  \label{eq:graph_conv}
 \end{align}
 
-The matrix $\widetilde{L}$ is analogous to the graph Laplacian (with better numerical stability properties).
-$\widetilde{L}$ is used to encode the structure of the graph and is used to perform the actual graph convolution.
-We use many layers, and thus the receptive field of the final embedding is quite large, even without the pooling operations.
-For simplicity we restrict ourselves to this for now, though in principle we could use higher hop neighborhoods \cite{gama2018convolutional}, or more complicated aggregation structures \cite{battaglia2018relational}.
+The matrix $\widetilde{\mat{L}}$ is analogous to the graph Laplacian (with better numerical stability properties).
+$\widetilde{\mat{L}}$ encodes the structure of the graph and is used to perform the actual graph convolution.
+Our network has many layers, and thus the receptive field of the final embedding is quite large, even without the pooling operations.
+In principle we could use higher hop neighborhoods \cite{gama2018convolutional}, or more complicated aggregation structures \cite{battaglia2018relational}, but in this work we restrict ourselves to simpler architectures, which still shows promising results for this task.
 For faster training, we use group normalization \cite{wu2018group} and skip connections.
 The final output $\mat{E}_n$ gives us a new descriptor for every node.
 In the next sections we will discuss the loss functions to train this network.
@@ -248,6 +257,9 @@ Then the cycle consistency becomes:
 
 % In our case, we try to learn embeddings $\mat{E}$ that map to the $\mat{X}_i$ - learn the universe of features via our embeddings.
 We try to learn $\mat{E}$ to approximate $\mat{X}$ - in other words the final embedding should be an encoding of the universe of features.
+However for this equation to be valid, we need the dimension of the embedding to be at least the number of unique points in the scene.
+Picking the correct number is difficult a-priori, and is a problem with all cycle consistency based methods.
+Here we use the ground truth dimension of the embedding to test our method and the baselines.
 Thus our loss would be 
 \begin{equation}
 \mathcal{L}(\mat{A}, \mat{E}_n) = \mathcal{D}(\mat{A}, \mat{E}_n\mat{E}_n^\top)
@@ -270,7 +282,7 @@ Another way of viewing this is that features $i$ and $j$ match with probability 
 
 \subsection{Geometric Side Information}
 One of the main advantages of this approach over more traditional optimization based approaches is the ability to add geometric side information into the loss at training time, even if it is not available at test time.
-The simplest way to add this, and the approach we use here, is using the epipolar constraint.
+The simplest way to add geometric side losses, and the approach we use here, is to use the epipolar constraint.
 The epipolar constraint describes how the positions of features in different images corresponding to the same point should be related.
 Given a relative pose $(R_{ij}, T_{ij})$ between two cameras $i$ and $j$  (transforms $j$ to $i$) the epipolar on corresponding feature locations $X_i$ and $X_j$:
 \begin{equation}
@@ -283,7 +295,7 @@ X_{i}^\top R_{i}^\top \cross{T_{j} - T_{i}}R_{j} X_{j} = 0
 \label{eq:essential_constraint}
 \end{equation}
 % Where the $(R_k, T_k)$ are the poses of cameras $i$ and $j$ respectively.
-This assumes that the $X_k$ are calibrated i.e. the camera intrinsics are known. 
+The constraint assumes that the $X_k$ are calibrated i.e. the camera intrinsics are known. 
 Given the matrix of correspondences between camera $i$ and $j$, $\mat{M}_{ij}$, we can formulate this as a loss:
 \begin{equation}
 \mathcal{L}_{ij,geom}(\mat{M}_{ij}) = \sum_{k,l} (\mat{M}_{ij})_{kl} \left|X_{i,k}^\top R_{i}^\top \cross{T_{j} - T_{i}}R_{j} X_{j,l}\right|
@@ -297,7 +309,7 @@ For our purposes, since we use low rank embeddings of the $\mat{M}_{ij}$, the lo
 \label{eq:geom_cost2}
 \end{align}
 Where $c(i)$ is the appropriate camera for point index $i$.
-While this is all we use in this work, in principle you could use higher order constraints such as the trifocal tensor as additional loss terms.
+In future work we will invistigate using higher order constraints, such as the trifocal tensor as additional loss terms.
 
 
 %------------------------------------------------------------------------
