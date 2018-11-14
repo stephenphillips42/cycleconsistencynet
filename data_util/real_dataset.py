@@ -44,6 +44,24 @@ class Rome16KTupleDataset(parent_dataset.GraphSimDataset):
   def tuples_fname(self, bundle_file):
     return os.path.join(self.rome16k_dir, 'scenes', parse.tuples_fname(bundle_file))
 
+  def get_tuples(self, bundle_file):
+    tuples_fname = self.tuples_fname(bundle_file)
+    with open(tuples_fname, 'rb') as f:
+      tuples_all = pickle.load(f)
+    if self.tuple_size == 3:
+      tuples = tuples_all[1]
+    else:
+      tuples_sel = tuples_all[self.tuple_size-2]
+      n_select = int(1.5*len(tuples_all[1])) # TODO: Make this less hacky??
+      if n_select > len(tuples_sel):
+        tuples = tuples_all[self.tuple_size-2]
+      else:
+        tuples = np.array(tuples_sel)
+        tuples_idx = np.random.choice(np.arange(len(tuples)),
+                                      size=n_select, replace=False)
+        tuples = np.sort(tuples[np.sort(tuples_idx)]).tolist()
+    return tuples
+
   def convert_dataset(self, out_dir, mode):
     """Writes synthetic flow data in .mat format to a TF record file."""
     params = self.dataset_params
@@ -63,23 +81,7 @@ class Rome16KTupleDataset(parent_dataset.GraphSimDataset):
       scene_name = self.scene_fname(bundle_file)
       np.random.seed(hash(scene_name) % 2**32)
       scene = parse.load_scene(scene_name)
-      tuples_fname = self.tuples_fname(bundle_file)
-      with open(tuples_fname, 'rb') as f:
-        tuples_all = pickle.load(f)
-        if self.tuple_size == 3:
-          tuples = tuples_all[1]
-        else:
-          tuples_sel = tuples_all[self.tuple_size-2]
-          n_select = int(1.5*len(tuples_all[1])) # TODO: Make this less hacky??
-          if n_select > len(tuples_sel):
-            tuples = tuples_all[self.tuple_size-2]
-          else:
-            tuples = np.array(tuples_sel)
-            tuples_idx = np.random.choice(np.arange(len(tuples)),
-                                          size=n_select, replace=False)
-            tuples = np.sort(tuples[np.sort(tuples_idx)]).tolist()
-
-      for tupl in tuples:
+      for tupl in self.get_tuples(bundle_file):
         if file_idx > self.MAX_IDX:
           file_idx = 0
           if writer: writer.close()
@@ -109,11 +111,9 @@ class Rome16KTupleDataset(parent_dataset.GraphSimDataset):
     index = 0
     for bundle_file in parse.bundle_file_info['test']:
       scene_name = self.scene_fname(bundle_file)
+      np.random.seed(hash(scene_name) % 2**32)
       scene = parse.load_scene(scene_name)
-      with open(self.tuples_fname(bundle_file), 'rb') as f:
-        tuples = pickle.load(f)[self.tuple_size-2]
-      for tupl in tuples:
-        # np.random.seed((hash(scene_name) + hash(tupl)) % 2**32)
+      for tupl in self.get_tuples(bundle_file):
         features = self.gen_sample_from_tuple(scene, tupl)
         np.savez(outfile(index), **features)
         index += 1
@@ -271,8 +271,9 @@ class GeomKNNRome16KDataset(Rome16KTupleDataset):
     perm = la.block_diag(*perm_mats)
     descs = np.dot(perm,np.concatenate(descs_))
     xy_pos = np.dot(perm,np.concatenate(xy_pos_))
-    scale = np.dot(perm,np.concatenate(scale_)).reshape(-1,1)
-    orien = np.dot(perm,np.concatenate(orien_)).reshape(-1,1)
+    # We have to manually normalize these values as they are much larger than the others
+    logscale = np.dot(perm, np.log(np.concatenate(scale_)) - 1.5).reshape(-1,1)
+    orien = np.dot(perm,np.concatenate(orien_)).reshape(-1,1) / np.pi
     # Build Graph
     desc_norms = np.sqrt(np.sum(descs**2, 1).reshape(-1, 1))
     ndescs = descs / desc_norms
@@ -290,7 +291,7 @@ class GeomKNNRome16KDataset(Rome16KTupleDataset):
     LLT = np.maximum(L,L.T)
 
     # Build dataset options
-    InitEmbeddings = np.concatenate([ndescs,xy_pos,scale,orien], axis=1)
+    InitEmbeddings = np.concatenate([ndescs,xy_pos,logscale,orien], axis=1)
     AdjMat = LLT*mask
     Degrees = np.diag(np.sum(AdjMat,0))
     TrueEmbedding = np.concatenate(perm_mats,axis=0)
