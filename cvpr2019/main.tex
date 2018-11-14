@@ -106,6 +106,7 @@ and using learning could help improve the robustness even further.
     Example of multi-image matching, with images from Rome16K dataset \cite{li2010location}.
     In this example, an error in matching leads to an inconsistent cycle, ideally these pairwise matches would be consistent.
     In this work, we show how to learn this multi-view matching problem using cycle consistency.
+    Best viewed in color.
   }
 \label{fig:cycconsistex}
 \label{fig:onecol}
@@ -172,6 +173,7 @@ More sophisticated aggregation techniques and global information passing can als
     The final embedding is used to construct a pairwise similarity matrix, which ideally should be a low dimensional cycle consistent representation of the graph adjacency matrix.
     We train the network using a reconstruction loss on the similarity matrix.
     In addition we can use geometric information at to assist training the network, even if we do not have that geometric information at testing time such as epipolar constraints on the point locations or higher order geometric constraints.
+    Best viewed in color.
   }
 \label{fig:pipeline}
 \label{fig:onecol}
@@ -268,6 +270,7 @@ Here $\mathcal{D}$ could be an $L_2$ loss, $L_1$ loss, or many others.
     Illustrated here is an example of how the geometric loss on one feature.  
     We compute the errors on each feature match to determine their validity.
     Errors are computed via absolute distance from the epipolar line, as expressed by (\ref{eq:essential_constraint}) via the epipolar constraint.
+    Best viewed in color.
   }
 \label{fig:cycconsistex}
 \label{fig:onecol}
