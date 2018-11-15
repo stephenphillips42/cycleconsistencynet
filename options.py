@@ -114,7 +114,11 @@ def get_opts():
   parser.add_argument('--use_end_bias',
                       default=False,
                       type=myutils.str2bool,
-                      help='NOT IMPLEMENTED YET: Use bias in dot product')
+                      help='Use bias in dot product')
+  parser.add_argument('--reconstruction_loss',
+                      default=1.0,
+                      type=float,
+                      help='Use true adjacency or noisy one in loss')
   parser.add_argument('--geometric_loss',
                       default=-1,
                       type=float,
