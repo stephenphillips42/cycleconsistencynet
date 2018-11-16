@@ -99,17 +99,17 @@ class GraphGroupNorm(snt.AbstractModule):
                                   shape=(self._input_shape[2]),
                                   dtype=dtype,
                                   initializer=self._initializers["gamma"])
-    self._gamma = tf.reshape(self._gamma, broadcast_shape)
     if self._gamma not in tf.get_collection('weights'):
       tf.add_to_collection('weights', self._gamma)
+    self._gamma = tf.reshape(self._gamma, broadcast_shape)
 
     self._beta = tf.get_variable("beta",
                                  shape=(self._input_shape[2],),
                                  dtype=dtype,
                                  initializer=self._initializers["beta"])
-    self._beta = tf.reshape(self._beta, broadcast_shape)
     if self._beta not in tf.get_collection('biases'):
       tf.add_to_collection('biases', self._beta)
+    self._beta = tf.reshape(self._beta, broadcast_shape)
 
     ##### Actually perform operations
     # Reshape input

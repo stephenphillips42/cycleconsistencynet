@@ -49,11 +49,11 @@ def get_test_losses(opts, sample, output, return_gt=False, name='loss'):
     osim_log = tf.log(tf.abs(output_sim) + 1e-9)
   gt_l1_loss = loss_fns['l1'](sim_true, osim, add_loss=False)
   gt_l2_loss = loss_fns['l2'](sim_true, osim, add_loss=False)
-  gt_bce_loss = loss_fns['bce'](sim_true, oslim_log, add_loss=False)
+  gt_bce_loss = loss_fns['bce'](sim_true, osim, add_loss=False)
   num_same = tf.reduce_sum(sim_true)
   num_diff = tf.reduce_sum(1-sim_true)
-  ssame_m, ssame_var = tf.weighted_moments(osim, None, sim_true)
-  sdiff_m, sdiff_var = tf.weighted_moments(osim, None, 1-sim_true)
+  ssame_m, ssame_var = tf.nn.weighted_moments(osim, None, sim_true)
+  sdiff_m, sdiff_var = tf.nn.weighted_moments(osim, None, 1-sim_true)
 
   return gt_l1_loss, gt_l2_loss, gt_bce_loss, ssame_m, ssame_var, sdiff_m, sdiff_var
 
@@ -77,8 +77,8 @@ def test_values(opts):
   # Tensorflow and logging operations
   disp_string =  '{:06d} Errors: ' \
                  'L1: {:.03e},  L2: {:.03e}, BCE: {:.03e} ' \
-                 'Same sim: {.03e} +/- {.03e} ' \
-                 'Diff sim: {.03e} +/- {.03e}' 
+                 'Same sim: {:.03e} +/- {:.03e} ' \
+                 'Diff sim: {:.03e} +/- {:.03e}' 
 
 
   # Build session
@@ -86,6 +86,7 @@ def test_values(opts):
   npz_files = sorted(glob.glob(glob_str))
   vars_restore = [ v for v in tf.get_collection('weights') ] + \
                  [ v for v in tf.get_collection('biases') ]
+  print(vars_restore)
   saver = tf.train.Saver(vars_restore)
   with open(os.path.join(opts.save_dir, 'test_output.log'), 'a') as log_file:
     with build_test_session(opts) as sess:
@@ -100,5 +101,8 @@ def test_values(opts):
 
 if __name__ == "__main__":
   opts = options.get_opts()
+  print("Getting options from run...")
+  opts = options.parse_yaml_opts(opts)
+  print("Done")
   test_values(opts)
 
