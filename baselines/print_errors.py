@@ -10,10 +10,10 @@ egstr = '000000 Errors: L1: 5.297e-02, L2: 1.678e-02, BCE: 1.008e-01, Same sim: 
 def stdagg(x):
   return np.sqrt(np.mean(np.array(x)**2))
 
-def myformat(x):
+def myformat2(x):
   return '{:.05e}'.format(x)
 
-def myformat2(x):
+def myformat(x):
   return '{:.03f}'.format(x)
 
 def myformat_old(x):
