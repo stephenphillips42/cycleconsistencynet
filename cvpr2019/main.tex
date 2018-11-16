@@ -416,23 +416,24 @@ Here we use the ground truth dimension of the embedding to test both our method 
 \begin{center}
 \begin{tabular}{|l|c|c|c|}
 \hline
-Method                                                    & L1 Loss           & L2 Loss           & BCE Loss \\
+Method                                                    & $L_1$ Loss        & $L_2$ Loss        & BCE Loss \\
+
 \hline\hline\hline
 MatchALS \cite{zhou2015multi} 15 Iterations               & 0.052 $\pm$ 0.003 & 0.010 $\pm$ 0.002 & 0.107 $\pm$ 0.038 \\ \hline
-MatchALS \cite{zhou2015multi} 100 Iterations              & 0.029 $\pm$ 0.023 & 0.008 $\pm$ 0.003 & 0.163 $\pm$ 0.094 \\ \hline 
-MatchALS \cite{zhou2015multi} 400 Iterations              & 0.022 $\pm$ 0.022 & 0.008 $\pm$ 0.003 & 0.184 $\pm$ 0.102 \\ \hline 
-PGDDS \cite{leonardos2016distributed} 15 Iterations       & 0.020 $\pm$ 0.019 & 0.007 $\pm$ 0.003 & 0.149 $\pm$ 0.108 \\ \hline 
-PGDDS \cite{leonardos2016distributed} 100 Iterations      & 0.019 $\pm$ 0.017 & 0.007 $\pm$ 0.003 & 0.127 $\pm$ 0.108 \\ \hline 
-PGDDS \cite{leonardos2016distributed} 200 Iterations      & 0.018 $\pm$ 0.016 & 0.007 $\pm$ 0.003 & 0.112 $\pm$ 0.105 \\ \hline 
-Spectral                                                  & 0.023 $\pm$ 0.019 & 0.008 $\pm$ 0.005 & 0.113 $\pm$ 0.098 \\ \hline \hline
-GNN, 12 Layers                                            & 0.027 $\pm$ 0.003 & 0.017 $\pm$ 0.003 & 0.701 $\pm$ 0.002 \\
+MatchALS \cite{zhou2015multi} 100 Iterations              & 0.007 $\pm$ 0.003 & 0.007 $\pm$ 0.003 & 0.220 $\pm$ 0.099 \\ \hline
+% MatchALS \cite{zhou2015multi} 400 Iterations              & 0.007 $\pm$ 0.003 & 0.007 $\pm$ 0.003 & 0.225 $\pm$ 0.104 \\ \hline
+PGDDS \cite{leonardos2016distributed} 15 Iterations       & 0.016 $\pm$ 0.002 & 0.006 $\pm$ 0.002 & 0.045 $\pm$ 0.037 \\ \hline
+PGDDS \cite{leonardos2016distributed} 100 Iterations      & 0.013 $\pm$ 0.002 & 0.005 $\pm$ 0.002 & 0.039 $\pm$ 0.038 \\ \hline
+% PGDDS \cite{leonardos2016distributed} 200 Iterations      & 0.013 $\pm$ 0.002 & 0.005 $\pm$ 0.002 & 0.039 $\pm$ 0.039 \\ \hline
+Spectral                                                  & 0.054 $\pm$ 0.005 & 0.018 $\pm$ 0.004 & 0.114 $\pm$ 0.028 \\ \hline \hline
+GNN, 12 Layers (ours)                                     & 0.027 $\pm$ 0.003 & 0.017 $\pm$ 0.003 & 0.701 $\pm$ 0.002 \\
 \hline
 \end{tabular}
 \end{center}
 % save-rome16kgeom0-normedskip2-loss-l1-geom-10-0 (028249) -> train : +3.1467e-02, test : +3.8864e-02, gt_l1 : +2.6321e-02, gt_l2 : +2.6321e-02
 
 \caption{
-Results on Rome16K Correspondence graphs.
+Results on Rome16K Correspondence graphs, showing the mean and standard deviation of the $L_1$ and $L_2$.
 Our method was not trained on ground truth corresopndences but using unsupervised methods and geometric side losses.
 As our method gives soft labels, we use cannot use precision or recall as is standard in testing cycle consistency \cite{zhou2015multi}.
 Thus we test against ground truth correspondence graph adjacency matrices gotten from the bundle adjustment output.
