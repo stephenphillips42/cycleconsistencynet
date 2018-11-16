@@ -38,7 +38,7 @@
 %%%%%%%%% TITLE
 % \title{All Graphs Lead to Rome: \\
 % Cycle Consistent Multi-View Representations Using Graph CNNs}
-\title{All Graphs Lead to Rome: Learning Geometric and Cycle Consistent Representations with Graph CNNs}
+\title{All Graphs Lead to Rome: Learning Geometric and Cycle Consistent Representations with Graph Convolutional Networks}
 
 \author{Stephen Phillips, Kostas Daniilidis \\
 GRASP Labratory, University of Pennsylvania\\
@@ -76,7 +76,7 @@ GRASP Labratory, University of Pennsylvania\\
 % We present a learning technique for refining multi-image feature matches in an unsupervised fashion.
 \begin{abstract}
     Image feature matching is a fundametal part of many geometric computer vision applications, and using multiple images can improve performance.
-    In this work, we formulate the multi-image matching problem as a graph embedding problem then use a Graph Neural Network to learn an appropriate embedding function for aligning image features. % How to talk about the universe of features here without going too much into the weeds??
+    In this work, we formulate the multi-image matching problem as a graph embedding problem then use a Graph Convolutional Network to learn an appropriate embedding function for aligning image features. % How to talk about the universe of features here without going too much into the weeds??
     We use cycle consistency to train our network in an unsupervised fashion since ground truth correspondence is difficult or expensive to come by in many real world datasets.
     In addtion, geometric consistency losses can be added at train time, even if the information is not available in the test set, unlike previous optimization based methods.
     To the best of our knowledge, no other works have used learning for multi-image feature matching.
@@ -91,13 +91,14 @@ The goal in multi-image feature matching is to take 2D image locations from thre
 Methods such as SIFT feature matching \cite{lowe2004distinctive} and RANSAC \cite{fischler1981random} have been standard for solving this for decades.
 However RANSAC-based approaches are limited for matching pairs of images.
 Other works, such as Wang et al. \cite{wang2017multi}, have shown improvement in performance by enforcing consistency between multiple images.
-% However we still have not fully answered the question: What are the best image features to describe multiple views of the same scene?
 
-Deep learning has revolutionized how image features are computed \cite{yi2016lift}, and so we would like to leverage this to compute better scene features.
-Typically when applied to image or feature matching, deep neural networks (DNNs) are trained with photometric losses, directly using pixel color values.
-However direct, pixel-based losses have are not robust to the many confounding factors in the environment, such as lighting and view-point changes.
-Using features designed to deal with these condfounding factors improves robustness to them, 
-and learning may improve robustness even further.
+However, these multi-view consistency algorithms struggle in distributed and robust settings.
+Deep learning has revolutionized how image features are computed \cite{yi2016lift}, and so we would like to leverage this to compute better and more robust multi-view scene features.
+Graph Convolutional Networks \cite{kipf2016semi} also show promise using learning in a distributed setting.
+Thus deep learning seems a promising tool to help solve this problem.
+% Typically when applied to image or feature matching, deep neural networks (DNNs) are trained with photometric losses, directly using pixel color values.
+% However direct, pixel-based losses have are not robust to the many confounding factors in the environment, such as lighting and view-point changes.
+% Using features designed to deal with these condfounding factors improves robustness to them, and learning may improve robustness even further.
 
 \begin{figure}[t]
 \begin{center}
@@ -107,7 +108,7 @@ and learning may improve robustness even further.
   \caption{
     Example of multi-image matching, with images from Rome16K dataset \cite{li2010location}.
     In this example, an error in matching leads to an inconsistent cycle (shown in red), ideally these pairwise matches would be consistent.
-    We improve consistency between pairwise matches in the multi-view matching problem by training a neural net with cycle consistency.
+    We improve the quality of pairwise matches in the multi-view matching problem by training a neural net with cycle consistency.
   }
 \label{fig:cycconsistex}
 \label{fig:onecol}
@@ -120,29 +121,30 @@ and learning may improve robustness even further.
   \includegraphics[width=0.8\linewidth]{figures/CycleConsistencyMainFigure.pdf}
 \end{center}
   \caption{
-    An outline of the pipeline of this work.
+    An illustration of the approach of this work.
     The Graph Convolutional Neural Network (GCN) \cite{kipf2016semi} takes as input the graph of matches and then outputs a low rank embedding of the adjacency matrix of the graph.
     The GCN operates on an embedding over the nodes of the graph.
     In the figure, the the GCN node embeddings are represented by different colors.
-    The final embedding is used to construct a pairwise similarity matrix, which ideally should be a low dimensional cycle consistent representation of the graph adjacency matrix.
-    We train the network using a reconstruction loss on the similarity matrix.
+    The final embedding is used to construct a pairwise similarity matrix, which we train to be a low dimensional cycle consistent representation of the graph adjacency matrix, thus pruning the erroneous matches.
+    We train the network using a reconstruction loss on the similarity matrix with the noisy adjacency matrix, and thus do not need ground truth matches.
     In addition, we can use geometric information at to assist training the network, even if we do not have that geometric information at testing time such as epipolar constraints on the point locations or higher order geometric constraints.
   }
 \label{fig:pipeline}
 \label{fig:onecol}
 \end{figure*}
 
-Unfortunately, there are obstacles to applying multi-view constraints directly to learning. 
+Unfortunately, there are obstacles to applying multi-view constraints directly to deep learning. 
 To train networks, we need a large amount of labelled data.
 In the case of multi-image feature matching, one would need to hand label point correspondences between images, which is difficult and expensive to obtain.
 Multi-view constraints are formulated in terms of sparse features, which traditional convolutional deep neural nets (CNNs) are not designed to handle such input.
 In the case of multi-image feature matching, geometric constraints would be helpful in rejecting outlier matches.
 
-In this work, we propose to solve these problems using a Graph Neural Network (GNN) to operate on the correspondence graph.
-The proposed method works on the correspondence graph, which is agnostic to how the correspondnces were computed, thus allowing the algorithm to work in a broad class of environments.
-
-We use a unsupervised loss, the cycle consistency loss, to train the network.
+In this work, we propose to solve these problems using a Graph Convolutional Network (GCN) to operate on the correspondence graph.
+The proposed method works directly on the correspondence graph, which is agnostic to how the correspondnces were computed, thus allowing the algorithm to work in a broad class of environments.
+To the best of our knowledge this work is the first to apply deep learning to the multi-view feature matching problem.
+We use a unsupervised loss, the cycle consistency loss, to train the network, and thus we avoid the difficulty of expensive hand labelling.
 We add in geometric consistency losses to help training, which works even when the geometric information is not available at test time.
+Our simple network already has promising results compared to previous optimization based baselines.
 Our contributions are:
 \begin{itemize}
 \item We use a novel architecture to address multi-image feature matching problem using GNNs with graph embeddings.
@@ -155,24 +157,29 @@ Our contributions are:
 %-------------------------------------------------------------------------
 \section{Related Work}
 
+\subsection{Feature Matching}
 Matching has a rich history of research in computer vision.
 The most well known and widely used method for image matching is RANSAC \cite{fischler1981random}.
 RANSAC, combined with hand-crafted feature descriptors like SIFT \cite{lowe2004distinctive}, SURF \cite{bay2006surf}, BRIEF \cite{calonder2012brief}, or ORB \cite{mur2015orb}, has constituted the bulk of the matching literature for the last 40 years.
 To improve matching of all the features of the image, graph matching \cite{suh2015subgraph, hu2016distributable} can be used for more robust matches.
 
+\subsection{Multi-image Matching}
 Multi-image matching has traditionally been done using optimization based methods minimizing a cycle consistency based loss (see Section 3.3).
 Pachauri et al. \cite{pachauri2013solving} and Arrigoni et al. \cite{arrigoni2017synchronization} use the eigenvectors of the matching matrix to obtain a low dimensional embedding. 
 Thus they are robust to small Gaussian noise but not to more realistic noise.
-Zhou et al. \cite{zhou2015multi} and Wang et al. \cite{wang2017multi} use most sophisticated optimization techniques on the matching matrix and thus are quite robust.
-Leonardos et al. \cite{leonardos2016distributed} implement a distributed optimizaiton scheme to solve for cycle consistency.
+Zhou et al. \cite{zhou2015multi} and Wang et al. \cite{wang2017multi} use most sophisticated optimization techniques on the matching matrix and thus produce more robust solutions.
+Leonardos et al. \cite{leonardos2016distributed} implement a distributed optimization scheme to solve for cycle consistency.
 As an alternative to optimization based techiniques, Tron et al. \cite{tron2017fast} used density based clustering techniques to compute multi-image correspondence.
+To the best of our knowledge, we are the first work to use neural networks for multi-image matching.
 
+\subsection{Deep Learning for Matching}
 Previous attempts to improve image matching techniques using machine learning have focused on learning the descriptors given ground truth correspondence from curated datasets \cite{zagoruyko2015learning, yi2016lift, brachmann2017dsac}.
 This approach is limited if you do not have the ability to get the ground truth correspondences.
 There are other methods to build correspondences such as Choy et al. \cite{choy2016universal}, but it only handles two-view constraints and requires dense correspondences.
 Most similar to ours, Yi et al. \cite{yi2018learning} attempts to improve correspondences by learning match probabilites for RANSAC to speed up test time running.
 However, they only focus on two view tests and do not exploit the advantages of the correspondence structure.
 
+\subsection{Graph Neural Networks}
 Graph neural networks have been getting more attention recently \cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2016semi, scarselli2009graph, gama2018mimo, gama2018convolutional, battaglia2018relational}.
 Classical so-called Spectral methods used the eigenvectors of graph Laplacian to compute convolutions like in Bruna et al. \cite{bruna2013spectral}, but requires a fixed graph structure known a-priori. 
 Non-spectral methods do not require a-priori knowledge \cite{bronstein2017geometric, kipf2016semi, scarselli2009graph, gama2018convolutional}.
@@ -188,8 +195,8 @@ To improve performance, more sophisticated aggregation techniques and global inf
   \caption{
     Illustration of the universe of features.
     Each feature in each image corresponds to a 3D point in the scene.
-    Therefore, we can get the points to have a cycle consistent embedding by mapping each feature in each image to the one-hot vector of its corresponding 3D point.
-    While there can be many features, there are much fewer 3D points and thus this corrsponds to a low rank factorization of the corrspondence matrix.
+    We can get the points to have a cycle consistent embedding by mapping each feature in each image to the one-hot vector of its corresponding 3D point.
+    While there can be many features, there are many fewer 3D points and thus this corrsponds to a low rank factorization of the corrspondence matrix.
     Best viewed in color.
   }
 \label{fig:universefeatures}
@@ -279,6 +286,14 @@ We try to learn $\mat{E}$ to approximate $\mat{X}$ - in other words the final em
 \mathcal{L}(\mat{A}, \mat{E}_n) = \mathcal{D}(\mat{A}, \mat{E}_n\mat{E}_n^\top)
 \end{equation}
 Here $\mathcal{D}$ could be an $L_2$ loss, $L_1$ loss, or many others. In this work, we use the $L_1$ loss. 
+Note that because of this formulation, we can determine our embeddings only up to a rotation on the right, as
+\begin{equation}
+\mat{E}R(\mat{E}R)^\top
+= \mat{E}RR^\top\mat{E}^\top
+= \mat{E}\mat{E}^\top
+\label{eq:rotinvar}
+\end{equation}
+and 
 
 \subsection{Geometric Consistency Loss}
 
@@ -356,25 +371,35 @@ For our purposes, since we use low rank embeddings $\mat{E}_{i}$, $\mat{E}_{j}$,
 \end{align}
 Where $c(i)$ is the appropriate camera for point index $i$.
 
+% MatchALS \cite{zhou2015multi} 400 Iterations              & 0.007 $\pm$ 0.003 & 0.007 $\pm$ 0.003 & 0.007 $\pm$ 0.003 \\ \hline
+% PGDDS \cite{leonardos2016distributed} 200 Iterations      & 0.013 $\pm$ 0.002 & 0.005 $\pm$ 0.002 & 0.005 $\pm$ 0.002 & 0.039 $\pm$ 0.039 \\ \hline
 \begin{table*}
 \begin{center}
 \begin{tabular}{|l|c|c|c|}
 \hline
-Method                                                    & $L_1$ Loss        & $L_2$ Loss         \\
-
-\hline\hline\hline
-MatchALS \cite{zhou2015multi} 15 Iterations               & 0.052 $\pm$ 0.003 & 0.010 $\pm$ 0.002 \\ \hline
-MatchALS \cite{zhou2015multi} 25 Iterations               & 0.045 $\pm$ 0.007 & 0.009 $\pm$ 0.003 \\ \hline
-MatchALS \cite{zhou2015multi} 50 Iterations               & 0.016 $\pm$ 0.008 & 0.007 $\pm$ 0.003 \\ \hline
-MatchALS \cite{zhou2015multi} 100 Iterations              & 0.007 $\pm$ 0.003 & 0.007 $\pm$ 0.003 \\ \hline
-% MatchALS \cite{zhou2015multi} 400 Iterations              & 0.007 $\pm$ 0.003 & 0.007 $\pm$ 0.003 \\ \hline
-PGDDS \cite{leonardos2016distributed} 15 Iterations       & 0.016 $\pm$ 0.002 & 0.006 $\pm$ 0.002 \\ \hline
-PGDDS \cite{leonardos2016distributed} 50 Iterations       & 0.013 $\pm$ 0.002 & 0.005 $\pm$ 0.002 \\ \hline
-PGDDS \cite{leonardos2016distributed} 100 Iterations      & 0.013 $\pm$ 0.002 & 0.005 $\pm$ 0.002 \\ \hline
-% PGDDS \cite{leonardos2016distributed} 200 Iterations      & 0.013 $\pm$ 0.002 & 0.005 $\pm$ 0.002 & 0.039 $\pm$ 0.039 \\ \hline
-Spectral                                                  & 0.054 $\pm$ 0.005 & 0.018 $\pm$ 0.004 \\ \hline \hline
-GNN, 12 Layers (ours)                                     & 0.025 $\pm$ 0.003 & 0.016 $\pm$ 0.003 \\
-\hline
+Method (3 Views)                                          & $L_1$ Loss                          & $L_2$ Loss                          & Run Time (sec) (TODO: Fill out)    \\
+\hline\hline
+MatchALS \cite{zhou2015multi} 15 Iterations               & 0.052 $\pm$ 0.003                   & 0.010 $\pm$ 0.002                   & 0.010 $\pm$ 0.002 \\ \hline
+MatchALS \cite{zhou2015multi} 25 Iterations               & 0.045 $\pm$ 0.007                   & 0.009 $\pm$ 0.003                   & 0.009 $\pm$ 0.003 \\ \hline
+MatchALS \cite{zhou2015multi} 50 Iterations               & 0.016 $\pm$ 0.008                   & 0.007 $\pm$ 0.003                   & 0.007 $\pm$ 0.003 \\ \hline
+MatchALS \cite{zhou2015multi} 100 Iterations              & 0.007 $\pm$ 0.003                   & 0.007 $\pm$ 0.003                   & 0.007 $\pm$ 0.003 \\ \hline
+PGDDS \cite{leonardos2016distributed} 15 Iterations       & 0.016 $\pm$ 0.002                   & 0.006 $\pm$ 0.002                   & 0.006 $\pm$ 0.002 \\ \hline
+PGDDS \cite{leonardos2016distributed} 50 Iterations       & 0.013 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 0.005 $\pm$ 0.002 \\ \hline
+PGDDS \cite{leonardos2016distributed} 100 Iterations      & 0.013 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 0.005 $\pm$ 0.002 \\ \hline
+Spectral                                                  & 0.054 $\pm$ 0.005                   & 0.018 $\pm$ 0.004                   & 0.018 $\pm$ 0.004 \\ \hline 
+\textbf{GNN, 12 Layers (ours)}                            & \textbf{0.025} $\pm$ \textbf{0.003} & \textbf{0.016} $\pm$ \textbf{0.003} & \textbf{0.016} $\pm$ \textbf{0.003} \\
+\hline \hline\hline
+Method (4 Views)                                          & $L_1$ Loss                          & $L_2$ Loss                          & Run Time (sec) (TODO: Fill out)   \\
+\hline\hline
+MatchALS \cite{zhou2015multi} 15 Iterations               & 0.052 $\pm$ 0.003                   & 0.010 $\pm$ 0.002                   & 0.010 $\pm$ 0.002 \\ \hline
+MatchALS \cite{zhou2015multi} 25 Iterations               & 0.045 $\pm$ 0.007                   & 0.009 $\pm$ 0.003                   & 0.009 $\pm$ 0.003 \\ \hline
+MatchALS \cite{zhou2015multi} 50 Iterations               & 0.016 $\pm$ 0.008                   & 0.007 $\pm$ 0.003                   & 0.007 $\pm$ 0.003 \\ \hline
+MatchALS \cite{zhou2015multi} 100 Iterations              & 0.007 $\pm$ 0.003                   & 0.007 $\pm$ 0.003                   & 0.007 $\pm$ 0.003 \\ \hline
+PGDDS \cite{leonardos2016distributed} 15 Iterations       & 0.016 $\pm$ 0.002                   & 0.006 $\pm$ 0.002                   & 0.006 $\pm$ 0.002 \\ \hline
+PGDDS \cite{leonardos2016distributed} 50 Iterations       & 0.013 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 0.005 $\pm$ 0.002 \\ \hline
+PGDDS \cite{leonardos2016distributed} 100 Iterations      & 0.013 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 0.005 $\pm$ 0.002 \\ \hline
+Spectral                                                  & 0.054 $\pm$ 0.005                   & 0.018 $\pm$ 0.004                   & 0.018 $\pm$ 0.004 \\ \hline 
+\textbf{GNN, 12 Layers (ours)}                            & \textbf{0.025} $\pm$ \textbf{0.003} & \textbf{0.016} $\pm$ \textbf{0.003} & \textbf{0.016} $\pm$ \textbf{0.003} \\
 \end{tabular}
 \end{center}
 % save-rome16kgeom0-normedskip2-loss-l1-geom-10-0 (028249) -> train : +3.1467e-02, test : +3.8864e-02, gt_l1 : +2.6321e-02, gt_l2 : +2.6321e-02
@@ -453,12 +478,13 @@ We compare our method to spectral and optimization based baselines with differen
 %------------------------------------------------------------------------
 \section{Conclusion}
 
-We have shown a novel method for training feature matching.
+We have shown a novel method for training feature matching using GCNs and an unsupervised cycle consistency loss.
 This method can be employed even when labelled training data is not available, but can still incorporate geometric consistency into its losses.
-We have demonstrated its effectiveness using experiments on the Rome16K dataset compared to the traditional optimization based baselines.
+We have demonstrated its effectiveness on the Rome16K dataset compared to the traditional optimization based baselines on a simple GCN.
 For future work we will investigate using more robust losses for outlier rejection and using higher order geometric constraints, such as the trifocal tensor, as additional loss terms.
-A long term goal is to incorporate learning image level features into this pipeline
-Moreover we hope to make this method distributed - with group norm, we cannot distribute in its current form.
+A long term goal is to incorporate learning image level features into this pipeline.
+Moreover we plan to focus on making this method work in a distributed setting, which we could do with very small changes to the current approach.
+% , but with group norm, we cannot distribute in its current form.
 
 {\small
 \bibliographystyle{ieee}
