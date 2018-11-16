@@ -32,6 +32,11 @@ def get_latex_opts():
                       default=False,
                       type=str2bool,
                       help='Just view, do not save')
+  view_style_choices = [ 'default', 'paper' ]
+  parser.add_argument('--view_style',
+                      default=view_style_choices[0],
+                      choices=view_style_choices,
+                      help='Options for the figure style')
   parser.add_argument('--index',
                       default=0,
                       type=int,
@@ -74,6 +79,7 @@ class Experiment(object):
     self.name = os.path.split(folder)[1]
     self.extention = extention
     self.verbose = verbose
+    self.view_style = opts.view_style
 
   def get_losses(self, use_time=False):
     loss = np.load(os.path.join(self.folder, 'loss.npy'))
@@ -86,6 +92,12 @@ class Experiment(object):
       return loss, test_loss
 
   def generate_plot(self, size, index=0):
+    if self.view_style == 'default':
+      self.generate_plot_default(size, index=index)
+    elif self.view_style == 'paper':
+      self.generate_plot_paper(size, index=index)
+
+  def generate_plot_default(self, size, index=0):
     nrows, ncols = 1, 5
     fig = plt.figure(figsize=(ncols*size,1.4*nrows*size))
     gs = GridSpec(4, 14)
@@ -148,6 +160,69 @@ class Experiment(object):
     ### Titles
     ax[0].set_title('Train/test loss')
     ax[1].set_title('Normalized Embeddings')
+    ax[-1].set_title('Pairwise similarities')
+    ax[-1].set_axis_off()
+    
+    # Show everything
+    # plt.show()
+    # break
+    return fig
+
+  def generate_plot_paper(self, size, index=0):
+    nrows, ncols = 1, 4
+    fig = plt.figure(figsize=(ncols*size,1.4*nrows*size))
+    gs = GridSpec(4, 10)
+    ax = [
+      plt.subplot(gs[:,0:2]),
+      plt.subplot(gs[1:,2:4]),
+      plt.subplot(gs[:,4:7]),
+      plt.subplot(gs[:,7:10]),
+      plt.subplot(gs[0,2:4]),
+    ]
+    fig.tight_layout()
+
+    ##### Plot a specific example
+    ### Get specific example
+    ldnames = sorted(glob.glob(os.path.join(self.folder, 'test*npz')))
+    ld = np.load(ldnames[-1])
+    emb_init = ld['input'][index]
+    emb_gt = ld['gt'][index]
+    emb_out = ld['output'][index]
+    adjmat = ld['adjmat'][index]
+    ### Create labels
+    slabels, sorted_idxs = get_sorted(emb_gt)
+    soutput = emb_out[sorted_idxs]
+    srand = myutils.dim_normalize(emb_init[sorted_idxs])
+    lsim = np.abs(np.dot(slabels, slabels.T))
+    osim = np.abs(np.dot(soutput, soutput.T))
+    rsim = np.abs(np.dot(srand, srand.T))
+    ### Create plots
+    if soutput.shape[1] == slabels.shape[1]:
+      u, s, v = np.linalg.svd(np.dot(soutput.T, slabels))
+      o_ = np.ones_like(s)
+      o_[-1] = np.linalg.det(np.dot(u,v))
+      Q = np.dot(u, np.dot(np.diag(o_), v))
+      im0 = ax[0].imshow(np.abs(np.dot(soutput, Q)))
+    else:
+      im0 = ax[0].imshow(np.abs(soutput))
+    im1 = ax[1].imshow(osim)
+    # fig.colorbar(im0, ax=ax[1])
+    fig.colorbar(im1, ax=ax[1])
+    ### Plot Histogram
+    diag = np.reshape(osim[lsim==1],-1)
+    off_diag = np.reshape(osim[lsim==0],-1)
+    baseline_diag = np.reshape(rsim[lsim==1],-1)
+    baseline_off_diag = np.reshape(rsim[lsim==0],-1)
+    ax[2].hist([ diag, baseline_diag ], bins=20, density=True,
+             label=[ 'Same Point Output Similarity', 'Same Point Sift Similarity' ])
+    ax[2].legend()
+    ax[2].set_title('Diagonal Similarity Rate')
+    ax[3].hist([ off_diag, baseline_off_diag ], bins=20, density=True,
+             label=[ 'Diff. Point Output Similarity', 'Diff. Point Sift Similarity' ])
+    ax[3].set_title('Off Diagonal Similarity Rate')
+    ax[3].legend()
+    ### Titles
+    ax[0].set_title('Normalized Embeddings')
     ax[-1].set_title('Pairwise similarities')
     ax[-1].set_axis_off()
     
@@ -368,14 +443,17 @@ class LatexGenerator(object):
                         self.experiments[min_idx], 
                         "Sample embedding, similarity matrix, histogram, and loss curves for best performing of this set", 
                         self.index)
-    latex_string += self.save_images_and_output_latex(
-                        self.experiments[max_idx],
-                        "Sample embedding, similarity matrix, histogram, and loss curves for worst performing of this set", 
-                        self.index)
-    latex_string += self.save_images_and_output_latex(
-                        self.experiments[rnd_idx],
-                        "Sample embedding, similarity matrix, histogram, and loss curves for random experiment of this set", 
-                        self.index)
+    if len(losses) > 1:
+      latex_string += self.save_images_and_output_latex(
+                          self.experiments[max_idx],
+                          "Sample embedding, similarity matrix, histogram, and loss curves for worst performing of this set", 
+                          self.index)
+    if len(losses) > 2:
+      latex_string += self.save_images_and_output_latex(
+                          self.experiments[rnd_idx],
+                          "Sample embedding, similarity matrix, histogram, and loss curves for random experiment of this set", 
+                          self.index)
+
     latex_string += self.build_latex_stat_table()
     # latex_string += "\\begin{figure}[H]\n"
     # latex_string += "\\end{figure}\n"
