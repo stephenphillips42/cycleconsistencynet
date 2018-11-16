@@ -11,6 +11,12 @@ def stdagg(x):
   return np.sqrt(np.mean(np.array(x)**2))
 
 def myformat(x):
+  return '{:.05e}'.format(x)
+
+def myformat2(x):
+  return '{:.03f}'.format(x)
+
+def myformat_old(x):
   y = "{:.03e}".format(x).split('e')
   return "{}e-{}".format(y[0], y[1][-1])
 
@@ -31,6 +37,12 @@ def agg(vals):
   return aggs
 
 def disp_val(aggs):
+  # fstr = "{:40}, L1: {} +/- {} , L2: {} +/- {} , BCE: {} +/- {}"
+  # print(fstr.format(fname, 
+  #                   myformat(aggs['l1'][0]), myformat(aggs['l1'][1]),
+  #                   myformat(aggs['l2'][0]), myformat(aggs['l2'][1]),
+  #                   myformat(aggs['bce'][0]), myformat(aggs['bce'][1])))
+  # return 
   fstr = "{:40} & {} $\pm$ {} & {} $\pm$ {} & {} $\pm$ {}"
   print(fstr.format(fname, 
                     myformat(aggs['l1'][0]), myformat(aggs['l1'][1]),
@@ -38,9 +50,9 @@ def disp_val(aggs):
                     myformat(aggs['bce'][0]), myformat(aggs['bce'][1])))
 
 
-vals = dict(zip(names, [ [] for nm in names ]))
 
 for fname in sys.argv[1:]:
+  vals = dict(zip(names, [ [] for nm in names ]))
   f = open(fname, 'r')
   for line in f:
     vals_ = parse(line)
