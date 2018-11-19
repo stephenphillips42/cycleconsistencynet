@@ -16,6 +16,7 @@ params200.maxiter = 200;
 
 %  'MatchALS400Iter', @(W)  mmatch_CVX_ALS(W, dimGroups, 'maxrank', p, 'maxiter', 400); ...
 %  'PGDDS200Iter', @(W) PGDDS(W, dimGroups, p, params200); ...
+%  'PGDDS100Iter', @(W) PGDDS(W, dimGroups, p, params100); ...
 test_fns = { ...
  'Spectral', @(W)  myspectral(W, p); ...
  'MatchALS015Iter', @(W)  mmatch_CVX_ALS(W, dimGroups, 'maxrank', p, 'maxiter', 15); ...
@@ -25,7 +26,6 @@ test_fns = { ...
  'PGDDS015Iter', @(W) PGDDS(W, dimGroups, p, params015); ...
  'PGDDS025Iter', @(W) PGDDS(W, dimGroups, p, params025); ...
  'PGDDS050Iter', @(W) PGDDS(W, dimGroups, p, params050); ...
- 'PGDDS100Iter', @(W) PGDDS(W, dimGroups, p, params100); ...
 };
 
 % disp_string =  [ '%06d Errors: ' ...
@@ -34,6 +34,7 @@ disp_string =  [ '%06d Errors: ' ...
                  'L1: %.03e, L2: %.03e, BCE: %.03e, ' ...
                  'Same sim: %.03e +/- %.03e, ' ...
                  'Diff sim: %.03e +/- %.03e, ' ...
+                 'Time: %.03e, ' ...
                  '\n' ];
 
 for test_fn_index = 1:size(test_fns,1)
@@ -44,6 +45,7 @@ for test_fn_index = 1:size(test_fns,1)
   ssame_s = [];
   sdiff_m = [];
   sdiff_s = [];
+  run_times = [];
   test_fn = test_fns{test_fn_index,2};
   fid = fopen(sprintf('%sTestErrors.log', test_fns{test_fn_index,1}), 'w');
   fprintf('%s Method:\n', test_fns{test_fn_index,1})
@@ -58,12 +60,16 @@ for test_fn_index = 1:size(test_fns,1)
     ssame_s_ = zeros(mat_length,1);
     sdiff_m_ = zeros(mat_length,1);
     sdiff_s_ = zeros(mat_length,1);
+    run_times_ = zeros(mat_length,1);
     for index = 1:mat_length
       fprintf('Matrix %03d of %03d, file %05d of %05d\r', mat_index, length(mat_files), index, mat_length)
       W = squeeze(test_mats.AdjMat(index,:,:)) + eye(n);
       Xgt = squeeze(test_mats.TrueEmbedding(index,:,:));
       Agt = Xgt*Xgt';
-      Ah = max(0,min(1,test_fn(W)));
+      tic;
+      A_output = test_fn(W);
+      run_times_(index) = toc;
+      Ah = max(0,min(1,A_output));
       [l1, l2, bce] = testOutput_soft(Ah,Agt);
       [ssame, ssame_std, sdiff, sdiff_std] = testOutputhist(Ah,Agt);
       l1_(index) = l1;
@@ -73,7 +79,7 @@ for test_fn_index = 1:size(test_fns,1)
       ssame_s_(index) = ssame_std;
       sdiff_m_(index) = sdiff;
       sdiff_s_(index) = sdiff_std;
-      fprintf(fid, disp_string, test_index, l1, l2, bce, ssame, ssame_std, sdiff, sdiff_std);
+      fprintf(fid, disp_string, test_index, l1, l2, bce, ssame, ssame_std, sdiff, sdiff_std, run_times_(index));
       % fprintf(disp_string, test_index, l1, l2, bce, ssame, ssame_std, sdiff, sdiff_std)
       test_index = test_index + 1;
     end
@@ -84,6 +90,7 @@ for test_fn_index = 1:size(test_fns,1)
     ssame_s = [ssame_s; ssame_s_];
     sdiff_m = [sdiff_m; sdiff_m_];
     sdiff_s = [sdiff_s; sdiff_s_];
+    run_times = [run_times; run_times_];
   end
   fprintf('\n')
   fclose(fid);
@@ -94,7 +101,9 @@ for test_fn_index = 1:size(test_fns,1)
   ssame_s = sqrt(mean(ssame_s.^2));
   sdiff_m = mean(sdiff_m);
   sdiff_s = sqrt(mean(sdiff_s.^2));
-  fprintf(disp_string, 0, l1s, l2s, bces, ssame_m, ssame_s, sdiff_m, sdiff_s)
+  run_time = mean(run_times);
+
+  fprintf(disp_string, 0, l1s, l2s, bces, ssame_m, ssame_s, sdiff_m, sdiff_s, run_time)
 end
 
 

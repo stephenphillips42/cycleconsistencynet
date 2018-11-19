@@ -5,7 +5,7 @@ import re
 
 import matplotlib.pyplot as plt
 
-egstr = '000000 Errors: L1: 5.297e-02, L2: 1.678e-02, BCE: 1.008e-01, Same sim: 8.776e-01 +/- 9.812e-02, Diff sim: 5.209e-02 +/- 1.182e-01, '
+egstr = '000000 Errors: L1: 5.297e-02, L2: 1.678e-02, BCE: 1.008e-01, Same sim: 8.776e-01 +/- 9.812e-02, Diff sim: 5.209e-02 +/- 1.182e-01, Time: 2.800e-02, '
 
 def stdagg(x):
   return np.sqrt(np.mean(np.array(x)**2))
@@ -22,15 +22,14 @@ def myformat_old(x):
 
 efmt = '[-+]?\d+\.\d*e[-+]\d+'
 disp_match = re.compile(efmt)
-names = ['l1', 'l2', 'bce', 'ssame_m', 'ssame_s', 'sdiff_m', 'sdiff_s']
-aggregators = [ np.mean, np.mean, np.mean, np.mean, stdagg, np.mean, stdagg ]
+names = ['l1', 'l2', 'bce', 'ssame_m', 'ssame_s', 'sdiff_m', 'sdiff_s', 'time']
 def parse(line):
   return dict(zip(names, [ float(x) for x in disp_match.findall(line) ]))
 
 agg_names = [ 'l1', 'l2', 'bce', 'ssame', 'sdiff' ]
 def agg(vals):
   aggs = dict(zip(agg_names, [ None for nm in agg_names ]))
-  for k in [ 'l1', 'l2', 'bce' ]:
+  for k in [ 'l1', 'l2', 'bce', 'time' ]:
     aggs[k] = (np.mean(vals[k]), np.std(vals[k]))
   for k in [ 'ssame', 'sdiff' ]:
     aggs[k] = ( np.mean(vals[k + '_m']), stdagg(vals[k + '_s']) )
@@ -43,11 +42,11 @@ def disp_val(aggs):
   #                   myformat(aggs['l2'][0]), myformat(aggs['l2'][1]),
   #                   myformat(aggs['bce'][0]), myformat(aggs['bce'][1])))
   # return 
-  fstr = "{:40} & {} $\pm$ {} & {} $\pm$ {} & {} $\pm$ {}"
+  fstr = "{:40} & {} $\pm$ {} & {} $\pm$ {} & {} $\pm$ {} \\\\ \\hline"
   print(fstr.format(fname, 
                     myformat(aggs['l1'][0]), myformat(aggs['l1'][1]),
                     myformat(aggs['l2'][0]), myformat(aggs['l2'][1]),
-                    myformat(aggs['bce'][0]), myformat(aggs['bce'][1])))
+                    myformat(aggs['time'][0]), myformat(aggs['time'][1])))
 
 
 
