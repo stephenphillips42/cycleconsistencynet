@@ -2,11 +2,13 @@ import os
 import sys
 import glob
 import numpy as np
+import sklearn.manifold as manifold
 import argparse
 import argcomplete
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib import cm
+from mpl_toolkits.mplot3d import Axes3D
 import tqdm
 # import yaml
 
@@ -21,6 +23,28 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
+def hinton(matrix, max_weight=None, ax=None):
+    """Draw Hinton diagram for visualizing a weight matrix."""
+    ax = ax if ax is not None else plt.gca()
+
+    if not max_weight:
+        max_weight = 2 ** np.ceil(np.log(np.abs(matrix).max()) / np.log(2))
+
+    ax.patch.set_facecolor('gray')
+    ax.set_aspect('equal', 'box')
+    ax.xaxis.set_major_locator(plt.NullLocator())
+    ax.yaxis.set_major_locator(plt.NullLocator())
+
+    for (x, y), w in np.ndenumerate(matrix):
+        color = 'white' if w > 0 else 'black'
+        size = np.sqrt(np.abs(w) / max_weight)
+        rect = plt.Rectangle([x - size / 2, y - size / 2], size, size,
+                             facecolor=color, edgecolor=color)
+        ax.add_patch(rect)
+
+    ax.autoscale_view()
+    ax.invert_yaxis()
+
 def get_latex_opts():
   parser = argparse.ArgumentParser(description='Experiment with output')
   argcomplete.autocomplete(parser)
@@ -32,6 +56,11 @@ def get_latex_opts():
                       default=False,
                       type=str2bool,
                       help='Just view, do not save')
+  view_style_choices = [ 'default', 'paper', 'embeddings' ]
+  parser.add_argument('--view_style',
+                      default=view_style_choices[0],
+                      choices=view_style_choices,
+                      help='Options for the figure style')
   parser.add_argument('--index',
                       default=0,
                       type=int,
@@ -74,6 +103,7 @@ class Experiment(object):
     self.name = os.path.split(folder)[1]
     self.extention = extention
     self.verbose = verbose
+    self.view_style = opts.view_style
 
   def get_losses(self, use_time=False):
     loss = np.load(os.path.join(self.folder, 'loss.npy'))
@@ -86,6 +116,14 @@ class Experiment(object):
       return loss, test_loss
 
   def generate_plot(self, size, index=0):
+    if self.view_style == 'default':
+      self.generate_plot_default(size, index=index)
+    elif self.view_style == 'paper':
+      self.generate_plot_paper(size, index=index)
+    elif self.view_style == 'embeddings':
+      self.generate_plot_embeddings(size, index=index)
+
+  def generate_plot_default(self, size, index=0):
     nrows, ncols = 1, 5
     fig = plt.figure(figsize=(ncols*size,1.4*nrows*size))
     gs = GridSpec(4, 14)
@@ -154,6 +192,107 @@ class Experiment(object):
     # Show everything
     # plt.show()
     # break
+    return fig
+
+  def generate_plot_paper(self, size, index=0):
+    nrows, ncols = 1, 4
+    fig = plt.figure(figsize=(ncols*size,1.4*nrows*size))
+    gs = GridSpec(4, 9)
+    ax = [
+      plt.subplot(gs[1:,0:3]),
+      plt.subplot(gs[:,3:6]),
+      plt.subplot(gs[:,6:9]),
+      plt.subplot(gs[0,0:3]),
+    ]
+    fig.tight_layout()
+
+    ##### Plot a specific example
+    ### Get specific example
+    ldnames = sorted(glob.glob(os.path.join(self.folder, 'test*npz')))
+    ld = np.load(ldnames[-1])
+    emb_init = ld['input'][index]
+    emb_gt = ld['gt'][index]
+    emb_out = ld['output'][index]
+    adjmat = ld['adjmat'][index]
+    ### Create labels
+    slabels, sorted_idxs = get_sorted(emb_gt)
+    soutput = emb_out[sorted_idxs]
+    srand = myutils.dim_normalize(emb_init[sorted_idxs])
+    lsim = np.abs(np.dot(slabels, slabels.T))
+    osim = np.abs(np.dot(soutput, soutput.T))
+    rsim = np.abs(np.dot(srand, srand.T))
+    ### Create plots
+    im1 = ax[0].imshow(osim)
+    # fig.colorbar(im0, ax=ax[1])
+    csfont = {'fontsize':20, 'fontname':'Times New Roman'}
+    fig.colorbar(im1, ax=ax[0])
+    ### Plot Histograms
+    # Same Points
+    diag = np.reshape(osim[lsim==1],-1)
+    off_diag = np.reshape(osim[lsim==0],-1)
+    baseline_diag = np.reshape(rsim[lsim==1],-1)
+    baseline_off_diag = np.reshape(rsim[lsim==0],-1)
+    ax[1].hist([ diag, baseline_diag ], bins=20, density=True,
+             label=[ 'Same Point Output Similarity', 'Same Point SIFT Similarity' ])
+    l1 = ax[1].legend()
+    plt.setp(l1.texts, fontname='Times New Roman', fontsize=16)
+    ax[1].text(-0.08, 1.00, '(b)', transform=ax[1].transAxes,
+          va='top', ha='right', **csfont)
+    ax[1].set_title('Diagonal Similarity Histogram', **csfont)
+    # Diff. Points
+    ax[2].hist([ off_diag, baseline_off_diag ], bins=20, density=True,
+             label=[ 'Diff. Point Output Similarity', 'Diff. Point SIFT Similarity' ])
+    ax[2].text(-0.02, 1.00, '(c)', transform=ax[2].transAxes,
+          va='top', ha='right', **csfont)
+    ax[2].set_title('Off Diagonal Similarity Histogram', **csfont)
+    l2 = ax[2].legend()
+    plt.setp(l2.texts, fontname='Times New Roman', fontsize=16)
+    ### Title for Similarities 
+    ax[-1].set_title('Pairwise similarities', **csfont)
+    ax[-1].text(-0.02, 1.00, '(a)', transform=ax[-1].transAxes,
+          va='top', ha='right', **csfont)
+    ax[-1].set_axis_off()
+    
+    # Show everything
+    # plt.show()
+    # break
+    return fig
+
+  def generate_plot_embeddings(self, size, index=0):
+    nrows, ncols = 1, 2
+    fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols*size,1.4*nrows*size))
+    # ax[1] = fig.add_subplot(nrows,ncols,2,projection='3d')
+    fig.tight_layout()
+
+    ##### Plot embeddings of a specific example
+    ### Get specific example
+    ldnames = sorted(glob.glob(os.path.join(self.folder, 'test*npz')))
+    ld = np.load(ldnames[-1])
+    emb_init = ld['input'][index]
+    emb_gt = ld['gt'][index]
+    emb_out = ld['output'][index]
+    adjmat = ld['adjmat'][index]
+    ### Create labels
+    slabels, sorted_idxs = get_sorted(emb_gt)
+    soutput = emb_out[sorted_idxs]
+    ### Create plots
+    # fig = plt.figure()
+    # return fig, fig.add_subplot(111, projection='3d')
+    if soutput.shape[1] == slabels.shape[1]:
+      # im0 = ax[0].imshow(np.abs(soutput))
+      im0 = hinton(soutput.T, ax=ax[0])
+      u, s, v = np.linalg.svd(np.dot(soutput.T, slabels))
+      o_ = np.ones_like(s)
+      o_[-1] = np.linalg.det(np.dot(u,v))
+      Q = np.dot(u, np.dot(np.diag(o_), v))
+      soutput = np.dot(soutput, Q)
+      # im1 = ax[1].imshow(np.abs(soutput))
+      # im0 = ax[0].imshow(np.abs(soutput))
+      im1 = hinton(soutput.T, ax=ax[1])
+    else:
+      im0 = ax[0].imshow(np.abs(soutput))
+      ax[1].scatter(X[:,0], X[:,1])
+
     return fig
 
   def get_latex_name(self):
@@ -368,14 +507,17 @@ class LatexGenerator(object):
                         self.experiments[min_idx], 
                         "Sample embedding, similarity matrix, histogram, and loss curves for best performing of this set", 
                         self.index)
-    latex_string += self.save_images_and_output_latex(
-                        self.experiments[max_idx],
-                        "Sample embedding, similarity matrix, histogram, and loss curves for worst performing of this set", 
-                        self.index)
-    latex_string += self.save_images_and_output_latex(
-                        self.experiments[rnd_idx],
-                        "Sample embedding, similarity matrix, histogram, and loss curves for random experiment of this set", 
-                        self.index)
+    if len(losses) > 1:
+      latex_string += self.save_images_and_output_latex(
+                          self.experiments[max_idx],
+                          "Sample embedding, similarity matrix, histogram, and loss curves for worst performing of this set", 
+                          self.index)
+    if len(losses) > 2:
+      latex_string += self.save_images_and_output_latex(
+                          self.experiments[rnd_idx],
+                          "Sample embedding, similarity matrix, histogram, and loss curves for random experiment of this set", 
+                          self.index)
+
     latex_string += self.build_latex_stat_table()
     # latex_string += "\\begin{figure}[H]\n"
     # latex_string += "\\end{figure}\n"
