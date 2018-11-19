@@ -3,6 +3,7 @@ import os
 import sys
 import glob
 import numpy as np
+import time
 
 import tensorflow as tf
 
@@ -58,8 +59,8 @@ def get_test_losses(opts, sample, output, return_gt=False, name='loss'):
   return gt_l1_loss, gt_l2_loss, gt_bce_loss, ssame_m, ssame_var, sdiff_m, sdiff_var
 
 def build_test_session(opts):
-  config = tf.ConfigProto()
-  config.gpu_options.allow_growth = True
+  config = tf.ConfigProto(device_count = {'GPU': 0})
+  # config.gpu_options.allow_growth = True
   return tf.Session(config=config)
 
 
@@ -76,9 +77,10 @@ def test_values(opts):
 
   # Tensorflow and logging operations
   disp_string =  '{:06d} Errors: ' \
-                 'L1: {:.03e},  L2: {:.03e}, BCE: {:.03e} ' \
-                 'Same sim: {:.03e} +/- {:.03e} ' \
-                 'Diff sim: {:.03e} +/- {:.03e}' 
+                 'L1: {:.03e},  L2: {:.03e}, BCE: {:.03e}, ' \
+                 'Same sim: {:.03e} +/- {:.03e}, ' \
+                 'Diff sim: {:.03e} +/- {:.03e}, ' \
+                 'Time: {:.03e}, '
 
 
   # Build session
@@ -93,8 +95,10 @@ def test_values(opts):
       saver.restore(sess, tf.train.latest_checkpoint(opts.save_dir))
       for i, npz_file in enumerate(npz_files):
         sample_ = { k : np.expand_dims(v,0) for k, v in np.load(npz_file).items() }
+        start_time = time.time()
         vals = sess.run(losses, { sample[k] : sample_[k] for k in sample.keys() })
-        dstr = disp_string.format(i, *vals)
+        end_time = time.time()
+        dstr = disp_string.format(i, *vals, end_time - start_time)
         print(dstr)
         log_file.write(dstr)
         log_file.write('\n')
