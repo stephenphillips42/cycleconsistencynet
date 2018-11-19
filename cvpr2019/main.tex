@@ -78,7 +78,7 @@ GRASP Laboratory, University of Pennsylvania\\
     Image feature matching is a fundamental part of many geometric computer vision applications, and using multiple images can improve performance.
     In this work, we formulate multi-image matching as a graph embedding problem then use a Graph Convolutional Network to learn an appropriate embedding function for aligning image features.
     We use cycle consistency to train our network in an unsupervised fashion, since ground truth correspondence is difficult or expensive to aquire.
-    In addition, geometric consistency losses can be added at train time, even if the information is not available in the test set, unlike previous approaches that optimize cycle consistency directly.
+    In addition, geometric consistency losses can be added at training time, even if the information is not available in the test set, unlike previous approaches that optimize cycle consistency directly.
     To the best of our knowledge, no other works have used learning for multi-image feature matching.
     Our experiments show that our method is competitive with other optimization based approaches.
 \end{abstract}
@@ -89,8 +89,8 @@ GRASP Laboratory, University of Pennsylvania\\
 Feature matching is an essential part of Structure from Motion and many geometric computer vision applications.
 The goal in multi-image feature matching is to take 2D image locations from three or more images and find which ones correspond to the same point in the 3D scene.
 Methods such as SIFT feature matching \cite{lowe2004distinctive} followed by RANSAC \cite{fischler1981random} have been the standard for decades.
-However RANSAC-based approaches are limited for matching pairs of images, which can lead to global inconsistencies in the matching.
-Other works, such as Wang et al.~\cite{wang2017multi}, have shown improvement in performance by optimizing cycle consistency, i.e. enforcing the pairwise feature matches to be globally consistent, illustrated in \ref{fig:cycconsistex}.
+However RANSAC-based approaches are limited to matching pairs of images, which can lead to global inconsistencies in the matching.
+Other works, such as Wang et al.~\cite{wang2017multi}, have shown improvement in performance by optimizing cycle consistency, i.e. enforcing the pairwise feature matches to be globally consistent, illustrated in figure \ref{fig:cycconsistex}.
 
 However, these multi-view consistency algorithms struggle in distributed and robust settings.
 Deep learning has revolutionized how image features are computed \cite{yi2016lift}.
@@ -135,9 +135,9 @@ In this paper, we want to leverage the power of deep representations in order to
 
 Unfortunately, there are obstacles to applying multi-view constraints directly to deep learning. 
 To train networks, we need a large amount of labeled data.
-In the case of multi-image feature matching, one would need to hand label point correspondences between images, which is difficult and expensive to obtain.
+In the case of multi-image feature matching, one would need hand labeled point correspondences between images, which are difficult and expensive to obtain.
 Multi-view constraints are formulated in terms of sparse features, which traditional convolutional neural nets are not designed to handle.
-In the case of multi-image feature matching, geometric constraints would be helpful in rejecting outlier matches.
+Additionally, in the case of multi-image feature matching, geometric constraints would be helpful in rejecting outlier matches.
 
 In this work, we propose to solve these problems using a Graph Convolutional Network (GCN) to operate on the correspondence graph.
 The proposed method works directly on the correspondence graph, which is agnostic to how the correspondences were computed, thus allowing the algorithm to work in a broad class of environments.
@@ -146,7 +146,7 @@ We use an unsupervised loss - the cycle consistency loss - to train the network,
 % We incorporate geometric consistency losses to guide training, which helps training even when the geometric information is not available at test time.
 Geometric consistency losses can aid training, even if such information is not available at test time.
 Although our network is simple, it shows promising results compared to baselines which optimize for cycle-consistency without learned embeddings.
-Furthermore, since inference requires only a single forward pass over the neural network, our approach is faster (to achieve comparable accuracy) than method which must solve an optimization problem every time.
+Furthermore, since inference requires only a single forward pass over the neural network, our approach is faster (to achieve comparable accuracy) than methods which must solve an optimization problem every time.
 Our contributions are:
 \begin{itemize}
 \item We use a novel architecture to address the multi-image feature matching problem using GCNs with graph embeddings.
@@ -184,7 +184,7 @@ Note that while Zhu et al.~\cite{zhu2017unpaired} use cycle consistency in their
 
 \subsection{Graph Neural Networks}
 Graph neural networks have recieved more attention recently \cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2016semi, scarselli2009graph, gama2018mimo, gama2018convolutional, battaglia2018relational}.
-Classical so-called Spectral methods used the eigenvectors of the graph Laplacian to compute convolutions as in Bruna et al.~\cite{bruna2013spectral}, but requires an a-prior known graph structure. 
+Classical so-called Spectral methods used the eigenvectors of the graph Laplacian to compute convolutions as in Bruna et al.~\cite{bruna2013spectral}, but requires an a-priori known graph structure. 
 Non-spectral methods do not require a-priori knowledge \cite{bronstein2017geometric, kipf2016semi, scarselli2009graph, gama2018convolutional}.
 Most of these methods use polynomials of the graph Laplacian to compute neighborhood averages.
 Gama et al.~2018 \cite{gama2018mimo, gama2018convolutional} formalize this notion and generalize it beyond the use of the graph Laplacian.
@@ -199,7 +199,7 @@ To improve performance, more sophisticated aggregation techniques and global inf
   \caption{
     Illustration of the universe of features.
     Each feature in each image corresponds to a 3D point in the scene.
-    We can construct a cycle consistent embeddings of the features by mapping each one to the one-hot vector of its corresponding 3D point.
+    We can construct cycle consistent embeddings of the features by mapping each one to the one-hot vector of its corresponding 3D point.
     While there can be many features, there are fewer 3D points and thus this corresponds to a low rank factorization of the correspondence matrix.
     Best viewed in color.
   }
@@ -312,13 +312,12 @@ Method & Same Point Similarities & Different Point Similarities  \\
 \hline\hline\hline
 Ideal                              & 1.00e+0 $\pm$ 0.00e+0 & 0.00e+0 $\pm$ 0.00e+0 \\ \hline
 Initialization Baseline            & 5.11e-1 $\pm$ 1.68e-2 & 2.56e-1 $\pm$ 2.06e-1 \\ \hline
-3 Views, Noiseless                 & 9.96e-1 $\pm$ 7.70e-3 & 1.16e-1 $\pm$ 1.32e-1 \\ \hline
+3 Views, Noiseless                 & 9.96e-1 $\pm$ 7.70e-3 & 1.16e-1 $\pm$ 1.32e-1 \\ 
 5 Views, Noiseless                 & 1.00e+0 $\pm$ 4.15e-4 & 1.22e-1 $\pm$ 1.67e-1 \\ \hline
-3 Views, Added Noise               & 9.96e-1 $\pm$ 7.70e-3 & 1.16e-1 $\pm$ 1.32e-1 \\ \hline
-3 Views, Added Noise               & 9.68e-1 $\pm$ 5.29e-2 & 9.50e-2 $\pm$ 1.58e-1 \\ \hline
-5 Views, Added Noise               & 9.89e-1 $\pm$ 2.47e-2 & 7.67e-2 $\pm$ 1.56e-1 \\ \hline
+3 Views, Added Noise               & 9.96e-1 $\pm$ 7.70e-3 & 1.16e-1 $\pm$ 1.32e-1 \\ 
+5 Views, Added Noise               & 9.89e-1 $\pm$ 2.47e-2 & 7.67e-2 $\pm$ 1.56e-1 \\ 
 6 Views, Added Noise               & 9.84e-1 $\pm$ 3.16e-2 & 7.46e-2 $\pm$ 1.57e-1 \\ \hline
-3 Views, 5\% Outliers              & 9.29e-1 $\pm$ 1.79e-1 & 1.41e-1 $\pm$ 1.48e-1 \\ \hline
+3 Views, 5\% Outliers              & 9.29e-1 $\pm$ 1.79e-1 & 1.41e-1 $\pm$ 1.48e-1 \\ 
 3 Views, 10\% Outliers             & 9.27e-1 $\pm$ 1.79e-1 & 1.40e-1 $\pm$ 1.51e-1 \\ \hline
 
 \hline
@@ -347,7 +346,7 @@ Note that because of this formulation, we can determine our embeddings only up t
 = \mat{E}\mat{E}^\top
 \label{eq:rotinvar}
 \end{equation}
-Thus when visualizing embeddings, we rotate them to make them more interpretable (see figure CITE FIGURE).
+Thus when visualizing embeddings, we rotate them to make them more interpretable (see figure \ref{fig:embeddingsviz}).
 
 \subsection{Geometric Consistency Loss}
 
@@ -388,24 +387,24 @@ Where $c(i)$ is the appropriate camera for point index $i$.
 \hline
 Method (3 Views)                                          & $L_1$ Loss                          & $L_2$ Loss                          & Run Time (sec)                      \\
 \hline\hline
-MatchALS \cite{zhou2015multi} 15 Iterations               & 0.052 $\pm$ 0.003                   & 0.010 $\pm$ 0.002                   & 0.021 $\pm$ 0.003                   \\ \hline
-MatchALS \cite{zhou2015multi} 25 Iterations               & 0.045 $\pm$ 0.007                   & 0.009 $\pm$ 0.003                   & 0.034 $\pm$ 0.003                   \\ \hline
+MatchALS \cite{zhou2015multi} 15 Iterations               & 0.052 $\pm$ 0.003                   & 0.010 $\pm$ 0.002                   & 0.021 $\pm$ 0.003                   \\
+MatchALS \cite{zhou2015multi} 25 Iterations               & 0.045 $\pm$ 0.007                   & 0.009 $\pm$ 0.003                   & 0.034 $\pm$ 0.003                   \\
 MatchALS \cite{zhou2015multi} 50 Iterations               & 0.016 $\pm$ 0.008                   & 0.007 $\pm$ 0.003                   & 0.065 $\pm$ 0.006                   \\ \hline
-PGDDS \cite{leonardos2016distributed} 15 Iterations       & 0.016 $\pm$ 0.002                   & 0.006 $\pm$ 0.002                   & 0.287 $\pm$ 0.043                   \\ \hline
-PGDDS \cite{leonardos2016distributed} 25 Iterations       & 0.014 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 0.613 $\pm$ 0.089                   \\ \hline
+PGDDS \cite{leonardos2016distributed} 15 Iterations       & 0.016 $\pm$ 0.002                   & 0.006 $\pm$ 0.002                   & 0.287 $\pm$ 0.043                   \\
+PGDDS \cite{leonardos2016distributed} 25 Iterations       & 0.014 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 0.613 $\pm$ 0.089                   \\
 PGDDS \cite{leonardos2016distributed} 50 Iterations       & 0.013 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 1.430 $\pm$ 0.234                   \\ \hline
 Spectral                                                  & 0.054 $\pm$ 0.005                   & 0.018 $\pm$ 0.004                   & 0.018 $\pm$ 0.004                   \\ \hline 
 \textbf{GCN, 12 Layers (ours)}                            & \textbf{0.025} $\pm$ \textbf{0.003} & \textbf{0.016} $\pm$ \textbf{0.003} & \textbf{0.039} $\pm$ \textbf{0.009} \\
-\hline \hline\hline
+\hline\hline
 Method (4 Views)                                                         & $L_1$ Loss                          & $L_2$ Loss                          & Run Time (sec)                     \\
 \hline\hline
-MatchALS \cite{zhou2015multi} 15 Iterations                              & 0.064 $\pm$ 0.005                   & 0.012 $\pm$ 0.002                   & 0.030 $\pm$ 0.004                   \\  \hline
-MatchALS \cite{zhou2015multi} 25 Iterations                              & 0.041 $\pm$ 0.010                   & 0.008 $\pm$ 0.004                   & 0.048 $\pm$ 0.005                   \\  \hline
-MatchALS \cite{zhou2015multi} 50 Iterations                              & 0.011 $\pm$ 0.008                   & 0.005 $\pm$ 0.003                   & 0.094 $\pm$ 0.008                   \\  \hline
-PGDDS \cite{leonardos2016distributed} 15 Iterations                      & 0.015 $\pm$ 0.002                   & 0.006 $\pm$ 0.001                   & 0.436 $\pm$ 0.090                   \\  \hline
-PGDDS \cite{leonardos2016distributed} 25 Iterations                      & 0.014 $\pm$ 0.002                   & 0.005 $\pm$ 0.001                   & 0.961 $\pm$ 0.181                   \\  \hline
-PGDDS \cite{leonardos2016distributed} 50 Iterations                      & 0.013 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 2.056 $\pm$ 0.424                   \\  \hline
-Spectral Method                                                          & 0.055 $\pm$ 0.004                   & 0.017 $\pm$ 0.003                   & 0.028 $\pm$ 0.003                   \\  \hline
+MatchALS \cite{zhou2015multi} 15 Iterations                              & 0.064 $\pm$ 0.005                   & 0.012 $\pm$ 0.002                   & 0.030 $\pm$ 0.004                   \\
+MatchALS \cite{zhou2015multi} 25 Iterations                              & 0.041 $\pm$ 0.010                   & 0.008 $\pm$ 0.004                   & 0.048 $\pm$ 0.005                   \\
+MatchALS \cite{zhou2015multi} 50 Iterations                              & 0.011 $\pm$ 0.008                   & 0.005 $\pm$ 0.003                   & 0.094 $\pm$ 0.008                   \\ \hline
+PGDDS \cite{leonardos2016distributed} 15 Iterations                      & 0.015 $\pm$ 0.002                   & 0.006 $\pm$ 0.001                   & 0.436 $\pm$ 0.090                   \\
+PGDDS \cite{leonardos2016distributed} 25 Iterations                      & 0.014 $\pm$ 0.002                   & 0.005 $\pm$ 0.001                   & 0.961 $\pm$ 0.181                   \\
+PGDDS \cite{leonardos2016distributed} 50 Iterations                      & 0.013 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 2.056 $\pm$ 0.424                   \\ \hline
+Spectral Method                                                          & 0.055 $\pm$ 0.004                   & 0.017 $\pm$ 0.003                   & 0.028 $\pm$ 0.003                   \\ \hline
 \textbf{GCN, 12 Layers (ours)}                                           & \textbf{0.023} $\pm$ \textbf{0.003} & \textbf{0.015} $\pm$ \textbf{0.002} & \textbf{0.056} $\pm$ \textbf{0.017} \\ \hline
 \end{tabular}
 \end{center}
@@ -414,11 +413,11 @@ Spectral Method                                                          & 0.055
 
 \caption{
 Results on Rome16K Correspondence graphs, showing the mean and standard deviation of the $L_1$ and $L_2$.
-Our method was not trained on ground truth corresopndences but using unsupervised methods and geometric side losses.
+Our method was not trained on ground truth correspondences but using unsupervised methods and geometric side losses.
 As our method gives soft labels, we use cannot use precision or recall as is standard in testing cycle consistency \cite{zhou2015multi}.
 Thus we test against ground truth correspondence graph adjacency matrices computed from the bundle adjustment output.
 Our method performs better than 25 iteration of the MatchALS \cite{zhou2015multi} method, but does not perform as well as 50 iterations.
-Our network has only 12 layers, thus we have much greater efficiency per iteration.
+% Our network has only 12 layers, thus we have much greater efficiency per iteration.
 We do not perform as well as the Projected Gradient Descent Doubly Stochastic (PGDDS) \cite{leonardos2016distributed} but we perform significantly faster than them.
 Note that we perform much better in $L_1$ performance rather than $L_2$, as we optimized the network weights using an $L_1$ loss.
 }
@@ -455,13 +454,13 @@ Note that we perform much better in $L_1$ performance rather than $L_2$, as we o
 \subsection{Synthetic Graph Dataset}
 We first test our method on synthetically generated data as a simple proof of concept.
 To generate the data, we generate $p$ points, each with its own randomly generated descriptor.
-To create the graph, we generate random permutation matrices, with a noise applied to it after generated.
+To create the graph, we generate random permutation matrices, with a noise applied to it after it is generated.
 % The initial descriptors we use as input we created using the true descriptor plus some added Gaussian noise.
 We initialize the input descriptors using the true descriptor, plus some added Gaussian noise.
 No geometric losses were added during training for these experiments.
 However, the method was robust in testing with different noise functions and parameters.
 The normalized noisy input descriptors are our baseline - they correlate with the true values but do not preserve the structure well.
-However, the GCN recovered the true structure very well, as shown in \ref{fig:synthtable}.
+However, the GCN recovered the true structure very well, as shown in Table \ref{fig:synthtable}.
 All experiments were run with a 12 layer GCN with the ReLU nonlinearity and skip connections.
 All were trained with the Adam optimizer \cite{kingma2014adam} and a learning rate $10^{-4}$
 
@@ -495,7 +494,7 @@ Additional comparisons to different iterations numbers of iterations can be foun
 \begin{figure}[t]
 \begin{center}
   % \fbox{\rule{0pt}{2in} \rule{.9\linewidth}{0pt}}
-  \includegraphics[width=0.8\linewidth]{figures/EmbeddingsViz.pdf}
+  \includegraphics[width=0.8\linewidth]{figures/EmbeddingsViz.png}
   \end{center}
      \caption{
          Visualization of the learned embeddings using Hinton diagrams \cite{bremner1994hinton}.
@@ -512,7 +511,7 @@ We have shown a novel method for training feature matching using GCNs, using an 
 We have demonstrated its effectiveness on the Rome16K dataset compared to the traditional optimization based baselines on a simple GCN.
 For future work, we will investigate robust losses for better outlier rejection, and using higher order geometric constraints, such as the tri-focal tensor, as additional loss terms.
 A long term goal is to incorporate learning image level features into this pipeline.
-Moreover we hope to adapt this method to a distributed setting, which would be simple given current approach.
+Moreover we hope to adapt this method to a distributed setting, which would be a simple extention given current approach.
 % , but with group norm, we cannot distribute in its current form.
 
 {\small
