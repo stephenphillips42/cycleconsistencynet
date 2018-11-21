@@ -57,10 +57,16 @@ def get_geometric_loss(opts, sample, output_sim, name='geo_loss'):
   RX = tf.einsum('bvik,bvk->bvi',R,X)
   TcrossRX = tf.cross(T, RX)
   E_part = tfutils.batch_matmul(RX, tf.transpose(TcrossRX, perm=[0, 2, 1]))
-  E = tf.abs(E_part + tf.transpose(E_part, [0, 2, 1]))
-  return opts.geometric_loss * tf.reduce_mean(tf.multiply(output_sim, E), name=name)
+  npmask = np.kron(1-np.eye(v),np.ones((p,p))).reshape(1,v*p,v*p).astype(opts.dataset_params.dtype)
+  mask = tf.convert_to_tensor(npmask, name='mask_{}'.format(name))
+  E = tf.multiply(tf.abs(E_part + tf.transpose(E_part, [0, 2, 1])), mask)
+  if opts.full_tensorboard:
+    tf.summary.image('Geometric matrix {}'.format(name), tf.expand_dims(E, -1))
+    tf.summary.histogram('Geometric matrix hist {}'.format(name), E)
+    tf.summary.scalar('Geometric matrix norm {}'.format(name), tf.norm(E, ord=np.inf))
+  return tf.reduce_mean(tf.multiply(output_sim, E), name=name)
 
-def get_loss(opts, sample, output, return_gt=False, name='loss'):
+def get_loss(opts, sample, output, return_gt=False, name='train'):
   emb = sample['TrueEmbedding']
   output_sim = tfutils.get_sim(output)
   if opts.use_end_bias:
@@ -77,17 +83,21 @@ def get_loss(opts, sample, output, return_gt=False, name='loss'):
   else:
     sim = sim_true
   if opts.full_tensorboard:
-    tf.summary.image('Output Similarity', tf.expand_dims(output_sim, -1))
-    tf.summary.image('Embedding Similarity', tf.expand_dims(sim, -1))
-  loss = loss_fns[opts.loss_type](sim, output_sim)
+    tf.summary.image('Output Similarity {}'.format(name), tf.expand_dims(output_sim, -1))
+    tf.summary.image('Embedding Similarity {}'.format(name), tf.expand_dims(sim, -1))
+  reconstr_loss = loss_fns[opts.loss_type](sim, output_sim)
   if opts.full_tensorboard:
-    tf.summary.scalar('reconstruction loss', loss)
+    tf.summary.scalar('Reconstruction Loss {}'.format(name), reconstr_loss)
   if opts.geometric_loss > 0:
-    geo_loss = get_geometric_loss(opts, sample, output_sim)
+    geo_loss = get_geometric_loss(opts, sample, output_sim, name='geom_loss_{}'.format(name))
     if opts.full_tensorboard:
-      tf.summary.scalar('geometric loss', geo_loss)
-    loss += geo_loss
-  tf.summary.scalar(name, loss)
+      tf.summary.scalar('Geometric Loss {}'.format(name), geo_loss)
+      geo_loss_gt = get_geometric_loss(opts, sample, sim_true)
+      tf.summary.scalar('Geometric Loss GT {}'.format(name), geo_loss_gt)
+    loss = opts.reconstruction_loss * reconstr_loss + opts.geometric_loss * geo_loss
+  else:
+    loss = reconstr_loss
+  tf.summary.scalar('Total Loss {}'.format(name), loss)
   if return_gt:
     output_sim_gt = output_sim
     if opts.loss_type == 'bce':
@@ -95,8 +105,8 @@ def get_loss(opts, sample, output, return_gt=False, name='loss'):
     gt_l1_loss = loss_fns['l1'](sim_true, output_sim_gt, add_loss=False)
     gt_l2_loss = loss_fns['l2'](sim_true, output_sim_gt, add_loss=False)
     if opts.full_tensorboard and opts.use_unsupervised_loss:
-      tf.summary.scalar('GT L1 loss', gt_l1_loss)
-      tf.summary.scalar('GT L2 loss', gt_l2_loss)
+      tf.summary.scalar('GT L1 Loss {}'.format(name), gt_l1_loss)
+      tf.summary.scalar('GT L2 Loss {}'.format(name), gt_l2_loss)
     return loss, gt_l1_loss, gt_l2_loss
   else:
     return loss
@@ -208,7 +218,7 @@ def get_test_dict(opts, dataset, network):
                                  test_data['sample'],
                                  test_data['output'],
                                  return_gt=True,
-                                 name='test_loss')
+                                 name='test')
     test_data['loss'] = test_loss
     test_data['loss_gt_l1'] = test_gt_l1_loss
     test_data['loss_gt_l2'] = test_gt_l2_loss
@@ -216,7 +226,7 @@ def get_test_dict(opts, dataset, network):
     test_data['loss'] = get_loss(opts,
                                  test_data['sample'],
                                  test_data['output'],
-                                 name='test_loss')
+                                 name='test')
   num_batches = 1.0 * opts.dataset_params.sizes['test'] / opts.batch_size
   test_data['nsteps'] = int(num_batches)
   return test_data
@@ -266,7 +276,7 @@ def train(opts):
     else:
       sample = dataset.gen_batch('train')
   output = network(sample['Laplacian'], sample['InitEmbeddings'])
-  loss = get_loss(opts, sample, output)
+  loss = get_loss(opts, sample, output, name='train')
   train_op = get_train_op(opts, loss)
   # Testing
   test_data = get_test_dict(opts, dataset, network)

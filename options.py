@@ -13,6 +13,27 @@ import re
 
 import myutils
 
+class DatasetParams(argparse.Namespace):
+  def __init__(self, opts):
+    super(DatasetParams, self).__init__()
+    self.data_dir='{}/{}'.format(opts.datasets_dir, opts.dataset)
+    self.sizes={ 'train': 40000, 'test': 3000 }
+    self.fixed_size=True
+    self.views=[3]
+    self.points=[25]
+    self.points_scale=1
+    self.knn=4
+    self.scale=3
+    self.sparse=False
+    self.soft_edges=False
+    self.descriptor_dim=12
+    self.descriptor_var=1.0
+    self.descriptor_noise_var=0
+    self.noise_level=0.1
+    self.num_repeats=1
+    self.num_outliers=0
+    self.dtype='float32'
+
 dataset_choices = [
   'synth_3view', 'synth_small', 'synth_4view', 'synth_5view', 'synth_6view',
   'noise_3view',
@@ -25,6 +46,18 @@ dataset_choices = [
   'rome16kknn0',
   'rome16kgeom0', 'rome16kgeom4view0',
 ]
+
+class ArchParams(argparse.Namespace):
+  def __init__(self, opts):
+    super(ArchParams, self).__init__()
+    self.layer_lens = [ 32, 64 ]
+    self.activ = opts.activation_type
+    self.attn_lens = []
+    self.skip_layers = []
+    self.start_normed = 1
+    self.group_size = 32
+    self.normalize_emb = True
+    self.sparse = False
 
 arch_choices = [
   'vanilla', 'vanilla0', 'vanilla1',
@@ -114,7 +147,11 @@ def get_opts():
   parser.add_argument('--use_end_bias',
                       default=False,
                       type=myutils.str2bool,
-                      help='NOT IMPLEMENTED YET: Use bias in dot product')
+                      help='Use bias in dot product')
+  parser.add_argument('--reconstruction_loss',
+                      default=1.0,
+                      type=float,
+                      help='Use true adjacency or noisy one in loss')
   parser.add_argument('--geometric_loss',
                       default=-1,
                       type=float,
@@ -225,25 +262,7 @@ def get_opts():
   if not opts.load_data and opts.dataset in [ 'rome16kknn0' ]:
     print("ERROR: Cannot generate samples on the fly for this dataset: {}".format(opts.dataset))
     sys.exit(1)
-  class DatasetParams(object):
-    def __init__(self, opts):
-      self.data_dir='{}/{}'.format(opts.datasets_dir, opts.dataset)
-      self.sizes={ 'train': 40000, 'test': 3000 }
-      self.fixed_size=True
-      self.views=[3]
-      self.points=[25]
-      self.points_scale=1
-      self.knn=4
-      self.scale=3
-      self.sparse=False
-      self.soft_edges=False
-      self.descriptor_dim=12
-      self.descriptor_var=1.0
-      self.descriptor_noise_var=0
-      self.noise_level=0.1
-      self.num_repeats=1
-      self.num_outliers=0
-      self.dtype='float32'
+
   dataset_params = DatasetParams(opts)
   if opts.dataset == 'synth_3view':
     pass
@@ -312,16 +331,6 @@ def get_opts():
   setattr(opts, 'dataset_params', dataset_params)
 
   # Set up architecture
-  class ArchParams(object):
-    def __init__(self, opts):
-      self.layer_lens = [ 32, 64 ]
-      self.activ = opts.activation_type
-      self.attn_lens = []
-      self.skip_layers = []
-      self.start_normed = 1
-      self.group_size = 32
-      self.normalize_emb = True
-      self.sparse = False
   arch = ArchParams(opts)
   if opts.architecture in ['vanilla', 'skip', 'attn0', 'spattn0']:
     arch.layer_lens=[ 2**min(5+k,9) for k in range(5) ]
@@ -345,7 +354,7 @@ def get_opts():
   #   arch.start_normed = 1
   if opts.loss_type == 'bce':
     arch.normalize_emb = False
-  if opts.dataset not in [ 'rome16kgeom0' ]:
+  if opts.dataset not in [ 'rome16kgeom0', 'rome16kgeom4view0' ]:
     opts.geometric_loss = 0
   setattr(opts, 'arch', arch)
 
@@ -358,11 +367,19 @@ def get_opts():
   if opts.checkpoint_start_dir and not os.path.exists(opts.checkpoint_start_dir):
     print("ERROR: Checkpoint Directory {} does not exist".format(opts.checkpoint_start_dir))
     return
-  with open(os.path.join(opts.save_dir, 'options.yaml'), 'w') as yml:
-    yml.write(yaml.dump(opts.__dict__))
+
+  yaml_fname = os.path.join(opts.save_dir, 'options.yaml')
+  if not os.path.exists(yaml_fname):
+    with open(yaml_fname, 'w') as yml:
+      yml.write(yaml.dump(opts.__dict__))
 
   # Finished, return options
   return opts
 
+def parse_yaml_opts(opts):
+  with open(os.path.join(opts.save_dir, 'options.yaml'), 'r') as yml:
+    yaml_opts = yaml.load(yml)
+  opts.__dict__.update(yaml_opts)
+  return opts
 
 
