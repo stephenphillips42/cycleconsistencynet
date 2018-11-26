@@ -10,10 +10,10 @@ egstr = '000000 Errors: L1: 5.297e-02, L2: 1.678e-02, BCE: 1.008e-01, Same sim: 
 def stdagg(x):
   return np.sqrt(np.mean(np.array(x)**2))
 
-def myformat2(x):
+def myformat(x):
   return '{:.05e}'.format(x)
 
-def myformat(x):
+def myformat2(x):
   return '{:.03f}'.format(x)
 
 def myformat_old(x):
@@ -26,9 +26,8 @@ names = ['l1', 'l2', 'bce', 'ssame_m', 'ssame_s', 'sdiff_m', 'sdiff_s', 'time']
 def parse(line):
   return dict(zip(names, [ float(x) for x in disp_match.findall(line) ]))
 
-agg_names = [ 'l1', 'l2', 'bce', 'ssame', 'sdiff' ]
 def agg(vals):
-  aggs = dict(zip(agg_names, [ None for nm in agg_names ]))
+  aggs = dict(zip(names, [ None for nm in names ]))
   for k in [ 'l1', 'l2', 'bce', 'time' ]:
     aggs[k] = (np.mean(vals[k]), np.std(vals[k]))
   for k in [ 'ssame', 'sdiff' ]:
@@ -50,6 +49,7 @@ def disp_val(aggs):
 
 
 
+print(" ID                                      & L1                & L2                & Time              \\ \hline")
 for fname in sys.argv[1:]:
   vals = dict(zip(names, [ [] for nm in names ]))
   f = open(fname, 'r')
