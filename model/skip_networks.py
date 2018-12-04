@@ -112,6 +112,57 @@ class GraphLongSkipLayerNetwork(snt.AbstractModule):
       output = tf.nn.l2_normalize(output, axis=2)
     return output
 
+class GraphSkipHopLayerNetwork(GraphLongSkipLayerNetwork):
+  def __init__(self,
+               opts,
+               arch,
+               use_bias=True,
+               initializers=None,
+               regularizers=None,
+               custom_getter=None,
+               name="graphnn"):
+    super(GraphSkipHopLayerNetwork, self).__init__(opts,
+                                                   arch,
+                                                   use_bias=use_bias,
+                                                   initializers=initializers,
+                                                   regularizers=regularizers,
+                                                   custom_getter=custom_getter,
+                                                   name=name)
+    lin_regularizers = None
+    if regularizers is not None:
+      lin_regularizers = { k:v
+                           for k, v in regularizers.items()
+                           if k in ["w", "b"] }
+    self._hop_layers = [
+      layers.EmbeddingLinearLayer(
+        output_size=arch.layer_lens[skip_idx],
+        initializers=initializers,
+        regularizers=lin_regularizers,
+        name="{}/hop".format(name))
+      for skip_idx in self._skip_layer_idx[1:]
+    ]
+
+  def _build(self, laplacian, init_embeddings):
+    """Applying this graph network to sample"""
+    output = init_embeddings
+    sk = 0
+    last_skip = None
+    for i, layer in enumerate(self._layers):
+      if i in self._skip_layer_idx:
+        output = layer(laplacian, output)
+        skip_add = self._skip_layers[sk](laplacian, init_embeddings)
+        output = output + skip_add
+        if last_skip is not None:
+          hop_add = self._hop_layers[sk-1](laplacian, last_skip)
+          output = output + hop_add
+        last_skip = output
+        sk += 1
+      else:
+        output = layer(laplacian, output)
+    if self.normalize_emb:
+      output = tf.nn.l2_normalize(output, axis=2)
+    return output
+
 class GraphLongSkipNormedNetwork(GraphLongSkipLayerNetwork):
   def __init__(self,
                opts,

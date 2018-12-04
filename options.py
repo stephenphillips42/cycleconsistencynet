@@ -62,7 +62,7 @@ class ArchParams(argparse.Namespace):
 arch_choices = [
   'vanilla', 'vanilla0', 'vanilla1',
   'skip', 'skip0', 'skip1',
-  'longskip0', 'longskip1',
+  'longskip0', 'longskip1', 'longskip2', 'longskip3',
   'normedskip0', 'normedskip1', 'normedskip2', 'normedskip3',
   'attn0', 'attn1', 'attn2',
   'spattn0', 'spattn1', 'spattn2',
@@ -338,11 +338,11 @@ def get_opts():
     arch.layer_lens=[ 2**min(5+k,9) for k in range(5) ]
   elif opts.architecture in ['vanilla1', 'skip1', 'attn2', 'spattn2']:
     arch.layer_lens=[ 2**min(5+k,9) for k in range(5) ]
-  elif opts.architecture in ['longskip0', 'normedskip0', 'normedskip2']:
+  elif opts.architecture in ['longskip0', 'longskip2', 'normedskip0', 'normedskip2']:
     arch.layer_lens=[ 32, 64, 128, 256, 512, 512, 512,
                       512, 512, 512, 1024, 1024 ]
     arch.skip_layers = [ len(arch.layer_lens)//2, len(arch.layer_lens) - 1 ]
-  elif opts.architecture in ['longskip1', 'normedskip1', 'normedskip3']:
+  elif opts.architecture in ['longskip1', 'longskip3', 'normedskip1', 'normedskip3']:
     arch.layer_lens=[ 32, 64, 128, 256, 512, 512,
                       512, 512, 512, 1024, 1024,
                       512, 512, 512, 1024, 1024 ]
