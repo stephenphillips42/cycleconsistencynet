@@ -40,6 +40,7 @@ def get_regularizers(opts):
     return { k: all_regs[k] for k in [ "w", "b" ] }
   elif opts.architecture in ['skip', 'skip0', 'skip1', \
                              'longskip0', 'longskip1', \
+                             'longskip2', 'longskip3', \
                              'normedskip0', 'normedskip1', \
                              'normedskip2', 'normedskip3', ]:
     return { k: all_regs[k] for k in [ "w", "u", "b", "c" ] }
@@ -61,6 +62,11 @@ def get_network(opts, arch):
                     regularizers=get_regularizers(opts))
   elif opts.architecture in ['longskip0', 'longskip1']:
     network = skip_networks.GraphLongSkipLayerNetwork(
+                    opts,
+                    arch,
+                    regularizers=get_regularizers(opts))
+  elif opts.architecture in ['longskip2', 'longskip3']:
+    network = skip_networks.GraphSkipHopLayerNetwork(
                     opts,
                     arch,
                     regularizers=get_regularizers(opts))
