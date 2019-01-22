@@ -9,20 +9,17 @@ import pickle
 
 import tensorflow as tf
 
-import sim_graphs
-from data_util import parent_dataset
+from data_util import mydataset
 from data_util import tf_helpers
 from data_util.rome16k import parse
 
-class Rome16KTupleDataset(parent_dataset.GraphSimDataset):
+class Rome16KTupleDataset(mydataset.MyDataset):
   """Abstract base class for Rome16K cycle consistency graphs"""
 
   def __init__(self, opts, params, tuple_size=3):
-    parent_dataset.GraphSimDataset.__init__(self, opts, params)
+    super(Rome16KTupleDataset, self).__init__(self, opts, params)
     self.rome16k_dir = opts.rome16k_dir
     self.tuple_size = tuple_size
-    del self.features['Mask']
-    del self.features['MaskOffset']
     self.dataset_params.sizes['train'] = \
         sum([ min(int(x[1]*1.5), x[tuple_size-2])
               for _, x in parse.bundle_file_info['train'].items() ])
