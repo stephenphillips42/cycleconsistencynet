@@ -1,0 +1,3 @@
+[submodule "graph_nets"]
+	path = graph_nets
+	url = git@github.com:deepmind/graph_nets.git
