@@ -8,7 +8,6 @@ import tqdm
 
 import tensorflow as tf
 
-import sim_graphs
 from data_util import tf_helpers
 
 class MyDataset(object):

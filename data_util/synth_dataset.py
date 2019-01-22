@@ -2,7 +2,9 @@
 import numpy as np
 import os
 
-from data_util import mydataset # import GraphSimDataset
+from data_util import mydataset
+from data_util import tf_helpers
+import sim_graphs
 
 class GraphSimDataset(mydataset.MyDataset):
   """Dataset for Cycle Consistency graphs"""
@@ -16,13 +18,13 @@ class GraphSimDataset(mydataset.MyDataset):
                  key='Mask',
                  shape=[d, d],
                  dtype=self.dtype,
-                 description='Mask for valid values of matrix'),
+                 description='Mask for valid values of matrix')
     self.features['MaskOffset'] = \
            tf_helpers.TensorFeature(
                  key='MaskOffset',
                  shape=[d, d],
                  dtype=self.dtype,
-                 description='Mask offset for loss'),
+                 description='Mask offset for loss')
 
   def gen_sample(self):
     # Pose graph and related objects
@@ -118,7 +120,7 @@ class GraphSimGaussDataset(GraphSimDataset):
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = super(GraphSimGaussDataset, self).gen_sample(self)
+    sample = super(GraphSimGaussDataset, self).gen_sample()
 
     # Graph objects
     p = self.n_pts
@@ -181,7 +183,7 @@ class GraphSimPairwiseDataset(GraphSimDataset):
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = super(GraphSimPairwiseDataset, self).gen_sample(self)
+    sample = super(GraphSimPairwiseDataset, self).gen_sample()
 
     # Graph objects
     p = self.n_pts
@@ -235,7 +237,7 @@ class GraphSimOutlierDataset(GraphSimDataset):
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = super(GraphSimOutlierDataset, self).gen_sample(self)
+    sample = super(GraphSimOutlierDataset, self).gen_sample()
 
     # Graph objects
     p = self.n_pts
