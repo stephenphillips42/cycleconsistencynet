@@ -10,7 +10,7 @@ import myutils
 import options
 
 
-# TODO: Make more configurable
+# TODO: Make a version of this that does not average accross images
 class GraphGroupNorm(snt.AbstractModule):
   """Group Norm for Graph-based inputs module 
 

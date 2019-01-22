@@ -290,6 +290,7 @@ class GeomKNNRome16KDataset(Rome16KTupleDataset):
           Lsub[u,Lsub[u].argsort()[:-k]] = 0
     LLT = np.maximum(L,L.T)
 
+    # TODO: Make intra-image graph Laplacians
     # Build dataset options
     InitEmbeddings = np.concatenate([ndescs,xy_pos,logscale,orien], axis=1)
     AdjMat = LLT*mask
