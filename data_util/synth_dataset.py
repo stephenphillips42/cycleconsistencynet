@@ -4,7 +4,7 @@ import os
 
 from data_util import mydataset
 from data_util import tf_helpers
-import sim_graphs
+from data_util import synth_graphs
 
 class GraphSimDataset(mydataset.MyDataset):
   """Dataset for Cycle Consistency graphs"""
@@ -29,9 +29,9 @@ class GraphSimDataset(mydataset.MyDataset):
   def gen_sample(self):
     # Pose graph and related objects
     params = self.dataset_params
-    pose_graph = sim_graphs.PoseGraph(self.dataset_params,
-                                      n_pts=self.n_pts,
-                                      n_views=self.n_views)
+    pose_graph = synth_graphs.PoseGraph(self.dataset_params,
+                                        n_pts=self.n_pts,
+                                        n_views=self.n_views)
     sz = (pose_graph.n_pts, pose_graph.n_pts)
     sz2 = (pose_graph.n_views, pose_graph.n_views)
     if params.sparse:
