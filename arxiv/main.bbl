@@ -1,0 +1,187 @@
+\begin{thebibliography}{10}\itemsep=-1pt
+
+\bibitem{arrigoni2017synchronization}
+F.~Arrigoni, E.~Maset, and A.~Fusiello.
+\newblock Synchronization in the symmetric inverse semigroup.
+\newblock In {\em International Conference on Image Analysis and Processing},
+  pages 70--81. Springer, 2017.
+
+\bibitem{battaglia2018relational}
+P.~W. Battaglia, J.~B. Hamrick, V.~Bapst, A.~Sanchez-Gonzalez, V.~Zambaldi,
+  M.~Malinowski, A.~Tacchetti, D.~Raposo, A.~Santoro, R.~Faulkner, et~al.
+\newblock Relational inductive biases, deep learning, and graph networks.
+\newblock {\em arXiv preprint arXiv:1806.01261}, 2018.
+
+\bibitem{bay2006surf}
+H.~Bay, T.~Tuytelaars, and L.~Van~Gool.
+\newblock Surf: Speeded up robust features.
+\newblock In {\em European conference on computer vision}, pages 404--417.
+  Springer, 2006.
+
+\bibitem{brachmann2017dsac}
+E.~Brachmann, A.~Krull, S.~Nowozin, J.~Shotton, F.~Michel, S.~Gumhold, and
+  C.~Rother.
+\newblock Dsac-differentiable ransac for camera localization.
+\newblock In {\em IEEE Conference on Computer Vision and Pattern Recognition
+  (CVPR)}, volume~3, 2017.
+
+\bibitem{bremner1994hinton}
+F.~J. Bremner, S.~J. Gotts, and D.~L. Denham.
+\newblock Hinton diagrams: Viewing connection strengths in neural networks.
+\newblock {\em Behavior Research Methods, Instruments, \& Computers},
+  26(2):215--218, 1994.
+
+\bibitem{bronstein2017geometric}
+M.~M. Bronstein, J.~Bruna, Y.~LeCun, A.~Szlam, and P.~Vandergheynst.
+\newblock Geometric deep learning: going beyond euclidean data.
+\newblock {\em IEEE Signal Processing Magazine}, 34(4):18--42, 2017.
+
+\bibitem{bruna2013spectral}
+J.~Bruna, W.~Zaremba, A.~Szlam, and Y.~LeCun.
+\newblock Spectral networks and locally connected networks on graphs.
+\newblock {\em arXiv preprint arXiv:1312.6203}, 2013.
+
+\bibitem{calonder2012brief}
+M.~Calonder, V.~Lepetit, M.~Ozuysal, T.~Trzcinski, C.~Strecha, and P.~Fua.
+\newblock Brief: Computing a local binary descriptor very fast.
+\newblock {\em IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  34(7):1281--1298, 2012.
+
+\bibitem{choy2016universal}
+C.~B. Choy, J.~Gwak, S.~Savarese, and M.~Chandraker.
+\newblock Universal correspondence network.
+\newblock In {\em Advances in Neural Information Processing Systems}, pages
+  2414--2422, 2016.
+
+\bibitem{defferrard2016convolutional}
+M.~Defferrard, X.~Bresson, and P.~Vandergheynst.
+\newblock Convolutional neural networks on graphs with fast localized spectral
+  filtering.
+\newblock In {\em Advances in Neural Information Processing Systems}, pages
+  3844--3852, 2016.
+
+\bibitem{fischler1981random}
+M.~A. Fischler and R.~C. Bolles.
+\newblock Random sample consensus: a paradigm for model fitting with
+  applications to image analysis and automated cartography.
+\newblock {\em Communications of the ACM}, 24(6):381--395, 1981.
+
+\bibitem{gama2018convolutional}
+F.~Gama, G.~Leus, A.~G. Marques, and A.~Ribeiro.
+\newblock Convolutional neural networks via node-varying graph filters.
+\newblock In {\em 2018 IEEE Data Science Workshop (DSW)}, pages 1--5. IEEE,
+  2018.
+
+\bibitem{gama2018mimo}
+F.~Gama, A.~G. Marques, A.~Ribeiro, and G.~Leus.
+\newblock Mimo graph filters for convolutional neural networks.
+\newblock {\em arXiv preprint arXiv:1803.02247}, 2018.
+
+\bibitem{hu2016distributable}
+N.~Hu, B.~Thibert, and L.~Guibas.
+\newblock Distributable consistent multi-graph matching.
+\newblock {\em arXiv preprint arXiv:1611.07191}, 2016.
+
+\bibitem{kingma2014adam}
+D.~P. Kingma and J.~Ba.
+\newblock Adam: A method for stochastic optimization.
+\newblock {\em arXiv preprint arXiv:1412.6980}, 2014.
+
+\bibitem{kipf2016semi}
+T.~N. Kipf and M.~Welling.
+\newblock Semi-supervised classification with graph convolutional networks.
+\newblock {\em arXiv preprint arXiv:1609.02907}, 2016.
+
+\bibitem{leonardos2016distributed}
+S.~Leonardos, X.~Zhou, and K.~Daniilidis.
+\newblock Distributed consistent data association.
+\newblock {\em arXiv preprint arXiv:1609.07015}, 2016.
+
+\bibitem{li2010location}
+Y.~Li, N.~Snavely, and D.~P. Huttenlocher.
+\newblock Location recognition using prioritized feature matching.
+\newblock In {\em European conference on computer vision}, pages 791--804.
+  Springer, 2010.
+
+\bibitem{lowe2004distinctive}
+D.~G. Lowe.
+\newblock Distinctive image features from scale-invariant keypoints.
+\newblock {\em International journal of computer vision}, 60(2):91--110, 2004.
+
+\bibitem{mur2015orb}
+R.~Mur-Artal, J.~M.~M. Montiel, and J.~D. Tardos.
+\newblock Orb-slam: a versatile and accurate monocular slam system.
+\newblock {\em IEEE Transactions on Robotics}, 31(5):1147--1163, 2015.
+
+\bibitem{pachauri2013solving}
+D.~Pachauri, R.~Kondor, and V.~Singh.
+\newblock Solving the multi-way matching problem by permutation
+  synchronization.
+\newblock In {\em Advances in neural information processing systems}, pages
+  1860--1868, 2013.
+
+\bibitem{scarselli2009graph}
+F.~Scarselli, M.~Gori, A.~C. Tsoi, M.~Hagenbuchner, and G.~Monfardini.
+\newblock The graph neural network model.
+\newblock {\em IEEE Transactions on Neural Networks}, 20(1):61--80, 2009.
+
+\bibitem{suh2015subgraph}
+Y.~Suh, K.~Adamczewski, and K.~Mu~Lee.
+\newblock Subgraph matching using compactness prior for robust feature
+  correspondence.
+\newblock In {\em Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pages 5070--5078, 2015.
+
+\bibitem{tron2014quotient}
+R.~Tron and K.~Daniilidis.
+\newblock On the quotient representation for the essential manifold.
+\newblock In {\em Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pages 1574--1581, 2014.
+
+\bibitem{tron2017fast}
+R.~Tron, X.~Zhou, C.~Esteves, and K.~Daniilidis.
+\newblock Fast multi-image matching via density-based clustering.
+\newblock In {\em Proc. IEEE Conf. Comput. Vis. Pattern Recognit.}, pages
+  4057--4066, 2017.
+
+\bibitem{wang2017multi}
+Q.~Wang, X.~Zhou, and K.~Daniilidis.
+\newblock Multi-image semantic matching by mining consistent features.
+\newblock {\em arXiv preprint arXiv:1711.07641}, 2017.
+
+\bibitem{wu2018group}
+Y.~Wu and K.~He.
+\newblock Group normalization.
+\newblock {\em arXiv preprint arXiv:1803.08494}, 2018.
+
+\bibitem{yi2016lift}
+K.~M. Yi, E.~Trulls, V.~Lepetit, and P.~Fua.
+\newblock Lift: Learned invariant feature transform.
+\newblock In {\em European Conference on Computer Vision}, pages 467--483.
+  Springer, 2016.
+
+\bibitem{yi2018learning}
+K.~M. Yi, E.~Trulls, Y.~Ono, V.~Lepetit, M.~Salzmann, and P.~Fua.
+\newblock Learning to find good correspondences.
+\newblock In {\em Proceedings of the 2018 IEEE/CVF Conference on Computer
+  Vision and Pattern Recognition (CVPR)}, number CONF, 2018.
+
+\bibitem{zagoruyko2015learning}
+S.~Zagoruyko and N.~Komodakis.
+\newblock Learning to compare image patches via convolutional neural networks.
+\newblock In {\em Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pages 4353--4361, 2015.
+
+\bibitem{zhou2015multi}
+X.~Zhou, M.~Zhu, and K.~Daniilidis.
+\newblock Multi-image matching via fast alternating minimization.
+\newblock In {\em Proceedings of the IEEE International Conference on Computer
+  Vision}, pages 4032--4040, 2015.
+
+\bibitem{zhu2017unpaired}
+J.-Y. Zhu, T.~Park, P.~Isola, and A.~A. Efros.
+\newblock Unpaired image-to-image translation using cycle-consistent
+  adversarial networks.
+\newblock {\em arXiv preprint}, 2017.
+
+\end{thebibliography}
