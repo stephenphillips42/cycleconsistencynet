@@ -17,7 +17,7 @@ class Rome16KTupleDataset(mydataset.MyDataset):
   """Abstract base class for Rome16K cycle consistency graphs"""
 
   def __init__(self, opts, params, tuple_size=3):
-    super(Rome16KTupleDataset, self).__init__(self, opts, params)
+    super(Rome16KTupleDataset, self).__init__(opts, params)
     self.rome16k_dir = opts.rome16k_dir
     self.tuple_size = tuple_size
     self.dataset_params.sizes['train'] = \
