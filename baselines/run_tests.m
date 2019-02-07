@@ -1,8 +1,19 @@
-function run_tests(mat_files, views)
+function run_tests(npz_files, views, save_out)
 
 if nargin < 2
   views = 3;
 end
+if nargin < 3
+  save_out = false;
+end
+
+npymatlab_path = 'npy-matlab/npy-matlab';
+pathCell = regexp(path, pathsep, 'split');
+onPath = any(strcmp(npymatlab_path, pathCell));
+if ~onPath
+  addpath(npymatlab_path);
+end
+[~,~,~] = mkdir('/tmp/unzip');
 
 v = views;
 p = 80;
@@ -14,6 +25,21 @@ params050.maxiter = 50;
 params100.maxiter = 100;
 params200.maxiter = 200;
 
+metric_info = { ...
+      { 'l1',      'L1: %.03e, ',              @mean                 }, ...
+      { 'l2',      'L2: %.03e, ',              @mean                 }, ...
+      { 'bce',     'BCE: %.03e, ' ,            @mean                 }, ...
+      { 'ssame_m', 'Same sim: %.03e ' ,        @mean                 }, ...
+      { 'ssame_s', '+/- %.03e, ' ,             @(x) sqrt(mean(x.^2)) }, ...
+      { 'sdiff_m', 'Diff sim: %.03e ' ,        @mean                 }, ...
+      { 'sdiff_s', '+/- %.03e, ' ,             @(x) sqrt(mean(x.^2)) }, ...
+      { 'roc',     'Area under ROC: %.03e, ' , @mean                 }, ...
+      { 'pr',      'Area under P-R: %.03e, ' , @mean                 }, ...
+};
+metrics = cell(length(metric_info),1);
+for i = 1:length(metric_info)
+  metrics{i} = zeros(length(npz_files),1);
+end
 %  'MatchALS400Iter', @(W)  mmatch_CVX_ALS(W, dimGroups, 'maxrank', p, 'maxiter', 400); ...
 %  'PGDDS200Iter', @(W) PGDDS(W, dimGroups, p, params200); ...
 %  'PGDDS100Iter', @(W) PGDDS(W, dimGroups, p, params100); ...
@@ -28,90 +54,71 @@ test_fns = { ...
  'PGDDS050Iter', @(W) PGDDS(W, dimGroups, p, params050); ...
 };
 
-% disp_string =  [ '%06d Errors: ' ...
-%                  'L1: %.03e, L2: %.03e, BCE: %.03e\n' ];
-disp_string =  [ '%06d Errors: ' ...
-                 'L1: %.03e, L2: %.03e, BCE: %.03e, ' ...
-                 'Same sim: %.03e +/- %.03e, ' ...
-                 'Diff sim: %.03e +/- %.03e, ' ...
-                 'Time: %.03e, ' ...
-                 '\n' ];
-
+outputs = zeros(length(npz_files), n, n);
+adjmats = zeros(length(npz_files), n, n);
 for test_fn_index = 1:size(test_fns,1)
-  l1s = [];
-  l2s = [];
-  bces = [];
-  ssame_m = [];
-  ssame_s = [];
-  sdiff_m = [];
-  sdiff_s = [];
-  run_times = [];
+  test_fn_tic = tic;
   test_fn = test_fns{test_fn_index,2};
   fid = fopen(sprintf('%sTestErrors.log', test_fns{test_fn_index,1}), 'w');
   fprintf('%s Method:\n', test_fns{test_fn_index,1})
   test_index = 0;
-  for mat_index = 1:length(mat_files)
-    test_mats = load(mat_files{mat_index});
-    mat_length = size(test_mats.AdjMat, 1);
-    l1_ = zeros(mat_length,1);
-    l2_ = zeros(mat_length,1);
-    bce_ = zeros(mat_length,1);
-    ssame_m_ = zeros(mat_length,1);
-    ssame_s_ = zeros(mat_length,1);
-    sdiff_m_ = zeros(mat_length,1);
-    sdiff_s_ = zeros(mat_length,1);
-    run_times_ = zeros(mat_length,1);
-    for index = 1:mat_length
-      fprintf('Matrix %03d of %03d, file %05d of %05d\r', mat_index, length(mat_files), index, mat_length)
-      W = squeeze(test_mats.AdjMat(index,:,:)) + eye(n);
-      Xgt = squeeze(test_mats.TrueEmbedding(index,:,:));
-      Agt = Xgt*Xgt';
-      tic;
-      A_output = test_fn(W);
-      run_times_(index) = toc;
-      Ah = max(0,min(1,A_output));
-      [l1, l2, bce] = testOutput_soft(Ah,Agt);
-      [ssame, ssame_std, sdiff, sdiff_std] = testOutputhist(Ah,Agt);
-      l1_(index) = l1;
-      l2_(index) = l2;
-      bce_(index) = bce;
-      ssame_m_(index) = ssame;
-      ssame_s_(index) = ssame_std;
-      sdiff_m_(index) = sdiff;
-      sdiff_s_(index) = sdiff_std;
-      fprintf(fid, disp_string, test_index, l1, l2, bce, ssame, ssame_std, sdiff, sdiff_std, run_times_(index));
-      % fprintf(disp_string, test_index, l1, l2, bce, ssame, ssame_std, sdiff, sdiff_std)
-      test_index = test_index + 1;
+  for npz_index = 1:length(npz_files)
+    fprintf('Matrix %03d of %03d\r', npz_index, length(npz_files))
+    [ W, Agt ] = load_npz(npz_files{npz_index});
+    tic;
+    A_output = test_fn(W);
+    Ah = max(0,min(1,A_output));
+    run_time = toc;
+    values = evaluate_tests(Ah, Agt);
+    for metric_idx = 1:length(metrics)
+      metrics{metric_idx}(npz_index) = values(metric_idx);
     end
-    l1s = [l1s; l1_];
-    l2s = [l2s; l2_];
-    bces = [bces; bce_];
-    ssame_m = [ssame_m; ssame_m_];
-    ssame_s = [ssame_s; ssame_s_];
-    sdiff_m = [sdiff_m; sdiff_m_];
-    sdiff_s = [sdiff_s; sdiff_s_];
-    run_times = [run_times; run_times_];
+    disp_values(metric_info, fid, npz_index, values, run_time);
+    test_index = test_index + 1;
+    if save_out
+      outputs(npz_index,:,:) = Ah;
+      adjmats(npz_index,:,:) = Agt;
+    end
   end
   fprintf('\n')
   fclose(fid);
-  l1s = mean(l1s);
-  l2s = mean(l2s);
-  bces = mean(bces);
-  ssame_m = mean(ssame_m);
-  ssame_s = sqrt(mean(ssame_s.^2));
-  sdiff_m = mean(sdiff_m);
-  sdiff_s = sqrt(mean(sdiff_s.^2));
-  run_time = mean(run_times);
-
-  fprintf(disp_string, 0, l1s, l2s, bces, ssame_m, ssame_s, sdiff_m, sdiff_s, run_time)
+  means = zeros(length(metrics),1);
+  for metric_idx = 1:length(metrics)
+    means(metric_idx) = metric_info{metric_idx}{3}(metrics{metric_idx});
+  end
+  disp_values(metric_info, 1, test_fn_index, means, run_time);
+  fprintf(1, 'Total time: %.03f seconds\n', toc(test_fn_tic));
+  if save_out
+    fprintf(1, 'Saving out %s', test_fns{test_fn_index,1})
+    writeNPY(outputs, sprintf('%s-Outputs.npy', test_fns{test_fn_index,1}));
+    % writeNPY(adjmats, sprintf('%s-Adjmats.npy', test_fns{test_fn_index,1}));
+  end
 end
-
 
 disp('Finished');
 
 end
 
-function [ssame, ssame_std, sdiff, sdiff_std] = testOutputhist(Ah,Agt,p)
+function disp_values(metric_info, fid, idx, values, time)
+  fprintf(fid, '%06d Errors: ', idx);
+  for i = 1:length(values)
+    fprintf(fid, metric_info{i}{2}, values(i));
+  end
+  fprintf(fid, 'Time: %.03e\n', time);
+end
+
+function [ means ] = get_metric_means(metrics)
+end
+
+function [ values ] = evaluate_tests(Ah, Agt)
+  [l1, l2, bce] = testOutput_soft(Ah,Agt);
+  [ssame, ssame_std, sdiff, sdiff_std] = testOutputhist(Ah,Agt);
+  [roc, pr] = testOutput_roc_pr(Ah,Agt);
+  values = [ l1, l2, bce, ssame, ssame_std, sdiff, sdiff_std, roc, pr ];
+end
+
+
+function [ssame, ssame_std, sdiff, sdiff_std] = testOutputhist(Ah,Agt)
 
 N = sum(sum(Agt));
 M = sum(sum(1-Agt));
@@ -130,48 +137,62 @@ bce = -mean2(Agt.*log2(eps+Ah) + (1-Agt).*log2(eps+1-Ah));
 
 end
 
-function [overlap, precision, recall, l1, l2, bce] = testOutput_full(Ah,Agt,p)
+function [roc, pr] = testOutput_roc_pr(Ah,Agt)
 
-[overlap, precision, recall] = evalMMatch(triu(Ah,1),triu(Agt,1),false);
-l1  = mean2(abs(Ah-Agt));
-l2  = mean2((Ah-Agt).^2);
-bce = mean2(Agt.*log2(eps+Ah) + (1-Agt).*log2(eps+1-Ah));
-
-end
-
-function testOutput_withX_full(Ah,X,Agt,Xgt,p,verbose)
-
-[ U, S, V ] = svd(Xgt'*X);
-Q = U*diag([ ones(p-1,1) ; det(U*V') ])*V';
-
-Xr = X*Q';
-if verbose
-imagesc(cat(2, [ Xr, ones(n,30), Xgt ]));
-axis equal;
-end
-
-[~, mi] = max(Xr,[],2);
-Xh = eye(p);
-Xh = Xh(mi,:);
-
-[overlap, precision, recall] = evalMMatch(Xh,Xgt,verbose);
-[overlap, precision, recall] = evalMMatch(triu(Ah,1),triu(Agt,1),verbose);
+[TP, TN, FP, FN] = compute_thresh_errs(Ah, Agt);
+m = length(TP);
+FPR = (FP ./ max(1e-8, FP + TN));
+TPR = (TP ./ max(1e-8, TP + FN));
+precision = (TP ./ max(1e-8, TP + FP));
+recall    = (TP ./ max(1e-8, TP + FN));
+% disp(size(FPR))
+% disp(size(TPR))
+% disp(class(FPR))
+% disp(class(TPR))
+roc = abs(trapz(FPR, TPR));
+pr  = abs(trapz(precision, recall));
 
 end
 
-function [overlap, precision, recall] = evalMMatch(A,B,verbose)
-if nargin < 3
-  verbose = false;
-end
-s1 = A > 0;
-s2 = B > 0;
-overlap = nnz(s1&s2)/(nnz(s1|s2)+eps);
-precision = nnz(s1&s2)/(nnz(s1)+eps);
-recall = nnz(s1&s2)/(nnz(s2)+eps);
+function [TP, TN, FP, FN] = compute_thresh_errs(output, adjmat, N_cutoffs)
+  if nargin < 3
+    N_cutoffs = 2048;
+  end
+  a = int32(adjmat);
+  M_T = sum(a);
+  M_F = numel(a) - M_T;
 
-if verbose
-  fprintf('Overlap: %f%%, Precision: %f%%, Recall: %f%%\n', 100*overlap, 100*precision, 100*recall)
+  TP = zeros(N_cutoffs, 1);
+  TN = zeros(N_cutoffs, 1);
+  FP = zeros(N_cutoffs, 1);
+  FN = zeros(N_cutoffs, 1);
+  for idx = 1:N_cutoffs
+    i = N_cutoffs - idx;
+    thresh = (1.0*i) / (N_cutoffs-1);
+    o = int32(output > thresh);
+    [ TP_, TN_, FP_, FN_ ] = calc_classifications(o,a);
+    TP(idx) = double(TP_);
+    TN(idx) = double(TN_);
+    FP(idx) = double(FP_);
+    FN(idx) = double(FN_);
+  end
 end
+
+function [ TP, TN, FP, FN ] = calc_classifications(o, a)
+  TP = sum(sum(o.*a));
+  TN = sum(sum((1-o).*(1-a)));
+  FP = sum(sum(o.*(1-a)));
+  FN = sum(sum((1-o).*a));
 end
+
+function [W, Agt] = load_npz(npz_file)
+  unzip(npz_file, '/tmp/unzip');
+  AdjMat = readNPY('/tmp/unzip/AdjMat.npy');
+  TrueEmbedding = readNPY('/tmp/unzip/TrueEmbedding.npy');
+  W = squeeze(double(AdjMat)) + eye(size(AdjMat));
+  Xgt = squeeze(double(TrueEmbedding));
+  Agt = Xgt*Xgt';
+end
+
 
 
