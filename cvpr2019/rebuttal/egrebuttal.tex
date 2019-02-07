@@ -31,94 +31,110 @@
 % TODO: Don't worry about space
 % TODO: Do more bullet point style
 % TODO: Thank all the reviewers at the start, skip sentences later
+Thank you to all the reviewers for all of your constructive comments and feedback.
+We hope to address some of your concerns here.
+
 \section{Reviewer \#1}
-Thank you for your comments and feedback. You
-mention the benefits of using Graph Neural Networks are not clear. One
-of the primary benefits is the ability to integrate the matching in an
-end-to-end learning pipeline, which could for instance train on semantic
-features. Adding in additional side-losses can assist in training,
-even if such information is not available at testing time. While not
-explored in this work, GNNs have great potential in fast parallel
-computation which has been difficult to do for optimization based
-methods. Your comment on how use of a CNN to solve the matching
-problem appears contrived but we use GNNs - unless there is some
-confusion here.
+\textbf{The benefits of applying a GCN instead of classical optimization methods are not clear and the use of a Convolutional Neural Network to solve the multi-view matching problem appears contrived.}:
+One of the primary benefits is the ability to integrate the matching in an end-to-end learning pipeline, which could for instance train on semantic features. Adding in additional side-losses can assist in training, even if such information is not available at testing time. We could have tried learning on sets of features but that would throw out the structure between the features, so graphs were the best way to represent that.
+
+\textbf{GCNs (Section 3.2) should be deeply described}: 
+We did not focus on the mechanics of GNNs to focus on cycle consistency and the matching graph, however we can add more to the text to make it clearer.
+
+\textbf{most of the figures are not cited in the tex}: 
+We will cite the figures in the appropriate places better.
+
+\textbf{images showing the experimental results (figure 5, 6, 7) should be better clarified and discussed}: 
+Relatedly, can reference the figures on the experiments in the text more, and label the axes better.
+
+\textbf{The reference to the “spectral method” used in the experiments is missing.}: 
+You are right in that we neglected to cite the spectral method \cite{pachauri2013solving} except briefly in the methods section. This is simply taking the top $k$ eigenvectors as the embedding. It is the simplest method to solve mutli-image matching and works perfectly when there is no noise, but breaks down more quickly when there is more noise.
+
+\textbf{The performances of the proposed method should be evaluated also on sequences of tens of images. Multiview matching with 4 images is not very meaningful}: 
+We admit the lack of larger view-sets for our experiments is an oversight. However RANSAC based methods start becoming computationally infeasible at 3 and 4 images (12-point RANSAC for the trifocal tensor is too demanding) so it was the simplest test to see how our method could function in ways simple RANSAC based methods wouldn't.
+% While not explored in this work, GNNs have great potential in fast parallel
+% computation which has been difficult to do for optimization based
+% methods. Your comment on how use of a CNN to solve the matching
+% problem appears contrived but we use GNNs - unless there is some
+% confusion here.
 % TODO: We could use sets but that would throw away the structure of our data
 % TODO: Most structured 
 
 % TODO: Less apologetic
 % TODO: Their comments in quotes
-To address your other comments, we did not focus on the mechanics of
-GNNs to focus on cycle consistency and the matching graph, however we
-can add more to the text to make it clearer. We should reference the
-figures more in the text - they are there for illustrative purposes but
-we should indeed explicitly cite them. Relatedly, can reference the
-figures on the experiments in the text more.
-You are right in that we neglected to cite the spectral method
-\cite{pachauri2013solving} except briefly in the methods section. This
-is simply taking the top $k$ eigenvectors as the embedding. It is the
-simplest method to solve mutli-image matching and works perfectly when
-there is no noise, but breaks down more quickly when there is more noise.
 
-We admit the lack of larger view-sets for our experiments is an
-oversight. However RANSAC based methods start becoming computationally
-infeasible at 3 and 4 images (too many points to select) so it appeared
-the simplest test to see how our method could function in ways simple
-RANSAC based methods wouldn't.
 
 \section{Reviewer \#3}
-Thank you for you comments and we agree that this method is interesting
-and has many interesting applications.
-To address the weaknesses you point out, you are right that an
-precision-recall or ROC curve would be a good measure (W1). We have
-added in this rebuttal a figure showing the ROC curves of our method
-compared to other methods, and we still compare favorably. You are
-right in that more outlier experiments could have been done (W2b). 
+\textbf{ In my opinion, measuring the precision and recall in terms of identifying correct matches would be a better evaluation score (and also closer to the problem setting) (W1).}:
+You are right that an precision-recall or ROC curve would be a good measure. We have added in this rebuttal a figure showing the ROC curves of our method compared to other methods, and we still compare favorably.
 
-You say that Rome16K is an inappropriate dataset for testing Cycle
-Consistency (W2a). We couldn't find a more appropriate large scale
-dataset where we could find ground truth matches. We could collect our
-own but we wanted to test against a well-known dataset (even if it is
-typically used in other contexts) for a more fair comparison. You are 
-right we did not specify how we split training and testing - there was
-no overlap of sequences in training and testing sets. It was trained on
-one set of buildings and tested on another, so it has not overfit to
-particular buildings.
+\textbf{I am worried that the Rome16k dataset is not really suited to demonstrate the benefits of multi-image matching under cycle consistency (W2a)}:
+We couldn't find a more appropriate large scale dataset where we could find ground truth matches. We could collect our own but we wanted to test against a well-known dataset (even if it is typically used in other contexts) for a more fair comparison.
 
-You are right to point out we did not include the implementation
-details of our architecture. Our layer splits were: 
-32, 64, 128, 256, 512, 512, 512, 512, 512, 512, 1024, 1024.
-For your other comments, the first comment was addressed in the last
-paragraph of Reviewer \#1, and the others are valid comments that we
-will attempt to fix.
+\textbf{there are not really experiments analyzing the robustness of the proposed approach to outliers (W2b)}:
+You are right in that more outlier experiments could have been done. 
+
+\textbf{Details on the network architecture (beyond it having 12 layers) are missing (W3a)}:
+Our layer splits were: 32, 64, 128, 256, 512, 512, 512, 512, 512, 512, 1024, 1024. We had skip connections between the input and layers 7 and 12, with small one layer skip connections between each layer. 
+
+\textbf{It is unclear how the Rome16k dataset is split into a test and training set (W3b)}:
+There was no overlap of sequences in training and testing sets. It was trained on one set of buildings and tested on another, so it has not overfit to particular buildings.
 
 \section{Reviewer \#5}
-Thank you as well for your comments and feedback.
-We agree with you that this topic is an important research area and feel
-that our method has much to contribute to that.
 
-You as well as Reviewer \#1 felt the discussion on GNNs was insufficient
-and we will add more detail should this paper be accepted. To address
-your comments on the scale of the mutil-image experiments, see Reviewer
-\#1. We appreciate the comment about the axes of figure and we will
-fix that, as well as your other comments on typos and figure fixes.
-You mentioned~\cite{hajder2006weak}, which did not come up in our
-literature search, but it does address mutli-view robust image matching
-and we will add it to our citations. 
+\textbf{I think the method cannot be re-implemented based on the submitted manuscript. Especially Section 3.1-3.3 are very confusing}:
+You as well as Reviewer \#1 felt the discussion on GNNs was insufficient and we will add more detail should this paper be accepted, especially about Graph Neural Networks.
+
+\textbf{The evaluation of the testing part is not satisfactory. Although it is a general multi-image method, only three- and four-view tests are included}:
+See Reviewer \#1 - we were testing on the minimum number of images before RANSAC based methods on multi-view constraints became impractical.
+
+\textbf{Axes in the charts are usually missing. There are typos and grammatical errors in the text}:
+Indeed we did not label them - we will add labels and greater descriptions for each of the figures.
+
+\textbf{ do not agree that RANSAC can only be applied for stereo matching. E.g. a multi-view robust RANSAC-based factorization is proposed in the work of Hajder\&Chetverikov }:
+We indeed did not know of \cite{hajder2006weak}. We will cite it and hope to use some of its techniques in future work.
 
 
-
-\begin{figure}[t]
+\begin{table}[t]
 \begin{center}
-\fbox{\rule{0pt}{1.8in} \rule{0.9\linewidth}{0pt}}
-   %\includegraphics[width=0.8\linewidth]{egfigure.eps}
+\begin{tabular}{ |c|c|c|c|c|c| }
+\hline
+Method                                         & ROC    & mAP \\ \hline
+GCN 12 Layers                                  & 0.953  & 0.655  \\ \hline
+MatchALS \cite{zhou2015multi}  15 Iter.        & 0.624  & 0.653  \\ \hline
+MatchALS \cite{zhou2015multi}  25 Iter.        & 0.573  & 0.569  \\ \hline
+MatchALS \cite{zhou2015multi}  50 Iter.        & 0.437  & 0.423  \\ \hline
+MatchALS \cite{zhou2015multi} 100 Iter.        & 0.404  & 0.302  \\ \hline
+PGDDS \cite{leonardos2016distributed} 15 Iter. & 0.918  & 0.724  \\ \hline
+PGDDS \cite{leonardos2016distributed} 25 Iter. & 0.920  & 0.768  \\ \hline
+PGDDS \cite{leonardos2016distributed} 50 Iter. & 0.920  & 0.795  \\ \hline
+Spectral \cite{pachauri2013solving}            & 0.917  & 0.689  \\ \hline
+\end{tabular}
 \end{center}
-   \caption{Example of caption.  It is set in Roman so that mathematics
-   (always set in Roman: $B \sin A = A \sin B$) may be included without an
-   ugly clash.}
-\label{fig:long}
-\label{fig:onecol}
-\end{figure}
+\caption{}
+
+\end{table}
+% GCN 12 Layers                                  & 0.953 $\pm$ 0.071 & 0.655 $\pm$ 0.113 \\ \hline
+% MatchALS \cite{zhou2015multi}  15 Iter.        & 0.624 $\pm$ 0.078 & 0.653 $\pm$ 0.184 \\ \hline
+% MatchALS \cite{zhou2015multi}  25 Iter.        & 0.573 $\pm$ 0.060 & 0.569 $\pm$ 0.167 \\ \hline
+% MatchALS \cite{zhou2015multi}  50 Iter.        & 0.437 $\pm$ 0.042 & 0.423 $\pm$ 0.151 \\ \hline
+% MatchALS \cite{zhou2015multi} 100 Iter.        & 0.404 $\pm$ 0.066 & 0.302 $\pm$ 0.116 \\ \hline
+% PGDDS \cite{leonardos2016distributed} 15 Iter. & 0.918 $\pm$ 0.101 & 0.724 $\pm$ 0.224 \\ \hline
+% PGDDS \cite{leonardos2016distributed} 25 Iter. & 0.920 $\pm$ 0.101 & 0.768 $\pm$ 0.230 \\ \hline
+% PGDDS \cite{leonardos2016distributed} 50 Iter. & 0.920 $\pm$ 0.101 & 0.795 $\pm$ 0.224 \\ \hline
+% Spectral \cite{pachauri2013solving}            & 0.917 $\pm$ 0.103 & 0.689 $\pm$ 0.197 \\ \hline
+
+% \begin{figure}[t]
+% \begin{center}
+% \fbox{\rule{0pt}{1.8in} \rule{0.9\linewidth}{0pt}}
+%    %\includegraphics[width=0.8\linewidth]{egfigure.eps}
+% \end{center}
+%    \caption{Example of caption.  It is set in Roman so that mathematics
+%    (always set in Roman: $B \sin A = A \sin B$) may be included without an
+%    ugly clash.}
+% \label{fig:long}
+% \label{fig:onecol}
+% \end{figure}
 
 {\small
 \bibliographystyle{ieee}
