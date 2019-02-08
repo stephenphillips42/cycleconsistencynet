@@ -26,92 +26,103 @@
 \maketitle
 \thispagestyle{empty}
 
-
-%%%%%%%%% BODY TEXT - ENTER YOUR RESPONSE BELOW
-% TODO: Don't worry about space
-% TODO: Do more bullet point style
-% TODO: Thank all the reviewers at the start, skip sentences later
 Thank you to all the reviewers for all of your constructive comments and feedback.
-We hope to address some of your concerns here.
+We fully understand your concerns and we elaborate on them here.
+We kindly ask you to trust us that the presentation will be clear in
+the camera-ready and to reward the novelty of the idea in your ratings.
 
-\section{Reviewer \#1}
-\textbf{The benefits of applying a GCN instead of classical optimization methods are not clear and the use of a Convolutional Neural Network to solve the multi-view matching problem appears contrived.}:
-One of the primary benefits is the ability to integrate the matching in an end-to-end learning pipeline, which could for instance train on semantic features. We could have tried learning on sets of features but that would throw out the structure between the features, so graphs were the best way to represent that. Adding in additional side-losses can assist in training, an option not available in optimization based methods. 
+\textbf{(R1)} ``\textit{GCNs (Section 3.2) should be deeply described}'' and (R5) ``\textit{Especially Section 3.1-3.3 are very confusing}'':
+We agree that we could have done a better job and we will have a comprehensive introduction into GCNs in the camera ready.
 
-\textbf{GCNs (Section 3.2) should be deeply described} and \textbf{most of the figures are not cited in the tex}: 
-We will cite the figures in the appropriate places better, with better descriptions.
+\textbf{(R1)} ``\textit{images showing the experimental results (figure 5, 6, 7) should be better clarified and discussed}'' and 
+\textbf{(R1)} ``\textit{most of the figures are not cited in the tex}'' and
+\textbf{(R5)} ``\textit{Axes in the charts are usually missing. There are typos and grammatical errors in the text}'':
+We agree and we will make the captions comprehensible and self-contained, reference the figures in the text more, and label the axes better.
 
-\textbf{images showing the experimental results (figure 5, 6, 7) should be better clarified and discussed}: 
-Relatedly, can reference the figures on the experiments in the text more, and label the axes better.
+\textbf{(R1)} ``\textit{The performances of the proposed method should be evaluated also on sequences of tens of images. Multiview matching with 4 images is not very meaningful}'' and 
+\textbf{(R5)} ``\textit{The evaluation of the testing part is not satisfactory. Although it is a general multi-image method, only three- and four-view tests are included}'':
+We fully agree that sets of tens of images would be even better.  But even with 3-4 views we are doing better than RANSAC computationally: RANSAC using trifocal tensor needs sampling of 7 triples for already established weak correspondences
 
-\textbf{The reference to the “spectral method” used in the experiments is missing.}: 
-We neglected to cite it \cite{pachauri2013solving} in the table only briefly in the methods section. This is simply taking the top $k$ eigenvectors as the embedding.
+\textbf{(R3)} ``\textit{Details on the network architecture (beyond it having 12 layers) are missing}'' and 
+\textbf{(R5)} ``\textit{I think the method cannot be re-implemented based on the submitted manuscript}'':
+Our layer splits were: 32, 64, 128, 256, 512, 512, 512, 512, 512, 512, 1024, 1024. We had skip connections between the input and layers 7 and 12, with small one layer skip connections between each layer. We will also be releasing code if accepted, which will clarify all points.
 
-\textbf{The performances of the proposed method should be evaluated also on sequences of tens of images. Multiview matching with 4 images is not very meaningful}: 
-We admit the lack of larger view-sets for our experiments is an oversight. However RANSAC based methods start becoming computationally infeasible at 3 and 4 images (12-point RANSAC for the trifocal tensor is too demanding) so it was the simplest test to see how our method would fair.
-% While not explored in this work, GNNs have great potential in fast parallel
-% computation which has been difficult to do for optimization based
-% methods. Your comment on how use of a CNN to solve the matching
-% problem appears contrived but we use GNNs - unless there is some
-% confusion here.
-% TODO: We could use sets but that would throw away the structure of our data
-% TODO: Most structured 
+\textbf{(R1)} ``\textit{The benefits of applying a GCN instead of classical optimization methods are not clear and the use of a Convolutional Neural Network to solve the multi-view matching problem appears contrived.}'':
+The main benefit is the learning of new feature representations whose distance better supports multi-view matching. Learning novel feature representations through CNN (like LIFT descriptor, for example) is a widely admitted interesting line of research although it will not necessarily beat yet benchmarks on SLAM problems. Second benefit of the GCN formulation is that we can add to the same end-to-end pipeline geometric or other losses, in addition to cycle consistency. If the criticism is regarding the graphs and not the CNN part of GCN, then we claim that graphs is the natural representation for matching problems but we agree that using pointsets would be an interesting future direction, too.
 
-% TODO: Less apologetic
-% TODO: Their comments in quotes
+\textbf{(R1)} ``\textit{The reference to the “spectral method” used in the experiments is missing.}'': 
+We will add \cite{pachauri2013solving} to the table.
 
+\textbf{(R3)} ``\textit{In my opinion, measuring the precision and recall in terms of identifying correct matches would be a better evaluation score (and also closer to the problem setting).}'':
+You are right that an precision-recall or ROC curve would be a good measure. We have added in this rebuttal a figure showing the ROC and mAP of our method compared to other methods.
 
-\section{Reviewer \#3}
-\textbf{ In my opinion, measuring the precision and recall in terms of identifying correct matches would be a better evaluation score (and also closer to the problem setting) (W1).}:
-You are right that an precision-recall or ROC curve would be a good measure. We have added in this rebuttal a figure showing the ROC curves of our method compared to other methods.
-
-\textbf{I am worried that the Rome16k dataset is not really suited to demonstrate the benefits of multi-image matching under cycle consistency (W2a)}:
+\textbf{(R3)} ``\textit{I am worried that the Rome16k dataset is not really suited to demonstrate the benefits of multi-image matching under cycle consistency}'':
 % We couldn't find a more appropriate large scale dataset where we could find ground truth matches. We could collect our own but we wanted to test against a well-known dataset (even if it is typically used in other contexts) for a more fair comparison.
-We needed a large-scale dataset with multi-view matching and having ground truth to evaluate against. Rome16K seemed the most appropriate dataset, as other datasets with ground truth were far too small. If the review knows of any other datasets that satisfy our constraints, we would appreciate the suggestion.
+We needed a large-scale dataset with multi-view matching and ground truth to evaluate against. Rome16K seemed the most appropriate dataset, as other datasets with ground truth were far too small. If the review knows of any other datasets that satisfy our constraints, we would appreciate the suggestion.
 
-\textbf{there are not really experiments analyzing the robustness of the proposed approach to outliers (W2b)}:
+\textbf{(R3)} ``\textit{there are not really experiments analyzing the robustness of the proposed approach to outliers}'':
 You are right in that more outlier experiments could have been done. 
 
-\textbf{Details on the network architecture (beyond it having 12 layers) are missing (W3a)}:
-Our layer splits were: 32, 64, 128, 256, 512, 512, 512, 512, 512, 512, 1024, 1024. We had skip connections between the input and layers 7 and 12, with small one layer skip connections between each layer. 
-
-\textbf{It is unclear how the Rome16k dataset is split into a test and training set (W3b)}:
+\textbf{(R3)} ``\textit{It is unclear how the Rome16k dataset is split into a test and training set}'':
 There was no overlap of sequences in training and testing sets. It was trained on one set of buildings and tested on another, so it has not overfit to particular buildings.
 
-\section{Reviewer \#5}
-
-\textbf{I think the method cannot be re-implemented based on the submitted manuscript. Especially Section 3.1-3.3 are very confusing}:
-You as well as Reviewer \#1 felt the discussion on GNNs was insufficient and we will add more detail should this paper be accepted, especially about Graph Neural Networks.
-
-\textbf{The evaluation of the testing part is not satisfactory. Although it is a general multi-image method, only three- and four-view tests are included}:
-See Reviewer \#1 - we were testing on the minimum number of images before RANSAC based methods on multi-view constraints became impractical.
-
-\textbf{Axes in the charts are usually missing. There are typos and grammatical errors in the text}:
-Indeed we did not label them - we will add labels and greater descriptions for each of the figures.
-
-\textbf{ do not agree that RANSAC can only be applied for stereo matching. E.g. a multi-view robust RANSAC-based factorization is proposed in the work of Hajder\&Chetverikov }:
+\textbf{(R5)} ``\textit{do not agree that RANSAC can only be applied for stereo matching. E.g. ... Hajder\&Chetverikov }'':
 We indeed did not know of \cite{hajder2006weak}. We will cite it and hope to use some of its techniques in future work.
-
 
 \begin{table}[t]
 \begin{center}
-\begin{tabular}{ |c|c|c|c|c|c| }
+\begin{tabular}{ |c|c|c| }
 \hline
-Method                                         & ROC    & mAP \\ \hline
-GCN 12 Layers                                  & 0.953  & 0.655  \\ \hline
-MatchALS \cite{zhou2015multi}  15 Iter.        & 0.624  & 0.653  \\ \hline
-MatchALS \cite{zhou2015multi}  25 Iter.        & 0.573  & 0.569  \\ \hline
-MatchALS \cite{zhou2015multi}  50 Iter.        & 0.437  & 0.423  \\ \hline
-MatchALS \cite{zhou2015multi} 100 Iter.        & 0.404  & 0.302  \\ \hline
-PGDDS \cite{leonardos2016distributed} 15 Iter. & 0.918  & 0.724  \\ \hline
-PGDDS \cite{leonardos2016distributed} 25 Iter. & 0.920  & 0.768  \\ \hline
-PGDDS \cite{leonardos2016distributed} 50 Iter. & 0.920  & 0.795  \\ \hline
-Spectral \cite{pachauri2013solving}            & 0.917  & 0.689  \\ \hline
+Method           & ROC       & mAP       \\ \hline
+GCN 12 Layers                                     & 9.088e-01 & 6.073e-01 \\ \hline
+Spectral          & 9.175e-01 & 7.735e-01 \\ \hline
+MatchALS 15 Iter. & 9.138e-01 & 7.384e-01 \\ \hline
+MatchALS 50 Iter. & 9.163e-01 & 6.691e-01 \\ \hline
+PGDDS    15 Iter. & 9.170e-01 & 7.357e-01 \\ \hline
+PGDDS    50 Iter. & 8.829e-01 & 6.691e-01 \\ \hline
 \end{tabular}
 \end{center}
-\caption{}
-
+\caption{ROC area and mean average precision (mAP). Some methods and citations skipped due to space constraints.}
+\vspace{-15pt}
 \end{table}
+
+% \begin{table}[t]
+% \begin{center}
+% \begin{tabular}{ |c|c|c| }
+% \hline
+% Method           & ROC       & mAP       \\ \hline
+% GCN 12 Layers                                  & 9.088e-01 & 6.073e-01 \\ \hline
+% Spectral \cite{pachauri2013solving}            & 9.175e-01 & 7.735e-01 \\ \hline
+% MatchALS \cite{zhou2015multi}  15 Iter.        & 9.138e-01 & 7.384e-01 \\ \hline
+% MatchALS \cite{zhou2015multi}  50 Iter.        & 9.163e-01 & 6.691e-01 \\ \hline
+% PGDDS \cite{leonardos2016distributed} 15 Iter. & 9.170e-01 & 7.357e-01 \\ \hline
+% PGDDS \cite{leonardos2016distributed} 50 Iter. & 8.829e-01 & 6.691e-01 \\ \hline
+% \end{tabular}
+% \end{center}
+% \caption{ROC area and mean average precision (mAP).}
+% \vspace{-15pt}
+% \end{table}
+
+
+% \begin{table}[t]
+% \begin{center}
+% \begin{tabular}{ |c|c|c|c|c|c| }
+% \hline
+% Method                                         & ROC    & mAP \\ \hline
+% GCN 12 Layers                                  & 0.953  & 0.655  \\ \hline
+% MatchALS \cite{zhou2015multi}  15 Iter.        & 0.624  & 0.653  \\ \hline
+% MatchALS \cite{zhou2015multi}  25 Iter.        & 0.573  & 0.569  \\ \hline
+% MatchALS \cite{zhou2015multi}  50 Iter.        & 0.437  & 0.423  \\ \hline
+% MatchALS \cite{zhou2015multi} 100 Iter.        & 0.404  & 0.302  \\ \hline
+% PGDDS \cite{leonardos2016distributed} 15 Iter. & 0.918  & 0.724  \\ \hline
+% PGDDS \cite{leonardos2016distributed} 25 Iter. & 0.920  & 0.768  \\ \hline
+% PGDDS \cite{leonardos2016distributed} 50 Iter. & 0.920  & 0.795  \\ \hline
+% Spectral \cite{pachauri2013solving}            & 0.917  & 0.689  \\ \hline
+% \end{tabular}
+% \end{center}
+% \caption{}
+% 
+% \end{table}
 % GCN 12 Layers                                  & 0.953 $\pm$ 0.071 & 0.655 $\pm$ 0.113 \\ \hline
 % MatchALS \cite{zhou2015multi}  15 Iter.        & 0.624 $\pm$ 0.078 & 0.653 $\pm$ 0.184 \\ \hline
 % MatchALS \cite{zhou2015multi}  25 Iter.        & 0.573 $\pm$ 0.060 & 0.569 $\pm$ 0.167 \\ \hline
@@ -134,7 +145,7 @@ Spectral \cite{pachauri2013solving}            & 0.917  & 0.689  \\ \hline
 % \label{fig:onecol}
 % \end{figure}
 
-{\small
+{\footnotesize
 \bibliographystyle{ieee}
 \bibliography{egbib}
 }
