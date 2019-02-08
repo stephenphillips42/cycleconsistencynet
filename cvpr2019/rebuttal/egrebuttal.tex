@@ -36,22 +36,19 @@ We hope to address some of your concerns here.
 
 \section{Reviewer \#1}
 \textbf{The benefits of applying a GCN instead of classical optimization methods are not clear and the use of a Convolutional Neural Network to solve the multi-view matching problem appears contrived.}:
-One of the primary benefits is the ability to integrate the matching in an end-to-end learning pipeline, which could for instance train on semantic features. Adding in additional side-losses can assist in training, even if such information is not available at testing time. We could have tried learning on sets of features but that would throw out the structure between the features, so graphs were the best way to represent that.
+One of the primary benefits is the ability to integrate the matching in an end-to-end learning pipeline, which could for instance train on semantic features. We could have tried learning on sets of features but that would throw out the structure between the features, so graphs were the best way to represent that. Adding in additional side-losses can assist in training, an option not available in optimization based methods. 
 
-\textbf{GCNs (Section 3.2) should be deeply described}: 
-We did not focus on the mechanics of GNNs to focus on cycle consistency and the matching graph, however we can add more to the text to make it clearer.
-
-\textbf{most of the figures are not cited in the tex}: 
-We will cite the figures in the appropriate places better.
+\textbf{GCNs (Section 3.2) should be deeply described} and \textbf{most of the figures are not cited in the tex}: 
+We will cite the figures in the appropriate places better, with better descriptions.
 
 \textbf{images showing the experimental results (figure 5, 6, 7) should be better clarified and discussed}: 
 Relatedly, can reference the figures on the experiments in the text more, and label the axes better.
 
 \textbf{The reference to the “spectral method” used in the experiments is missing.}: 
-You are right in that we neglected to cite the spectral method \cite{pachauri2013solving} except briefly in the methods section. This is simply taking the top $k$ eigenvectors as the embedding. It is the simplest method to solve mutli-image matching and works perfectly when there is no noise, but breaks down more quickly when there is more noise.
+We neglected to cite it \cite{pachauri2013solving} in the table only briefly in the methods section. This is simply taking the top $k$ eigenvectors as the embedding.
 
 \textbf{The performances of the proposed method should be evaluated also on sequences of tens of images. Multiview matching with 4 images is not very meaningful}: 
-We admit the lack of larger view-sets for our experiments is an oversight. However RANSAC based methods start becoming computationally infeasible at 3 and 4 images (12-point RANSAC for the trifocal tensor is too demanding) so it was the simplest test to see how our method could function in ways simple RANSAC based methods wouldn't.
+We admit the lack of larger view-sets for our experiments is an oversight. However RANSAC based methods start becoming computationally infeasible at 3 and 4 images (12-point RANSAC for the trifocal tensor is too demanding) so it was the simplest test to see how our method would fair.
 % While not explored in this work, GNNs have great potential in fast parallel
 % computation which has been difficult to do for optimization based
 % methods. Your comment on how use of a CNN to solve the matching
@@ -66,10 +63,11 @@ We admit the lack of larger view-sets for our experiments is an oversight. Howev
 
 \section{Reviewer \#3}
 \textbf{ In my opinion, measuring the precision and recall in terms of identifying correct matches would be a better evaluation score (and also closer to the problem setting) (W1).}:
-You are right that an precision-recall or ROC curve would be a good measure. We have added in this rebuttal a figure showing the ROC curves of our method compared to other methods, and we still compare favorably.
+You are right that an precision-recall or ROC curve would be a good measure. We have added in this rebuttal a figure showing the ROC curves of our method compared to other methods.
 
 \textbf{I am worried that the Rome16k dataset is not really suited to demonstrate the benefits of multi-image matching under cycle consistency (W2a)}:
-We couldn't find a more appropriate large scale dataset where we could find ground truth matches. We could collect our own but we wanted to test against a well-known dataset (even if it is typically used in other contexts) for a more fair comparison.
+% We couldn't find a more appropriate large scale dataset where we could find ground truth matches. We could collect our own but we wanted to test against a well-known dataset (even if it is typically used in other contexts) for a more fair comparison.
+We needed a large-scale dataset with multi-view matching and having ground truth to evaluate against. Rome16K seemed the most appropriate dataset, as other datasets with ground truth were far too small. If the review knows of any other datasets that satisfy our constraints, we would appreciate the suggestion.
 
 \textbf{there are not really experiments analyzing the robustness of the proposed approach to outliers (W2b)}:
 You are right in that more outlier experiments could have been done. 
