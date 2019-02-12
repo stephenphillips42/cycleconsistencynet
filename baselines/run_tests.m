@@ -14,6 +14,9 @@ if ~onPath
   addpath(npymatlab_path);
 end
 [~,~,~] = mkdir('/tmp/unzip');
+if save_out
+  [~,~,~] = mkdir('Adjmats');
+end
 
 v = views;
 p = 80;
@@ -54,12 +57,14 @@ test_fns = { ...
  'PGDDS050Iter', @(W) PGDDS(W, dimGroups, p, params050); ...
 };
 
-outputs = zeros(length(npz_files), n, n);
-adjmats = zeros(length(npz_files), n, n);
+saveout_str = '%sOutputs/%04d.npy';
 for test_fn_index = 1:size(test_fns,1)
   test_fn_tic = tic;
   test_fn = test_fns{test_fn_index,2};
   fid = fopen(sprintf('%sTestErrors.log', test_fns{test_fn_index,1}), 'w');
+  if save_out
+    [~,~,~] = mkdir(sprintf('%sOutputs', test_fns{test_fn_index,1}))
+  end
   fprintf('%s Method:\n', test_fns{test_fn_index,1})
   test_index = 0;
   for npz_index = 1:length(npz_files)
@@ -76,8 +81,12 @@ for test_fn_index = 1:size(test_fns,1)
     disp_values(metric_info, fid, npz_index, values, run_time);
     test_index = test_index + 1;
     if save_out
-      outputs(npz_index,:,:) = Ah;
-      adjmats(npz_index,:,:) = Agt;
+      output_name = sprintf(saveout_str, test_fns{test_fn_index,1}, npz_index);
+      writeNPY(single(Ah), output_name);
+      adjmat_name = sprintf('Adjmats/%04d.npy', npz_index);
+      if ~exist(adjmat_name)
+        writeNPY(Agt, adjmat_name)
+      end
     end
   end
   fprintf('\n')
@@ -88,11 +97,6 @@ for test_fn_index = 1:size(test_fns,1)
   end
   disp_values(metric_info, 1, test_fn_index, means, run_time);
   fprintf(1, 'Total time: %.03f seconds\n', toc(test_fn_tic));
-  if save_out
-    fprintf(1, 'Saving out %s', test_fns{test_fn_index,1})
-    writeNPY(outputs, sprintf('%s-Outputs.npy', test_fns{test_fn_index,1}));
-    % writeNPY(adjmats, sprintf('%s-Adjmats.npy', test_fns{test_fn_index,1}));
-  end
 end
 
 disp('Finished');
@@ -113,7 +117,9 @@ end
 function [ values ] = evaluate_tests(Ah, Agt)
   [l1, l2, bce] = testOutput_soft(Ah,Agt);
   [ssame, ssame_std, sdiff, sdiff_std] = testOutputhist(Ah,Agt);
-  [roc, pr] = testOutput_roc_pr(Ah,Agt);
+  % [roc, pr] = testOutput_roc_pr(Ah,Agt);
+  pr = 0;
+  roc = 0;
   values = [ l1, l2, bce, ssame, ssame_std, sdiff, sdiff_std, roc, pr ];
 end
 

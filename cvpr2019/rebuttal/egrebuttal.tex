@@ -31,27 +31,8 @@ We fully understand your concerns and we elaborate on them here.
 We kindly ask you to trust us that the presentation will be clear in
 the camera-ready and to reward the novelty of the idea in your ratings.
 
-\textbf{(R1)} ``\textit{GCNs (Section 3.2) should be deeply described}'' and (R5) ``\textit{Especially Section 3.1-3.3 are very confusing}'':
-We agree that we could have done a better job and we will have a comprehensive introduction into GCNs in the camera ready.
-
-\textbf{(R1)} ``\textit{images showing the experimental results (figure 5, 6, 7) should be better clarified and discussed}'' and 
-\textbf{(R1)} ``\textit{most of the figures are not cited in the tex}'' and
-\textbf{(R5)} ``\textit{Axes in the charts are usually missing. There are typos and grammatical errors in the text}'':
-We agree and we will make the captions comprehensible and self-contained, reference the figures in the text more, and label the axes better.
-
-\textbf{(R1)} ``\textit{The performances of the proposed method should be evaluated also on sequences of tens of images. Multiview matching with 4 images is not very meaningful}'' and 
-\textbf{(R5)} ``\textit{The evaluation of the testing part is not satisfactory. Although it is a general multi-image method, only three- and four-view tests are included}'':
-We fully agree that sets of tens of images would be even better.  But even with 3-4 views we are doing better than RANSAC computationally: RANSAC using trifocal tensor needs sampling of 7 triples for already established weak correspondences
-
-\textbf{(R3)} ``\textit{Details on the network architecture (beyond it having 12 layers) are missing}'' and 
-\textbf{(R5)} ``\textit{I think the method cannot be re-implemented based on the submitted manuscript}'':
-Our layer splits were: 32, 64, 128, 256, 512, 512, 512, 512, 512, 512, 1024, 1024. We had skip connections between the input and layers 7 and 12, with small one layer skip connections between each layer. We will also be releasing code if accepted, which will clarify all points.
-
 \textbf{(R1)} ``\textit{The benefits of applying a GCN instead of classical optimization methods are not clear and the use of a Convolutional Neural Network to solve the multi-view matching problem appears contrived.}'':
 The main benefit is the learning of new feature representations whose distance better supports multi-view matching. Learning novel feature representations through CNN (like LIFT descriptor, for example) is a widely admitted interesting line of research although it will not necessarily beat yet benchmarks on SLAM problems. Second benefit of the GCN formulation is that we can add to the same end-to-end pipeline geometric or other losses, in addition to cycle consistency. If the criticism is regarding the graphs and not the CNN part of GCN, then we claim that graphs is the natural representation for matching problems but we agree that using pointsets would be an interesting future direction, too.
-
-\textbf{(R1)} ``\textit{The reference to the “spectral method” used in the experiments is missing.}'': 
-We will add \cite{pachauri2013solving} to the table.
 
 \textbf{(R3)} ``\textit{In my opinion, measuring the precision and recall in terms of identifying correct matches would be a better evaluation score (and also closer to the problem setting).}'':
 You are right that an precision-recall or ROC curve would be a good measure. We have added in this rebuttal a figure showing the ROC and mAP of our method compared to other methods.
@@ -60,8 +41,29 @@ You are right that an precision-recall or ROC curve would be a good measure. We 
 % We couldn't find a more appropriate large scale dataset where we could find ground truth matches. We could collect our own but we wanted to test against a well-known dataset (even if it is typically used in other contexts) for a more fair comparison.
 We needed a large-scale dataset with multi-view matching and ground truth to evaluate against. Rome16K seemed the most appropriate dataset, as other datasets with ground truth were far too small. If the review knows of any other datasets that satisfy our constraints, we would appreciate the suggestion.
 
+\textbf{(R1)} ``\textit{The performances of the proposed method should be evaluated also on sequences of tens of images. Multiview matching with 4 images is not very meaningful}'' and 
+\textbf{(R5)} ``\textit{The evaluation of the testing part is not satisfactory. Although it is a general multi-image method, only three- and four-view tests are included}'':
+Even with 3-4 views we are doing better than RANSAC computationally: RANSAC using trifocal tensor needs sampling of 7 triples for already established weak correspondences. But we fully agree that sets of tens of images would be even better.
+
+\textbf{(R1)} ``\textit{GCNs (Section 3.2) should be deeply described}'' and
+\textbf{(R5)} ``\textit{Especially Section 3.1-3.3 are very confusing}'':
+We agree that we could have done a better job and we will have a comprehensive introduction into GCNs in the camera ready.
+
+\textbf{(R1)} ``\textit{images showing the experimental results (figure 5, 6, 7) should be better clarified and discussed}'' and 
+\textbf{(R1)} ``\textit{most of the figures are not cited in the tex}'' and
+\textbf{(R5)} ``\textit{Axes in the charts are usually missing. There are typos and grammatical errors in the text}'':
+We agree and we will make the captions comprehensible and self-contained, reference the figures in the text more, and label the axes better.
+
+\textbf{(R3)} ``\textit{Details on the network architecture (beyond it having 12 layers) are missing}'' and 
+\textbf{(R5)} ``\textit{I think the method cannot be re-implemented based on the submitted manuscript}'':
+Our layer splits were: 32, 64, 128, 256, 512, 512, 512, 512, 512, 512, 1024, 1024. We had skip connections between the input and layers 7 and 12, with small one layer skip connections between each layer. We will also be releasing code if accepted, which will clarify all points.
+
+\textbf{(R1)} ``\textit{The reference to the “spectral method” used in the experiments is missing.}'': 
+We will add \cite{pachauri2013solving} to the table.
+
 \textbf{(R3)} ``\textit{there are not really experiments analyzing the robustness of the proposed approach to outliers}'':
-You are right in that more outlier experiments could have been done. 
+% You are right in that more outlier experiments could have been done. 
+We will add more outlier experiments for the camera-ready. 
 
 \textbf{(R3)} ``\textit{It is unclear how the Rome16k dataset is split into a test and training set}'':
 There was no overlap of sequences in training and testing sets. It was trained on one set of buildings and tested on another, so it has not overfit to particular buildings.
@@ -73,77 +75,37 @@ We indeed did not know of \cite{hajder2006weak}. We will cite it and hope to use
 \begin{center}
 \begin{tabular}{ |c|c|c| }
 \hline
-Method           & ROC       & mAP       \\ \hline
-GCN 12 Layers                                     & 9.088e-01 & 6.073e-01 \\ \hline
-Spectral          & 9.175e-01 & 7.735e-01 \\ \hline
-MatchALS 15 Iter. & 9.138e-01 & 7.384e-01 \\ \hline
-MatchALS 50 Iter. & 9.163e-01 & 6.691e-01 \\ \hline
-PGDDS    15 Iter. & 9.170e-01 & 7.357e-01 \\ \hline
-PGDDS    50 Iter. & 8.829e-01 & 6.691e-01 \\ \hline
+Method            & ROC       & mAP       \\ \hline
+GCN 12 Layers     & 9.531e-01 & 6.772e-01 \\ \hline
+Spectral          & 9.629e-01 & 8.089e-01 \\ \hline
+MatchALS  15 Iter.& 9.540e-01 & 8.149e-01 \\ \hline
+MatchALS  50 Iter.& 9.173e-01 & 7.471e-01 \\ \hline
+PGDDS     15 Iter.& 9.621e-01 & 8.360e-01 \\ \hline
+PGDDS     50 Iter.& 9.635e-01 & 9.033e-01 \\ \hline
 \end{tabular}
 \end{center}
 \caption{ROC area and mean average precision (mAP). Some methods and citations skipped due to space constraints.}
 \vspace{-15pt}
 \end{table}
 
-% \begin{table}[t]
-% \begin{center}
-% \begin{tabular}{ |c|c|c| }
-% \hline
-% Method           & ROC       & mAP       \\ \hline
-% GCN 12 Layers                                  & 9.088e-01 & 6.073e-01 \\ \hline
-% Spectral \cite{pachauri2013solving}            & 9.175e-01 & 7.735e-01 \\ \hline
-% MatchALS \cite{zhou2015multi}  15 Iter.        & 9.138e-01 & 7.384e-01 \\ \hline
-% MatchALS \cite{zhou2015multi}  50 Iter.        & 9.163e-01 & 6.691e-01 \\ \hline
-% PGDDS \cite{leonardos2016distributed} 15 Iter. & 9.170e-01 & 7.357e-01 \\ \hline
-% PGDDS \cite{leonardos2016distributed} 50 Iter. & 8.829e-01 & 6.691e-01 \\ \hline
-% \end{tabular}
-% \end{center}
-% \caption{ROC area and mean average precision (mAP).}
-% \vspace{-15pt}
-% \end{table}
+% GCN 12 Layers     & 9.531e-01 & 6.772e-01
+% Spectral          & 9.629e-01 & 8.089e-01
+% MatchALS  15 Iter.& 9.540e-01 & 8.149e-01
+% MatchALS  50 Iter.& 9.173e-01 & 7.471e-01
+% PGDDS     15 Iter.& 9.621e-01 & 8.360e-01
+% PGDDS     50 Iter.& 9.635e-01 & 9.033e-01
 
-
-% \begin{table}[t]
-% \begin{center}
-% \begin{tabular}{ |c|c|c|c|c|c| }
-% \hline
-% Method                                         & ROC    & mAP \\ \hline
-% GCN 12 Layers                                  & 0.953  & 0.655  \\ \hline
-% MatchALS \cite{zhou2015multi}  15 Iter.        & 0.624  & 0.653  \\ \hline
-% MatchALS \cite{zhou2015multi}  25 Iter.        & 0.573  & 0.569  \\ \hline
-% MatchALS \cite{zhou2015multi}  50 Iter.        & 0.437  & 0.423  \\ \hline
-% MatchALS \cite{zhou2015multi} 100 Iter.        & 0.404  & 0.302  \\ \hline
-% PGDDS \cite{leonardos2016distributed} 15 Iter. & 0.918  & 0.724  \\ \hline
-% PGDDS \cite{leonardos2016distributed} 25 Iter. & 0.920  & 0.768  \\ \hline
-% PGDDS \cite{leonardos2016distributed} 50 Iter. & 0.920  & 0.795  \\ \hline
-% Spectral \cite{pachauri2013solving}            & 0.917  & 0.689  \\ \hline
-% \end{tabular}
-% \end{center}
-% \caption{}
-% 
-% \end{table}
-% GCN 12 Layers                                  & 0.953 $\pm$ 0.071 & 0.655 $\pm$ 0.113 \\ \hline
-% MatchALS \cite{zhou2015multi}  15 Iter.        & 0.624 $\pm$ 0.078 & 0.653 $\pm$ 0.184 \\ \hline
-% MatchALS \cite{zhou2015multi}  25 Iter.        & 0.573 $\pm$ 0.060 & 0.569 $\pm$ 0.167 \\ \hline
-% MatchALS \cite{zhou2015multi}  50 Iter.        & 0.437 $\pm$ 0.042 & 0.423 $\pm$ 0.151 \\ \hline
-% MatchALS \cite{zhou2015multi} 100 Iter.        & 0.404 $\pm$ 0.066 & 0.302 $\pm$ 0.116 \\ \hline
-% PGDDS \cite{leonardos2016distributed} 15 Iter. & 0.918 $\pm$ 0.101 & 0.724 $\pm$ 0.224 \\ \hline
-% PGDDS \cite{leonardos2016distributed} 25 Iter. & 0.920 $\pm$ 0.101 & 0.768 $\pm$ 0.230 \\ \hline
-% PGDDS \cite{leonardos2016distributed} 50 Iter. & 0.920 $\pm$ 0.101 & 0.795 $\pm$ 0.224 \\ \hline
-% Spectral \cite{pachauri2013solving}            & 0.917 $\pm$ 0.103 & 0.689 $\pm$ 0.197 \\ \hline
-
-% \begin{figure}[t]
-% \begin{center}
-% \fbox{\rule{0pt}{1.8in} \rule{0.9\linewidth}{0pt}}
-%    %\includegraphics[width=0.8\linewidth]{egfigure.eps}
-% \end{center}
-%    \caption{Example of caption.  It is set in Roman so that mathematics
-%    (always set in Roman: $B \sin A = A \sin B$) may be included without an
-%    ugly clash.}
-% \label{fig:long}
-% \label{fig:onecol}
-% \end{figure}
+% GCN 12 Layers     : ROC: 9.531e-01 +/- 7.094e-02 ; P-R: 6.772e-01 +/- 1.114e-01
+% MatchALS  15 Iter.: ROC: 9.540e-01 +/- 6.538e-02 ; P-R: 8.149e-01 +/- 1.420e-01
+% MatchALS  25 Iter.: ROC: 9.471e-01 +/- 6.208e-02 ; P-R: 8.306e-01 +/- 1.482e-01
+% MatchALS  50 Iter.: ROC: 9.173e-01 +/- 6.018e-02 ; P-R: 7.471e-01 +/- 1.566e-01
+% MatchALS 100 Iter.: ROC: 9.071e-01 +/- 6.694e-02 ; P-R: 7.166e-01 +/- 1.716e-01
+% PGDDS     15 Iter.: ROC: 9.621e-01 +/- 7.694e-02 ; P-R: 8.360e-01 +/- 1.646e-01
+% PGDDS     25 Iter.: ROC: 9.630e-01 +/- 7.676e-02 ; P-R: 8.811e-01 +/- 1.646e-01
+% PGDDS     50 Iter.: ROC: 9.635e-01 +/- 7.650e-02 ; P-R: 9.033e-01 +/- 1.621e-01
+% Spectral          : ROC: 9.629e-01 +/- 7.413e-02 ; P-R: 8.089e-01 +/- 1.577e-01
+% AlmostPerfect     : ROC: 1.000e+00 +/- 0.000e+00 ; P-R: 1.000e+00 +/- 0.000e+00
+% Random            : ROC: 5.001e-01 +/- 8.223e-03 ; P-R: 1.256e-02 +/- 3.765e-04
 
 {\footnotesize
 \bibliographystyle{ieee}

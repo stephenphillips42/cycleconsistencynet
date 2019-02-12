@@ -5,134 +5,105 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt 
 import time
+import sklearn.metrics as metrics
+import tqdm
+import itertools
 
-def calc_classifications(o, a):
-  TP = np.sum(o*a)
-  TN = np.sum((1-o)*(1-a))
-  FP = np.sum(o*(1-a))
-  FN = np.sum((1-o)*a)
-  return TP, TN, FP, FN
+def scatterplot_matrix(data, names, **kwargs):
+  """Plots a scatterplot matrix of subplots.  Each row of "data" is plotted
+  against other rows, resulting in a nrows by nrows grid of subplots with the
+  diagonal subplots labeled with "names".  Additional keyword arguments are
+  passed on to matplotlib's "plot" command. Returns the matplotlib figure
+  object containg the subplot grid."""
+  numvars, numdata = data.shape
+  fig, axes = plt.subplots(nrows=numvars, ncols=numvars, figsize=(8,8))
+  fig.subplots_adjust(hspace=0.05, wspace=0.05)
 
+  for ax in axes.flat:
+    # Hide all ticks and labels
+    ax.xaxis.set_visible(False)
+    ax.yaxis.set_visible(False)
 
-def compute_thresh_errs(output, adjmat, N_cutoffs=2048):
-  a = adjmat.astype(np.int32)
-  M_T = np.sum(a)
-  M_F = a.size - M_T
+    # Set up ticks only on one side for the "edge" subplots...
+    if ax.is_first_col():
+      ax.yaxis.set_ticks_position('left')
+    if ax.is_last_col():
+      ax.yaxis.set_ticks_position('right')
+    if ax.is_first_row():
+      ax.xaxis.set_ticks_position('top')
+    if ax.is_last_row():
+      ax.xaxis.set_ticks_position('bottom')
 
-  TP_, TN_, FP_, FN_ = (np.zeros(N_cutoffs).astype(np.int32) for i in range(4))
-  TP_[ 0], TN_[ 0], FP_[ 0], FN_[ 0] =   0, M_F,   0, M_T
-  TP_[-1], TN_[-1], FP_[-1], FN_[-1] = M_T,   0, M_F,   0
-  for idx in range(1,N_cutoffs-1):
-    i = (N_cutoffs - 1) - idx
-    thresh = (1.0*i) / (N_cutoffs-1)
-    o = (output > thresh).astype(np.int32)
-    TP, TN, FP, FN = calc_classifications(o,a)
-    TP_[idx], TN_[idx], FP_[idx], FN_[idx] = TP, TN, FP, FN
+  # Plot the data.
+  for i, j in zip(*np.triu_indices_from(axes, k=1)):
+    for x, y in [(i,j), (j,i)]:
+      axes[x,y].scatter(data[x], data[y], **kwargs)
 
-  return (TP_, TN_, FP_, FN_)
+  # Label the diagonal subplots...
+  for i, label in enumerate(names):
+    axes[i,i].annotate(label, (0.5, 0.5), xycoords='axes fraction',
+                       ha='center', va='center')
 
-def roc_lines(TP, TN, FP, FN):
-  FPR = np.maximum(1e-8, FP) / np.maximum(1e-8, FP + TN)
-  TPR = np.maximum(1e-8, TP) / np.maximum(1e-8, TP + FN)
-  roc = np.stack((FPR, TPR), axis=-1)
-  return roc
+  # Turn on the proper x or y axes ticks.
+  for i, j in zip(range(numvars), itertools.cycle((-1, 0))):
+    axes[j,i].xaxis.set_visible(True)
+    axes[i,j].yaxis.set_visible(True)
 
-def compute_roc(TP, TN, FP, FN):
-  FPR = np.maximum(1e-8, FP) / np.maximum(1e-8, FP + TN)
-  TPR = np.maximum(1e-8, TP) / np.maximum(1e-8, TP + FN)
-  # sidx = np.argsort(FPR)
-  # FPR = FPR[sidx]
-  # TPR = TPR[sidx]
-  return np.abs(np.trapz(TPR, x=FPR))
+  return fig
 
-def precision_recall_lines(TP, TN, FP, FN):
-  precision = np.maximum(1e-8, TP) / np.maximum(1e-8, TP + FP)
-  recall = np.maximum(1e-8, TP) / np.maximum(1e-8, TP + FN)
-  p_r = np.stack((precision, recall), axis=-1)
-  return p_r
-
-def compute_precision_recall(TP, TN, FP, FN):
-  precision = np.maximum(1e-8, TP) / np.maximum(1e-8, TP + FP)
-  recall    = np.maximum(1e-8, TP) / np.maximum(1e-8, TP + FN)
-  return np.abs(np.trapz(recall, x=precision))
-
-def plot_values(TP, TN, FP, FN, show=True):
-  roc = roc_lines(TP, TN, FP, FN)
-  p_r = precision_recall_lines(TP, TN, FP, FN)
-  plt.plot(roc[:,0], roc[:,1])
-  plt.plot(p_r[:,0], p_r[:,1])
-  if show:
-    plt.scatter([0,0,1,1], [0,1,0,1])
-    plt.show()
-
-def main():
+def main(verbose):
   # Constants
   N_ = 2048
-  # Variables
-  roc_areas_ = []
-  p_r_areas_ = []
-  roc_lines_ = []
-  p_r_lines_ = []
+  # MATLAB Output Files
+  opt_names = [ x[:-len('TestErrors.log')] for x in sorted(glob.glob('*.log')) ]
+  all_names = opt_names + ['GCN', 'AlmostPerfect', 'Random' ]
+  # all_names = [ 'MatchALS015Iter', 'MatchALS025Iter', 'MatchALS050Iter', 'MatchALS100Iter' ]
+  num_outputs = len(os.listdir('{}Outputs'.format(opt_names[0])))
   # Tensorflow output file
   fname = 'GCN12Layer.npz'
   with open(fname, 'rb') as f:
     ld = dict(np.load(fname))
   temb = ld['trueemb']
   outemb = ld['out']
-  # MATLAB Output Files
-  opt_names = []
-  opt_adjmats = []
-  opt_outputs = []
-  AdjmatFiles = sorted(glob.glob('*Adjmats.npy'))
-  OutputFiles = sorted(glob.glob('*Outputs.npy'))
-  for adjmat_name, output_name in zip(AdjmatFiles, OutputFiles):
-    opt_names.append(adjmat_name[:-len('-Adjmats.npy')])
-    with open(adjmat_name, 'rb') as f:
-      a = np.load(f)
-      opt_adjmats.append(a)
-    with open(output_name, 'rb') as f:
-      o = np.load(f)
-      opt_outputs.append(o)
+  assert len(temb) == num_outputs
+  os.makedirs('ROC-Curves', exist_ok=True)
+  os.makedirs('P-R-Curves', exist_ok=True)
 
-  for i in range(20):
+  roc_ = { k : [] for k in all_names }
+  p_r_ = { k : [] for k in all_names }
+  for i in tqdm.tqdm(range(num_outputs), disable=(verbose != 1)):
+    adjmat = np.dot(temb[i], temb[i].T).reshape(-1) # They are all the same
     # MATLAB Outputs
     fig_roc, ax_roc = plt.subplots()
     fig_p_r, ax_p_r = plt.subplots()
     ax_roc.scatter([0,0,1,1],[0,1,0,1])
     ax_p_r.scatter([0,0,1,1],[0,1,0,1])
-    adjmat = opt_adjmats[0][i] # They are all the same
-    for k in range(len(opt_names)):
+    for k in all_names:
       # Compute things
-      output = opt_outputs[k][i]
-      TP, TN, FP, FN = compute_thresh_errs(output, adjmat, N_cutoffs=N_)
+      if k == 'GCN':
+        output = np.abs(np.dot(outemb[i], outemb[i].T)).reshape(-1)
+      elif k == 'AlmostPerfect':
+        output = np.abs(adjmat + np.random.randn(*adjmat.shape)*0.05)
+      elif k == 'Random':
+        output = np.abs(np.random.randn(*adjmat.shape)*0.25)
+      else:
+        fname = '{}Outputs/{:04d}.npy'.format(k, i+1)
+        # print(fname)
+        with open(fname, 'rb') as f:
+          o = np.load(f)
+        output = o.reshape(-1)
       # Get areas
-      roc_areas_.append(compute_roc(TP, TN, FP, FN))
-      p_r_areas_.append(compute_precision_recall(TP, TN, FP, FN))
-      print('{0:04d} {1:<20}: ROC: {2:.03e}, P-R: {3:.03e}'.format(k, opt_names[k],
-                                                                   roc_areas_[-1],
-                                                                   p_r_areas_[-1]))
+      roc_[k].append(metrics.roc_auc_score(adjmat, output))
+      p_r_[k].append(metrics.average_precision_score(adjmat, output))
+      if verbose > 1:
+        print('{0:04d} {1:<20}: ROC: {2:.03e}, P-R: {3:.03e}'.format(i, k,
+                                                                     roc_[k][-1],
+                                                                     p_r_[k][-1]))
       # PLot lines
-      roc = roc_lines(TP, TN, FP, FN)
-      p_r = precision_recall_lines(TP, TN, FP, FN)
-      ax_roc.plot(roc[:,0], roc[:,1], label='{} ROC ({:.03e})'.format(opt_names[k], roc_areas_[-1]))
-      ax_p_r.plot(p_r[:,0], p_r[:,1], label='{} P-R ({:.03e})'.format(opt_names[k], p_r_areas_[-1]))
-      roc_lines_.append(roc)
-      p_r_lines_.append(p_r)
-    # Tensorflow Outputs  
-    output = np.abs(np.dot(outemb[i], outemb[i].T))
-    TP, TN, FP, FN = compute_thresh_errs(output, adjmat, N_cutoffs=N_)
-    roc_areas_.append(compute_roc(TP, TN, FP, FN))
-    p_r_areas_.append(compute_precision_recall(TP, TN, FP, FN))
-    print('{0:04d} {1:<20}: ROC: {2:.03e}, P-R: {3:.03e}'.format(k, 'GCN',
-                                                                 roc_areas_[-1],
-                                                                 p_r_areas_[-1]))
-    # Tensorflow Plot lines
-    roc = roc_lines(TP, TN, FP, FN)
-    p_r = precision_recall_lines(TP, TN, FP, FN)
-    ax_roc.plot(roc[:,0], roc[:,1], label='{} ROC ({:.03e})'.format('GCN', roc_areas_[-1]))
-    ax_p_r.plot(p_r[:,0], p_r[:,1], label='{} P-R ({:.03e})'.format('GCN', p_r_areas_[-1]))
-    roc_lines_.append(roc)
-    p_r_lines_.append(p_r)
+      FPR, TPR, _ = metrics.roc_curve(adjmat, output)
+      precision, recall, _ = metrics.precision_recall_curve(adjmat, output)
+      ax_roc.plot(FPR, TPR, label='{} ROC ({:.03e})'.format(k, roc_[k][-1]))
+      ax_p_r.plot(precision, recall, label='{} P-R ({:.03e})'.format(k, p_r_[k][-1]))
 
     # Finish plots
     ax_roc.set_xlabel('False Positive Rate')
@@ -143,14 +114,33 @@ def main():
     ax_p_r.set_title('Precision Recall Curves')
     ax_roc.legend()
     ax_p_r.legend()
-    fig_roc.savefig('ROC-Curves-{:04d}.png'.format(i))
-    fig_p_r.savefig('P-R-Curves-{:04d}.png'.format(i))
+    fig_roc.savefig('ROC-Curves/{:04d}.png'.format(i))
+    fig_p_r.savefig('P-R-Curves/{:04d}.png'.format(i))
     plt.close(fig_roc)
     plt.close(fig_p_r)
+  dispstr = '{:<15}: ROC: {:.03e} +/- {:.03e} ; P-R: {:.03e} +/- {:.03e}'
+  for k in all_names:
+    roc_mean = np.mean(roc_[k])
+    roc_std = np.std(roc_[k])
+    p_r_mean = np.mean(p_r_[k])
+    p_r_std = np.std(p_r_[k])
+    print(dispstr.format(k, roc_mean, roc_std, p_r_mean, p_r_std))
 
-
-
+  # plot_names = [ 'MatchALS015Iter', 'PGDDS015Iter', 'Spectral', 'GCN' ]
+  plot_names = all_names
+  plot_vars = np.stack([ p_r_[k] for k in plot_names ], axis=0) 
+  # # scatter_fig = scatterplot_matrix(plot_vars, plot_names)
+  # plt.scatter(p_r_['MatchALS100Iter'], p_r_['GCN'])
+  # plt.scatter([0,0,1,1], [0,1,0,1])
+  # plt.plot([0,1], [0,1])
+  # plt.show()
+  # print(np.corrcoef(plot_vars))
+  better_than = np.zeros((len(plot_names), len(plot_names)))
+  for i in range(len(plot_names)):
+    for j in range(len(plot_names)):
+      better_than[i,j] = np.sum(np.array(p_r_[plot_names[i]]) < np.array(p_r_[plot_names[j]]))
+  print(better_than)
 
 if __name__ == '__main__':
-  main()
+  main(1)
 
