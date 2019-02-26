@@ -51,21 +51,29 @@ SEED = 1
 np.random.seed(SEED)
 tf.set_random_seed(SEED)
 
+
 import pprint
 pp = pprint.PrettyPrinter(indent=2)
+def myprint(x):
+  pass
+  # print(x)
+def mypprint(x):
+  pass
+  pp.pprint(x)
+
 def print_graph_tuple(G):
-  print("Num. Nodes ({}): {}".format(G.n_node.shape, G.n_node))
-  print("Num. Edges ({}): {}".format(G.n_edge.shape, G.n_edge))
-  print("Nodes ({})".format(G.nodes.shape))
-  print(G.nodes)
-  print("Edges ({})".format(G.edges.shape))
-  print(G.edges)
-  print("Globals")
-  print(G.globals)
-  print("Senders")
-  print(G.senders)
-  print("Receivers")
-  print(G.receivers)
+  myprint("Num. Nodes ({}): {}".format(G.n_node.shape, G.n_node))
+  myprint("Num. Edges ({}): {}".format(G.n_edge.shape, G.n_edge))
+  myprint("Nodes ({})".format(G.nodes.shape))
+  myprint(G.nodes)
+  myprint("Edges ({})".format(G.edges.shape))
+  myprint(G.edges)
+  myprint("Globals")
+  myprint(G.globals)
+  myprint("Senders")
+  myprint(G.senders)
+  myprint("Receivers")
+  myprint(G.receivers)
 
 #@title Helper functions  { form-width: "30%" }
 
@@ -318,6 +326,7 @@ def create_placeholders(rand, batch_size, num_nodes_min_max, theta):
       rand, batch_size, num_nodes_min_max, theta)
   input_ph = utils_tf.placeholders_from_networkxs(
       input_graphs, force_dynamic_num_graphs=True)
+  print(input_ph)
   target_ph = utils_tf.placeholders_from_networkxs(
       target_graphs, force_dynamic_num_graphs=True)
   return input_ph, target_ph
@@ -342,14 +351,14 @@ def create_feed_dict(rand, batch_size, num_nodes_min_max, theta, input_ph,
     feed_dict: The feed `dict` of input and target placeholders and data.
     raw_graphs: The `dict` of raw networkx graphs.
   """
-  # print("create_feed_dict")
+  myprint("create_feed_dict")
   inputs, targets, raw_graphs = generate_networkx_graphs(
       rand, batch_size, num_nodes_min_max, theta)
-  print("print(inputs)")
-  print(inputs[0].nodes)
-  print(inputs[0].edges)
   input_graphs = utils_np.networkxs_to_graphs_tuple(inputs)
-  print("input_graphs")
+  myprint("print(inputs)")
+  myprint(inputs[0].nodes)
+  myprint(inputs[0].edges)
+  myprint("input_graphs")
   print_graph_tuple(input_graphs)
   target_graphs = utils_np.networkxs_to_graphs_tuple(targets)
   feed_dict = {input_ph: input_graphs, target_ph: target_graphs}
@@ -785,19 +794,19 @@ print("# (iteration number), T (elapsed seconds), "
       "Cge (test/generalization fraction nodes/edges labeled correctly), "
       "Sge (test/generalization fraction examples solved correctly)")
 
-print("start_time = time.time()")
+myprint("start_time = time.time()")
 start_time = time.time()
-print("last_log_time = start_time")
+myprint("last_log_time = start_time")
 last_log_time = start_time
-print("for iteration in range(last_iteration, num_training_iterations):")
+myprint("for iteration in range(last_iteration, num_training_iterations):")
 for iteration in range(last_iteration, num_training_iterations):
-  print(" =================================== TRAINING ===================================== ")
-  print("last_iteration = iteration")
+  myprint(" =================================== TRAINING ===================================== ")
+  myprint("last_iteration = iteration")
   last_iteration = iteration
-  print("feed_dict, _ = create_feed_dict( ... )")
+  myprint("feed_dict, _ = create_feed_dict( ... )")
   feed_dict, _ = create_feed_dict(rand, batch_size_tr, num_nodes_min_max_tr,
                                   theta, input_ph, target_ph)
-  print("train_values = sess.run({ ... }, feed_dict=feed_dict)")
+  myprint("train_values = sess.run({ ... }, feed_dict=feed_dict)")
   train_values = sess.run({
       "step": step_op,
       "target": target_ph,
@@ -807,45 +816,44 @@ for iteration in range(last_iteration, num_training_iterations):
   the_time = time.time()
   elapsed_since_last_log = the_time - last_log_time
   if elapsed_since_last_log > log_every_seconds:
-    print(" *********************************** TESTING ************************************* ")
-    print("last_log_time = the_time")
+    myprint(" *********************************** TESTING ************************************* ")
+    myprint("last_log_time = the_time")
     last_log_time = the_time
-    print("feed_dict, raw_graphs = create_feed_dict( ... )")
+    myprint("feed_dict, raw_graphs = create_feed_dict( ... )")
     feed_dict, raw_graphs = create_feed_dict(
         rand, batch_size_ge, num_nodes_min_max_ge, theta, input_ph, target_ph)
-    print("test_values = sess.run({ ... }, feed_dict=feed_dict)")
+    myprint("test_values = sess.run({ ... }, feed_dict=feed_dict)")
     test_values = sess.run({
         "target": target_ph,
         "loss": loss_op_ge,
         "outputs": output_ops_ge
     }, feed_dict=feed_dict)
-    print("correct_tr, solved_tr = compute_accuracy( ... )")
+    myprint("correct_tr, solved_tr = compute_accuracy( ... )")
     correct_tr, solved_tr = compute_accuracy(
         train_values["target"], train_values["outputs"][-1], use_edges=True)
-    print("correct_ge, solved_ge = compute_accuracy( ... )")
+    myprint("correct_ge, solved_ge = compute_accuracy( ... )")
     correct_ge, solved_ge = compute_accuracy(
         test_values["target"], test_values["outputs"][-1], use_edges=True)
-    print("elapsed = time.time() - start_time")
+    myprint("elapsed = time.time() - start_time")
     elapsed = time.time() - start_time
-    print("losses_tr.append(train_values['loss'])")
+    myprint("losses_tr.append(train_values['loss'])")
     losses_tr.append(train_values["loss"])
-    print("corrects_tr.append(correct_tr)")
+    myprint("corrects_tr.append(correct_tr)")
     corrects_tr.append(correct_tr)
-    print("solveds_tr.append(solved_tr)")
+    myprint("solveds_tr.append(solved_tr)")
     solveds_tr.append(solved_tr)
-    print("losses_ge.append(test_values['loss'])")
+    myprint("losses_ge.append(test_values['loss'])")
     losses_ge.append(test_values["loss"])
-    print("corrects_ge.append(correct_ge)")
+    myprint("corrects_ge.append(correct_ge)")
     corrects_ge.append(correct_ge)
-    print("solveds_ge.append(solved_ge)")
+    myprint("solveds_ge.append(solved_ge)")
     solveds_ge.append(solved_ge)
-    print("logged_iterations.append(iteration)")
+    myprint("logged_iterations.append(iteration)")
     logged_iterations.append(iteration)
     print("# {:05d}, T {:.1f}, Ltr {:.4f}, Lge {:.4f}, Ctr {:.4f}, Str"
           " {:.4f}, Cge {:.4f}, Sge {:.4f}".format(
               iteration, elapsed, train_values["loss"], test_values["loss"],
               correct_tr, solved_tr, correct_ge, solved_ge))
-    sys.exit(0)
 
 
 #@title Visualize results  { form-width: "30%" }
