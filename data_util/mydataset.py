@@ -12,7 +12,7 @@ from data_util import tf_helpers
 
 class MyDataset(object):
   """Dataset for Cycle Consistency graphs"""
-  MAX_IDX=7000
+  MAX_IDX=500
 
   def __init__(self, opts, params):
     self.opts = opts
@@ -69,7 +69,7 @@ class MyDataset(object):
   def process_features(self, loaded_features):
     features = {}
     for k, feat in self.features.items():
-      features[k] = feat.get_feature_write(loaded_features[k])
+      features.update(feat.get_feature_write(loaded_features[k]))
     return features
 
   def augment(self, keys, values):
@@ -85,7 +85,7 @@ class MyDataset(object):
   def convert_dataset(self, out_dir, mode):
     """Writes synthetic flow data in .mat format to a TF record file."""
     params = self.dataset_params
-    fname = '{}-{:02d}.tfrecords'
+    fname = '{}-{:03d}.tfrecords'
     outfile = lambda idx: os.path.join(out_dir, fname.format(mode, idx))
     if not os.path.isdir(out_dir):
       os.makedirs(out_dir)
@@ -161,7 +161,7 @@ class MyDataset(object):
     params = self.dataset_params
     opts = self.opts
     assert mode in params.sizes, "Mode {} not supported".format(mode)
-    data_source_name = mode + '-[0-9][0-9].tfrecords'
+    data_source_name = mode + '-*.tfrecords'
     data_sources = glob.glob(os.path.join(self.data_dir, mode, data_source_name))
     if opts.shuffle_data and mode != 'test':
       np.random.shuffle(data_sources) # Added to help the shuffle

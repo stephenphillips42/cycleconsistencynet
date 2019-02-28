@@ -45,6 +45,7 @@ dataset_choices = [
   'noise_outlier1', 'noise_outlier2', 'noise_outlier4', 'noise_outlier8',
   'rome16kknn0',
   'rome16kgeom0', 'rome16kgeom4view0',
+  'spsynth0',
 ]
 
 class ArchParams(argparse.Namespace):
@@ -325,6 +326,8 @@ def get_opts():
     dataset_params.descriptor_dim=128
     # The dataset size is undermined until loading
     dataset_params.sizes={ 'train': -1, 'test': -1 }
+  elif opts.dataset == 'spsynth0':
+    dataset_params.sizes={ 'train': 400, 'test': 300 }
   else:
     pass
   opts.data_dir = dataset_params.data_dir

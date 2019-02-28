@@ -4,6 +4,7 @@ import os
 
 from data_util import synth_dataset
 from data_util import real_dataset
+from data_util import spgraph_dataset
 
 
 def get_dataset(opts):
@@ -28,4 +29,6 @@ def get_dataset(opts):
     return real_dataset.KNNRome16KDataset(opts, opts.dataset_params)
   elif opts.dataset in [ 'rome16kgeom0', 'rome16kgeom4view0' ]:
     return real_dataset.GeomKNNRome16KDataset(opts, opts.dataset_params)
+  elif opts.dataset in [ 'spsynth0' ]:
+    return spgraph_dataset.SpSynthGraphDataset(opts, opts.dataset_params)
 
