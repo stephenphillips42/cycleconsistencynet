@@ -26,7 +26,15 @@ import pprint
 pp = pprint.PrettyPrinter(indent=2)
 # import pdb; pdb.set_trace()
 
-sys.argv.extend(['--dataset', 'spsynth0', '--batch_size', '1'])
+def mygraphprint(x):
+  print(x.n_node)
+  print(x.n_edge)
+  print(x.nodes.shape)
+
+sys.argv.extend(['--dataset', 'spsynth0',
+                 '--datasets_dir', '/data',
+                 '--rome16k_dir', '/mount/data/Rome16K',
+                 '--batch_size', '2'])
 opts = options.get_opts()
 dtype = opts.dataset_params.dtype
 LD_FILE_SIZE = 128
@@ -54,18 +62,16 @@ class MLPInteractiveNetwork(snt.AbstractModule):
     return self._network(inputs)
 
 print("network")
-network = MLPInteractiveNetwork()
-print(network)
+# network = MLPInteractiveNetwork()
+# print(network)
 
 print("data")
 dataset = data_util.datasets.get_dataset(opts)
-input_graphs_ = dataset.load_batch('train')
-print(input_graphs_)
-sys.exit()
+sample = dataset.load_batch('train')
 
-print("output")
-output = network(input_graphs)
-print(output)
+# print("output")
+# output = network(sample['graph'])
+# print(output)
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -73,19 +79,13 @@ with tf.Session(config=config) as sess:
   pass
   init=tf.global_variables_initializer()
   sess.run(init)
-  for i in dataset_range:
-    g = get_data(i)
-    g_input = utils_np.data_dicts_to_graphs_tuple(g)
-    print("g_input")
-    print(g_input)
-    feed_dict = utils_tf.get_feed_dict(input_graphs, g_input)
-    print("feed_dict")
-    pp.pprint([ (k,v) for k, v in feed_dict.items() ])
-    pp.pprint([ (key.name, key.shape, type(value)) for key, value in feed_dict.items() ])
+  # for i in range(opts.dataset_params.sizes['train'] // opts.batch_size):
+  for i in range(10):
     # import pdb; pdb.set_trace()
-    o = sess.run(output, feed_dict=feed_dict)
+    o = sess.run(sample)
     print("o")
-    print(o)
+    mygraphprint(o['graph'])
+    print(o['adjmat'])
     print("I FINALLY GOT THE OUTPUT :D")
 
 

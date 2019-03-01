@@ -45,7 +45,7 @@ class SpSynthGraphDataset(mydataset.MyDataset):
       'nodes':
            tf_helpers.TensorFeature(
                          key='nodes',
-                         shape=[d, e + 2 + 1 + 1],
+                         shape=[d, e],
                          dtype=self.dtype,
                          description='Initial embeddings for optimization'),
       'n_edge':
@@ -53,7 +53,7 @@ class SpSynthGraphDataset(mydataset.MyDataset):
                          key='n_edge',
                          dtype='int32',
                          description='Number of edges in this graph'),
-      'edges': # TODO: How to do this?
+      'edges':
            tf_helpers.VarLenFloatFeature(
                          key='edges',
                          shape=[None, 1],
@@ -68,17 +68,17 @@ class SpSynthGraphDataset(mydataset.MyDataset):
                          key='senders',
                          dtype='int32',
                          description='Sending nodes for edges'),
+      'adjmat':
+           tf_helpers.SparseTensorFeature(
+                         key='adjmat',
+                         shape=[d, d],
+                         description='Sparse adjacency matrix of graph'),
     }
-    #   'adjmat':
-    #        tf_helpers.SparseTensorFeature(
-    #                      key='adjmat',
-    #                      shape=[d, d],
-    #                      description='Sparse adjacency matrix of graph'),
     self.graph_keys = [
       'n_node', 'nodes', 'n_edge', 'edges', 'receivers', 'senders'
     ]
-    # self.other_keys = [ 'adjmat' ]
-    self.other_keys = [ ]
+    self.other_keys = [ 'adjmat' ]
+    # self.other_keys = [ ]
     self.item_keys = self.graph_keys + self.other_keys
 
   def get_placeholders(self):
@@ -89,6 +89,9 @@ class SpSynthGraphDataset(mydataset.MyDataset):
 
   def gen_adjmat_noise(self, true_emb):
     adj_mat = np.dot(true_emb,true_emb.T) - np.eye(true_emb.shape[0])
+    # if np.random.randn() > 0:
+    #   d = self.n_pts*self.n_views
+    #   adj_mat[]
     return adj_mat
 
   def gen_sample(self):
@@ -115,7 +118,7 @@ class SpSynthGraphDataset(mydataset.MyDataset):
     nx.set_node_attributes(G_nx, node_attrs, 'features')
     nx.set_edge_attributes(G_nx, edges_attrs, 'features')
     G = utils_np.networkx_to_data_dict(G_nx)
-    G['globals'] = np.array([0])
+    G['globals'] = np.array([0,0])
     idx = np.where(AdjMat != 0.0)
     value = AdjMat[idx]
     G['adjmat'] = (idx, value)
@@ -145,25 +148,28 @@ class SpSynthGraphDataset(mydataset.MyDataset):
     dataset = dataset.repeat(None)
     if opts.shuffle_data and mode != 'test':
       dataset = dataset.shuffle(buffer_size=5*opts.batch_size)
-    if opts.batch_size > 1:
-      item_sizes = [ self.features[k].shape for k in self.item_keys ]
-      # dataset = dataset.padded_batch(opts.batch_size, padded_shapes=item_sizes)
-      dataset = dataset.batch(opts.batch_size)
-      dataset = dataset.prefetch(buffer_size=opts.batch_size)
+    # dataset = dataset.prefetch(buffer_size=opts.batch_size)
 
     iterator = dataset.make_one_shot_iterator()
-    sample_ = iterator.get_next()
-    # Constructing graph using relevant graph keys
-    sample_graph_ = { k : sample_[i] for i, k in enumerate(self.graph_keys) }
-    print(sample_graph_)
-    import pdb; pdb.set_trace()
-    sample_graph = utils_tf.data_dicts_to_graphs_tuple([ sample_graph_ ])
-    print("OK")
-    graph = utils_tf.concat(sample_graph, 0)
+    batch_graphs = []
+    batch_other = []
+    for b in range(opts.batch_size):
+      sample_ = iterator.get_next()
+      # Extracting other keys outside of the graph
+      sample_other_ = { k : sample_[i + len(self.graph_keys)]
+                        for i, k in enumerate(self.other_keys) }
+      batch_other.append(sample_other_)
+      # Constructing graph using relevant graph keys
+      sample_graph = { k : sample_[i] for i, k in enumerate(self.graph_keys) }
+      sample_graph['globals'] = tf.zeros([2])
+      batch_graphs.append(sample_graph)
     # Constructing output sample using known order of the keys
-    sample = { k : sample_[i + len(self.graph_keys)]
-               for i, k in enumerate(self.other_keys) }
-    sample['graph'] = graph
-    return graph
+    sample = {}
+    for k in self.other_keys:
+      sample[k] = self.features[k].stack([
+          batch_other[b][k] for b in range(opts.batch_size)
+      ])
+    sample['graph'] = utils_tf.data_dicts_to_graphs_tuple(batch_graphs)
+    return sample
 
 

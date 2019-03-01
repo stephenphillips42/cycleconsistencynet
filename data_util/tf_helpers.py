@@ -35,6 +35,9 @@ class MyFeature(object):
   def tensors_to_item(self, keys_to_tensors):
     tensor = keys_to_tensors[self._key]
     return tensor
+  
+  def stack(self, arr):
+    return tf.stack(arr)
 
 
 class Int64Feature(MyFeature):
@@ -69,7 +72,10 @@ class TensorFeature(MyFeature):
   def tensors_to_item(self, keys_to_tensors):
     tensor = keys_to_tensors[self._key]
     tensor = tf.decode_raw(tensor, out_type=self.dtype)
-    return tf.reshape(tensor, self.shape)
+    tensor = tf.reshape(tensor, self.shape)
+    sess = tf.InteractiveSession()
+    return tensor
+     
 
 
 class VarLenIntListFeature(MyFeature):
@@ -93,6 +99,7 @@ class VarLenFloatFeature(MyFeature):
   """Custom class used for decoding variable length float tensors."""
   def __init__(self, key, shape, description):
     super().__init__(key, description, shape=shape, dtype='float32')
+    # assert sum([ x is None for x in self.shape ]) <= 1
 
   def _get_feature_write(self, value):
     return tf.train.Feature(float_list=tf.train.FloatList(value=value))
@@ -103,6 +110,8 @@ class VarLenFloatFeature(MyFeature):
   def tensors_to_item(self, keys_to_tensors):
     tensor = keys_to_tensors[self._key]
     tensor = tf.sparse_tensor_to_dense(tensor)
+    shape = [ s if s is not None else -1 for s in self.shape ]
+    tensor = tf.reshape(tensor, shape)
     return tensor
 
 
@@ -122,19 +131,24 @@ class SparseTensorFeature(MyFeature):
     return sptensor_feature
 
   def _get_feature_read(self):
-    feat_write = { '{}_{:02d}'.format(self._key,i) :
+    feat_read = { '{}_{:02d}'.format(self._key,i) :
                      tf.VarLenFeature(tf.int64)
                    for i in range(len(self.shape)) }
-    feat_write['{}_value'.format(self._key)] = tf.VarLenFeature(self.dtype)
-    return feat_write
+    feat_read['{}_value'.format(self._key)] = tf.VarLenFeature(self.dtype)
+    return feat_read
 
   def tensors_to_item(self, keys_to_tensors):
-    indeces_sp = [ keys_to_tensors['{}_{:02d}'.format(self._key,i)]
+    indices_sp = [ keys_to_tensors['{}_{:02d}'.format(self._key,i)]
                      for i in range(len(self.shape)) ]
-    indeces = [ tf.sparse_tensor_to_dense(inds) for inds in indeces_sp ]
+    indices_list = [ tf.sparse_tensor_to_dense(inds) for inds in indices_sp ]
+    indices = tf.stack(indices_list, -1)
     values_sp = keys_to_tensors['{}_value'.format(self._key)]
     values = tf.sparse_tensor_to_dense(values_sp)
-    tensor = tf.SparseTensor(indeces, values, self.shape)
+    tensor = tf.SparseTensor(indices, values, self.shape)
     return tensor
+  
+  def stack(self, arr):
+    return tf.sparse_concat(0, [ tf.sparse_reshape(x, [1] + self.shape)
+                                 for x in arr ])
 
 
