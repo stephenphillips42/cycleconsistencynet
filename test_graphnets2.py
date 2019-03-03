@@ -21,6 +21,7 @@ from graph_nets import modules
 
 import options
 import data_util
+import tfutils
 
 import pprint
 pp = pprint.PrettyPrinter(indent=2)
@@ -34,7 +35,8 @@ def mygraphprint(x):
 sys.argv.extend(['--dataset', 'spsynth0',
                  '--datasets_dir', '/data',
                  '--rome16k_dir', '/mount/data/Rome16K',
-                 '--batch_size', '2'])
+                 '--batch_size', '2',
+                 '--save_dir', 'save/testing'])
 opts = options.get_opts()
 dtype = opts.dataset_params.dtype
 LD_FILE_SIZE = 128
@@ -62,16 +64,22 @@ class MLPInteractiveNetwork(snt.AbstractModule):
     return self._network(inputs)
 
 print("network")
-# network = MLPInteractiveNetwork()
-# print(network)
+network = MLPInteractiveNetwork()
+print(network)
 
 print("data")
 dataset = data_util.datasets.get_dataset(opts)
 sample = dataset.load_batch('train')
 
-# print("output")
-# output = network(sample['graph'])
-# print(output)
+print("output")
+output = network(sample['graph'])
+print(output.nodes)
+output_batch = tf.reshape(output.nodes, [ opts.batch_size, -1, 25 ])
+print(output_batch)
+output_sim = tfutils.get_sim(output_batch)
+print(output_sim)
+diff = tf.sparse_add(-output_sim, sample['adj_mat'])
+loss = tf.reduce_mean(tf.abs(diff))
 
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
@@ -82,11 +90,10 @@ with tf.Session(config=config) as sess:
   # for i in range(opts.dataset_params.sizes['train'] // opts.batch_size):
   for i in range(10):
     # import pdb; pdb.set_trace()
-    o = sess.run(sample)
-    print("o")
-    mygraphprint(o['graph'])
-    print(o['adjmat'])
-    print("I FINALLY GOT THE OUTPUT :D")
+    [ s, osim, l ] = sess.run([ sample, output_sim, loss ])
+    nodes = s['graph'].nodes
+    print("loss: {}, output_sim: {}, nodes: {}".format(l, osim.shape, nodes.shape))
+  print("I FINALLY GOT THE OUTPUT :D")
 
 
 

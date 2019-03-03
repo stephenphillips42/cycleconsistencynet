@@ -328,6 +328,7 @@ def get_opts():
     dataset_params.sizes={ 'train': -1, 'test': -1 }
   elif opts.dataset == 'spsynth0':
     dataset_params.sizes={ 'train': 400, 'test': 300 }
+    # dataset_params.views = [4]
   else:
     pass
   opts.data_dir = dataset_params.data_dir

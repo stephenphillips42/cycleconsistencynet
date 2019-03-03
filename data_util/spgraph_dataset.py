@@ -17,15 +17,17 @@ from data_util import mydataset
 from data_util import synth_graphs
 from data_util import tf_helpers
 
-def denseNDArrayToSparseTensor(arr):
-  idx  = np.where(arr != 0.0)
-  return tf.SparseTensor(np.vstack(idx).T, arr[idx], arr.shape)
+def np_dense_to_sparse(arr):
+  idx = np.where(arr != 0.0)
+  return idx, arr[idx]
 
 class SpSynthGraphDataset(mydataset.MyDataset):
   MAX_IDX=700
   def __init__(self, opts, params):
     super().__init__(opts, params)
-    d = self.n_pts*self.n_views
+    p = self.n_pts
+    v = self.n_views
+    d = p*v
     e = params.descriptor_dim
     """
     GraphsTuple(nodes=nodes,
@@ -68,17 +70,22 @@ class SpSynthGraphDataset(mydataset.MyDataset):
                          key='senders',
                          dtype='int32',
                          description='Sending nodes for edges'),
-      'adjmat':
+      'adj_mat':
            tf_helpers.SparseTensorFeature(
-                         key='adjmat',
+                         key='adj_mat',
                          shape=[d, d],
                          description='Sparse adjacency matrix of graph'),
+      'true_emb':
+           tf_helpers.SparseTensorFeature(
+                         key='true_emb',
+                         shape=[d, p],
+                         description='Sparse ground truth embedding of graph'),
     }
     self.graph_keys = [
       'n_node', 'nodes', 'n_edge', 'edges', 'receivers', 'senders'
     ]
-    self.other_keys = [ 'adjmat' ]
     # self.other_keys = [ ]
+    self.other_keys = list(set(self.features.keys()) - set(self.graph_keys))
     self.item_keys = self.graph_keys + self.other_keys
 
   def get_placeholders(self):
@@ -87,7 +94,7 @@ class SpSynthGraphDataset(mydataset.MyDataset):
   def gen_init_emb_noise(self, init_emb):
     return init_emb
 
-  def gen_adjmat_noise(self, true_emb):
+  def gen_adj_mat_noise(self, true_emb):
     adj_mat = np.dot(true_emb,true_emb.T) - np.eye(true_emb.shape[0])
     # if np.random.randn() > 0:
     #   d = self.n_pts*self.n_views
@@ -107,7 +114,7 @@ class SpSynthGraphDataset(mydataset.MyDataset):
     InitEmbeddings = np.concatenate([ pose_graph.get_proj(i).d
                                       for i in range(pose_graph.n_views) ], 0)
     # Graph objects
-    AdjMat = self.gen_adjmat_noise(TrueEmbedding)
+    AdjMat = self.gen_adj_mat_noise(TrueEmbedding)
     InitEmbeddings = self.gen_init_emb_noise(InitEmbeddings)
     # Build spart graph representation
     G_nx = nx.from_numpy_matrix(AdjMat, create_using=nx.DiGraph)
@@ -119,9 +126,8 @@ class SpSynthGraphDataset(mydataset.MyDataset):
     nx.set_edge_attributes(G_nx, edges_attrs, 'features')
     G = utils_np.networkx_to_data_dict(G_nx)
     G['globals'] = np.array([0,0])
-    idx = np.where(AdjMat != 0.0)
-    value = AdjMat[idx]
-    G['adjmat'] = (idx, value)
+    G['adj_mat'] = np_dense_to_sparse(AdjMat)
+    G['true_emb'] = np_dense_to_sparse(TrueEmbedding)
     return G
 
   def load_batch(self, mode):

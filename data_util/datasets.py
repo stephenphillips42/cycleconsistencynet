@@ -29,6 +29,6 @@ def get_dataset(opts):
     return real_dataset.KNNRome16KDataset(opts, opts.dataset_params)
   elif opts.dataset in [ 'rome16kgeom0', 'rome16kgeom4view0' ]:
     return real_dataset.GeomKNNRome16KDataset(opts, opts.dataset_params)
-  elif opts.dataset in [ 'spsynth0' ]:
+  elif opts.dataset in [ 'spsynth0', 'spsynth_test' ]:
     return spgraph_dataset.SpSynthGraphDataset(opts, opts.dataset_params)
 
