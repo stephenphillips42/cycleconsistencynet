@@ -295,7 +295,6 @@ def train(opts):
       ttime = stime
       while step != train_steps and ctime - stime <= train_time:
         start_time = time.time()
-        x = sess.run([ output ])
         _, loss_ = sess.run([ train_op, loss ])
         ctime = time.time()
         if (step % opts.log_steps) == 0:

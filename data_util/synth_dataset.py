@@ -2,19 +2,95 @@
 import numpy as np
 import os
 
-from data_util import parent_dataset # import GraphSimDataset
+from data_util import mydataset
+from data_util import tf_helpers
+from data_util import synth_graphs
 
-
-class GraphSimNoisyDataset(parent_dataset.GraphSimDataset):
+class GraphSimDataset(mydataset.MyDataset):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    parent_dataset.GraphSimDataset.__init__(self, opts, params)
+    super(GraphSimDataset, self).__init__(opts, params)
+    d = self.n_pts*self.n_views
+    self.features['Mask'] = \
+           tf_helpers.TensorFeature(
+                 key='Mask',
+                 shape=[d, d],
+                 dtype=self.dtype,
+                 description='Mask for valid values of matrix')
+    self.features['MaskOffset'] = \
+           tf_helpers.TensorFeature(
+                 key='MaskOffset',
+                 shape=[d, d],
+                 dtype=self.dtype,
+                 description='Mask offset for loss')
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = parent_dataset.GraphSimDataset.gen_sample(self)
+    params = self.dataset_params
+    pose_graph = synth_graphs.PoseGraph(self.dataset_params,
+                                        n_pts=self.n_pts,
+                                        n_views=self.n_views)
+    sz = (pose_graph.n_pts, pose_graph.n_pts)
+    sz2 = (pose_graph.n_views, pose_graph.n_views)
+    if params.sparse:
+      mask = np.kron(pose_graph.adj_mat,np.ones(sz))
+    else:
+      mask = np.kron(np.ones(sz2)-np.eye(sz2[0]),np.ones(sz))
+
+    perms_ = [ np.eye(pose_graph.n_pts)[:,pose_graph.get_perm(i)]
+               for i in range(pose_graph.n_views) ]
+    # Embedding objects
+    TrueEmbedding = np.concatenate(perms_, 0)
+    InitEmbeddings = np.concatenate([ pose_graph.get_proj(i).d
+                                      for i in range(pose_graph.n_views) ], 0)
+
+    # Graph objects
+    if not params.soft_edges:
+      if params.descriptor_noise_var == 0:
+        AdjMat = np.dot(TrueEmbedding,TrueEmbedding.T)
+        if params.sparse:
+          AdjMat = AdjMat * mask
+        else:
+          AdjMat = AdjMat - np.eye(len(AdjMat))
+        Degrees = np.diag(np.sum(AdjMat,0))
+    else:
+      if params.sparse and params.descriptor_noise_var > 0:
+        AdjMat = pose_graph.get_feature_matching_mat()
+        Degrees = np.diag(np.sum(AdjMat,0))
+
+    # Laplacian objects
+    Ahat = AdjMat + np.eye(*AdjMat.shape)
+    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
+    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
+
+    # Mask objects
+    neg_offset = np.kron(np.eye(sz2[0]),np.ones(sz)-np.eye(sz[0]))
+    Mask = AdjMat - neg_offset
+    MaskOffset = neg_offset
+    return {
+      'InitEmbeddings': InitEmbeddings.astype(self.dtype),
+      'AdjMat': AdjMat.astype(self.dtype),
+      'Degrees': Degrees.astype(self.dtype),
+      'Laplacian': Laplacian.astype(self.dtype),
+      'Mask': Mask.astype(self.dtype),
+      'MaskOffset': MaskOffset.astype(self.dtype),
+      'TrueEmbedding': TrueEmbedding.astype(self.dtype),
+      'NumViews': pose_graph.n_views,
+      'NumPoints': pose_graph.n_pts,
+    }
+
+class GraphSimNoisyDataset(GraphSimDataset):
+  """Dataset for Cycle Consistency graphs"""
+  MAX_IDX=7000
+
+  def __init__(self, opts, params):
+    GraphSimDataset.__init__(self, opts, params)
+
+  def gen_sample(self):
+    # Pose graph and related objects
+    sample = super(GraphSimNoisyDataset, self).gen_sample()
 
     # Graph objects
     p = self.n_pts
@@ -35,16 +111,16 @@ class GraphSimNoisyDataset(parent_dataset.GraphSimDataset):
 
     return sample
 
-class GraphSimGaussDataset(parent_dataset.GraphSimDataset):
+class GraphSimGaussDataset(GraphSimDataset):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    parent_dataset.GraphSimDataset.__init__(self, opts, params)
+    super(GraphSimGaussDataset, self).__init__(self, opts, params)
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = parent_dataset.GraphSimDataset.gen_sample(self)
+    sample = super(GraphSimGaussDataset, self).gen_sample()
 
     # Graph objects
     p = self.n_pts
@@ -66,16 +142,16 @@ class GraphSimGaussDataset(parent_dataset.GraphSimDataset):
 
     return sample
 
-class GraphSimSymGaussDataset(parent_dataset.GraphSimDataset):
+class GraphSimSymGaussDataset(GraphSimDataset):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    parent_dataset.GraphSimDataset.__init__(self, opts, params)
+    super(GraphSimSymGaussDataset, self).__init__(self, opts, params)
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = parent_dataset.GraphSimDataset.gen_sample(self)
+    sample = super(GraphSimSymGaussDataset, self).gen_sample()
 
     # Graph objects
     p = self.n_pts
@@ -98,16 +174,16 @@ class GraphSimSymGaussDataset(parent_dataset.GraphSimDataset):
 
     return sample
 
-class GraphSimPairwiseDataset(parent_dataset.GraphSimDataset):
+class GraphSimPairwiseDataset(GraphSimDataset):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    parent_dataset.GraphSimDataset.__init__(self, opts, params)
+    super(GraphSimPairwiseDataset, self).__init__(opts, params)
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = parent_dataset.GraphSimDataset.gen_sample(self)
+    sample = super(GraphSimPairwiseDataset, self).gen_sample()
 
     # Graph objects
     p = self.n_pts
@@ -138,12 +214,12 @@ class GraphSimPairwiseDataset(parent_dataset.GraphSimDataset):
 
     return sample
 
-class GraphSimOutlierDataset(parent_dataset.GraphSimDataset):
+class GraphSimOutlierDataset(GraphSimDataset):
   """Dataset for Cycle Consistency graphs"""
   MAX_IDX=7000
 
   def __init__(self, opts, params):
-    parent_dataset.GraphSimDataset.__init__(self, opts, params)
+    super(GraphSimOutlierDataset, self).__init__(self, opts, params)
 
   def create_outlier_indeces(self, o, n):
     ind_pairs = [ (x,y) for x in range(n) for y in range(x+1,n) ]
@@ -161,7 +237,7 @@ class GraphSimOutlierDataset(parent_dataset.GraphSimDataset):
 
   def gen_sample(self):
     # Pose graph and related objects
-    sample = parent_dataset.GraphSimDataset.gen_sample(self)
+    sample = super(GraphSimOutlierDataset, self).gen_sample()
 
     # Graph objects
     p = self.n_pts

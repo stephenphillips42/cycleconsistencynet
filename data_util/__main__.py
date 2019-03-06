@@ -4,7 +4,7 @@ import os
 
 import options
 from data_util import datasets
-from data_util import noisy_dataset
+from data_util import synth_dataset
 from data_util import real_dataset
 
 opts = options.get_opts()

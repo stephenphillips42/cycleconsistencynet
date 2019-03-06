@@ -1,31 +1,26 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import os
+import sys
 import glob
 import datetime
 import tqdm
 
 import tensorflow as tf
 
-import sim_graphs
 from data_util import tf_helpers
 
-class GraphSimDataset(object):
+class MyDataset(object):
   """Dataset for Cycle Consistency graphs"""
-  MAX_IDX=7000
+  MAX_IDX=500
 
   def __init__(self, opts, params):
     self.opts = opts
     self.dataset_params = params
     self.data_dir = params.data_dir
     self.dtype = params.dtype
-    # TODO: Fix this - this isn't right, we need to make it a function!
-    if params.fixed_size:
-      self.n_views = params.views[-1]
-      self.n_pts = params.points[-1]
-    else:
-      self.n_views = np.random.randint(params.views[0], params.views[1]+1)
-      self.n_pts = np.random.randint(params.points[0], params.points[1]+1)
+    self.n_views = params.views[-1]
+    self.n_pts = params.points[-1]
     d = self.n_pts*self.n_views
     e = params.descriptor_dim
     p = params.points[-1]
@@ -55,18 +50,6 @@ class GraphSimDataset(object):
                          shape=[d, d],
                          dtype=self.dtype,
                          description='Alternate Laplacian matrix for graph'),
-      'Mask':
-           tf_helpers.TensorFeature(
-                         key='Mask',
-                         shape=[d, d],
-                         dtype=self.dtype,
-                         description='Mask for valid values of matrix'),
-      'MaskOffset':
-           tf_helpers.TensorFeature(
-                         key='MaskOffset',
-                         shape=[d, d],
-                         dtype=self.dtype,
-                         description='Mask offset for loss'),
       'TrueEmbedding':
            tf_helpers.TensorFeature(
                          key='TrueEmbedding',
@@ -86,66 +69,15 @@ class GraphSimDataset(object):
   def process_features(self, loaded_features):
     features = {}
     for k, feat in self.features.items():
-      features[k] = feat.get_feature_write(loaded_features[k])
+      features.update(feat.get_feature_write(loaded_features[k]))
     return features
 
   def augment(self, keys, values):
     return keys, values
 
   def gen_sample(self):
-    # Pose graph and related objects
-    params = self.dataset_params
-    pose_graph = sim_graphs.PoseGraph(self.dataset_params,
-                                      n_pts=self.n_pts,
-                                      n_views=self.n_views)
-    sz = (pose_graph.n_pts, pose_graph.n_pts)
-    sz2 = (pose_graph.n_views, pose_graph.n_views)
-    if params.sparse:
-      mask = np.kron(pose_graph.adj_mat,np.ones(sz))
-    else:
-      mask = np.kron(np.ones(sz2)-np.eye(sz2[0]),np.ones(sz))
-
-    perms_ = [ np.eye(pose_graph.n_pts)[:,pose_graph.get_perm(i)]
-               for i in range(pose_graph.n_views) ]
-    # Embedding objects
-    TrueEmbedding = np.concatenate(perms_, 0)
-    InitEmbeddings = np.concatenate([ pose_graph.get_proj(i).d
-                                      for i in range(pose_graph.n_views) ], 0)
-
-    # Graph objects
-    if not params.soft_edges:
-      if params.descriptor_noise_var == 0:
-        AdjMat = np.dot(TrueEmbedding,TrueEmbedding.T)
-        if params.sparse:
-          AdjMat = AdjMat * mask
-        else:
-          AdjMat = AdjMat - np.eye(len(AdjMat))
-        Degrees = np.diag(np.sum(AdjMat,0))
-    else:
-      if params.sparse and params.descriptor_noise_var > 0:
-        AdjMat = pose_graph.get_feature_matching_mat()
-        Degrees = np.diag(np.sum(AdjMat,0))
-
-    # Laplacian objects
-    Ahat = AdjMat + np.eye(*AdjMat.shape)
-    Dhat_invsqrt = np.diag(1/np.sqrt(np.sum(Ahat,0)))
-    Laplacian = np.dot(Dhat_invsqrt, np.dot(Ahat, Dhat_invsqrt))
-
-    # Mask objects
-    neg_offset = np.kron(np.eye(sz2[0]),np.ones(sz)-np.eye(sz[0]))
-    Mask = AdjMat - neg_offset
-    MaskOffset = neg_offset
-    return {
-      'InitEmbeddings': InitEmbeddings.astype(self.dtype),
-      'AdjMat': AdjMat.astype(self.dtype),
-      'Degrees': Degrees.astype(self.dtype),
-      'Laplacian': Laplacian.astype(self.dtype),
-      'Mask': Mask.astype(self.dtype),
-      'MaskOffset': MaskOffset.astype(self.dtype),
-      'TrueEmbedding': TrueEmbedding.astype(self.dtype),
-      'NumViews': pose_graph.n_views,
-      'NumPoints': pose_graph.n_pts,
-    }
+    print("Error: Unable to generate sample - Not Implemented")
+    sys.exit(1)
 
   def get_placeholders(self):
     return { k:v.get_placeholder() for k, v in self.features.items() }
@@ -153,7 +85,7 @@ class GraphSimDataset(object):
   def convert_dataset(self, out_dir, mode):
     """Writes synthetic flow data in .mat format to a TF record file."""
     params = self.dataset_params
-    fname = '{}-{:02d}.tfrecords'
+    fname = '{}-{:03d}.tfrecords'
     outfile = lambda idx: os.path.join(out_dir, fname.format(mode, idx))
     if not os.path.isdir(out_dir):
       os.makedirs(out_dir)
@@ -229,7 +161,7 @@ class GraphSimDataset(object):
     params = self.dataset_params
     opts = self.opts
     assert mode in params.sizes, "Mode {} not supported".format(mode)
-    data_source_name = mode + '-[0-9][0-9].tfrecords'
+    data_source_name = mode + '-*.tfrecords'
     data_sources = glob.glob(os.path.join(self.data_dir, mode, data_source_name))
     if opts.shuffle_data and mode != 'test':
       np.random.shuffle(data_sources) # Added to help the shuffle

@@ -8,8 +8,12 @@ def batch_matmul(x,y):
   return tf.einsum('bik,bkj->bij', x, y)
 
 def get_sim(x):
-  x_T = tf.transpose(x, perm=[0, 2, 1])
-  return batch_matmul(x, x_T)
+  if isinstance(x, tf.SparseTensor):
+    x_T = tf.sparse_transpose(x, perm=[0, 2, 1])
+    return batch_matmul(x, x_T)
+  else:
+    x_T = tf.transpose(x, perm=[0, 2, 1])
+    return batch_matmul(x, x_T)
 
 def get_tf_activ(activ):
   if activ == 'relu':
@@ -37,6 +41,7 @@ def bce_loss(labels, logits, add_loss=True):
     tf.losses.add_loss(bce_)
   return bce_
 
+# Standard losses
 def l1_loss(x, y, add_loss=True):
   l1_ = tf.reduce_mean(tf.abs(x - y))
   if add_loss:
@@ -52,6 +57,33 @@ def l2_loss(x, y, add_loss=True):
 def l1_l2_loss(x, y, add_loss=True):
   l1_ = tf.reduce_mean(tf.abs(x - y))
   l2_ = tf.reduce_mean(tf.square(x - y))
+  l1l2_ = l1_ + l2_
+  if add_loss:
+    tf.losses.add_loss(l1l2_)
+  return l1l2_
+
+# Sparse losses
+def l1_loss_sp(x, y, add_loss=True):
+  """L1 loss, x should be a Tensor, y SparseTensor"""
+  diff = tf.sparse_add(-x,y)
+  l1_ = tf.reduce_mean(tf.abs(diff))
+  if add_loss:
+    tf.losses.add_loss(l1_)
+  return l1_
+
+def l2_loss_sp(x, y, add_loss=True):
+  """L2 loss, x should be a Tensor, y SparseTensor"""
+  diff = tf.sparse_add(-x,y)
+  l2_ = tf.reduce_mean(tf.square(diff))
+  if add_loss:
+    tf.losses.add_loss(l2_)
+  return l2_
+
+def l1_l2_loss_sp(x, y, add_loss=True):
+  """L1 + L2 loss, x should be a Tensor, y SparseTensor"""
+  diff = tf.sparse_add(-x,y)
+  l1_ = tf.reduce_mean(tf.abs(diff))
+  l2_ = tf.reduce_mean(tf.square(diff))
   l1l2_ = l1_ + l2_
   if add_loss:
     tf.losses.add_loss(l1l2_)
