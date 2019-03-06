@@ -14,7 +14,6 @@ from graph_nets import utils_tf
 from graph_nets import modules
 
 from data_util import mydataset
-from data_util import synth_graphs
 from data_util import tf_helpers
 
 def np_dense_to_sparse(arr):
@@ -75,11 +74,16 @@ class SpSynthGraphDataset(mydataset.MyDataset):
                          key='adj_mat',
                          shape=[d, d],
                          description='Sparse adjacency matrix of graph'),
-      'true_emb':
+      'true_adj_mat':
            tf_helpers.SparseTensorFeature(
-                         key='true_emb',
-                         shape=[d, p],
-                         description='Sparse ground truth embedding of graph'),
+                         key='true_adj_mat',
+                         shape=[d, d],
+                         description='Sparse ground truth adjacency of graph'),
+      'true_match':
+           tf_helpers.VarLenIntListFeature(
+                         key='true_match',
+                         dtype='int64',
+                         description='Ground truth matches of graph'),
     }
     self.graph_keys = [
       'n_node', 'nodes', 'n_edge', 'edges', 'receivers', 'senders'
@@ -91,8 +95,14 @@ class SpSynthGraphDataset(mydataset.MyDataset):
   def get_placeholders(self):
     return { k:v.get_placeholder() for k, v in self.features.items() }
 
-  def gen_init_emb_noise(self, init_emb):
-    return init_emb
+  def gen_init_emb(self, matches):
+    params = self.dataset_params
+    desc_var = params.descriptor_var
+    var = params.descriptor_noise_var
+    desc_dim = params.descriptor_dim
+    point_descs = desc_var*np.random.randn(self.n_pts, desc_dim)
+    desc_noise = var*np.random.randn(len(matches), desc_dim)
+    return point_descs[matches] + desc_noise
 
   def gen_adj_mat_noise(self, true_emb):
     adj_mat = np.dot(true_emb,true_emb.T) - np.eye(true_emb.shape[0])
@@ -104,18 +114,14 @@ class SpSynthGraphDataset(mydataset.MyDataset):
   def gen_sample(self):
     # Pose graph and related objects
     params = self.dataset_params
-    pose_graph = synth_graphs.PoseGraph(params,
-                                        n_pts=self.n_pts,
-                                        n_views=self.n_views)
     # Embedding objects
-    perms_ = [ np.eye(pose_graph.n_pts)[:,pose_graph.get_perm(i)]
-               for i in range(pose_graph.n_views) ]
-    TrueEmbedding = np.concatenate(perms_, 0)
-    InitEmbeddings = np.concatenate([ pose_graph.get_proj(i).d
-                                      for i in range(pose_graph.n_views) ], 0)
+    matches_ = np.concatenate([ np.random.permutation(self.n_pts)
+                                for i in range(self.n_views) ])
+    TrueEmbedding = np.eye(self.n_pts)[matches_]
+    InitEmbeddings = self.gen_init_emb(matches_)
     # Graph objects
+    GTAdjMat = np.dot(TrueEmbedding, TrueEmbedding.T)
     AdjMat = self.gen_adj_mat_noise(TrueEmbedding)
-    InitEmbeddings = self.gen_init_emb_noise(InitEmbeddings)
     # Build spart graph representation
     G_nx = nx.from_numpy_matrix(AdjMat, create_using=nx.DiGraph)
     node_attrs = { i : InitEmbeddings[i].astype(np.float32)
@@ -127,7 +133,8 @@ class SpSynthGraphDataset(mydataset.MyDataset):
     G = utils_np.networkx_to_data_dict(G_nx)
     G['globals'] = np.array([0,0])
     G['adj_mat'] = np_dense_to_sparse(AdjMat)
-    G['true_emb'] = np_dense_to_sparse(TrueEmbedding)
+    G['true_adj_mat'] = np_dense_to_sparse(GTAdjMat)
+    G['true_match'] = matches_
     return G
 
   def load_batch(self, mode):

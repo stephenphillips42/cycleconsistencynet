@@ -32,11 +32,12 @@ def mygraphprint(x):
   print(x.n_edge)
   print(x.nodes.shape)
 
-sys.argv.extend(['--dataset', 'spsynth0',
+sys.argv.extend(['--dataset', 'synth0',
                  '--datasets_dir', '/data',
                  '--rome16k_dir', '/mount/data/Rome16K',
                  '--batch_size', '2',
                  '--save_dir', 'save/testing'])
+print(sys.argv)
 opts = options.get_opts()
 dtype = opts.dataset_params.dtype
 LD_FILE_SIZE = 128
@@ -70,6 +71,8 @@ print(network)
 print("data")
 dataset = data_util.datasets.get_dataset(opts)
 sample = dataset.load_batch('train')
+print(sample.keys())
+print(sample['true_match'])
 
 print("output")
 output = network(sample['graph'])
@@ -81,6 +84,10 @@ print(output_sim)
 diff = tf.sparse_add(-output_sim, sample['adj_mat'])
 loss = tf.reduce_mean(tf.abs(diff))
 
+b = opts.batch_size
+v = opts.dataset_params.views[-1]
+p = opts.dataset_params.points[-1]
+
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True
 with tf.Session(config=config) as sess:
@@ -88,7 +95,7 @@ with tf.Session(config=config) as sess:
   init=tf.global_variables_initializer()
   sess.run(init)
   # for i in range(opts.dataset_params.sizes['train'] // opts.batch_size):
-  for i in range(10):
+  for i in range(2):
     # import pdb; pdb.set_trace()
     [ s, osim, l ] = sess.run([ sample, output_sim, loss ])
     nodes = s['graph'].nodes
