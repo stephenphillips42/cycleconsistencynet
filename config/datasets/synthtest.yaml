@@ -1,0 +1,15 @@
+sizes: { 'train': 400, 'test': 30 }
+fixed_size: True
+views: [3]
+points: [25]
+points_scale: 1
+knn: 4
+scale: 3
+descriptor_dim: 12
+descriptor_var: 1.0
+descriptor_noise_var: 0
+noise_level: 0.1
+num_repeats: 1
+num_outliers: 0
+dtype: 'float32'
+

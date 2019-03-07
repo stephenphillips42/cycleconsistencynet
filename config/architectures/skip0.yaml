@@ -1,0 +1,5 @@
+architecture_type: 'skip'
+layer_lens: [ 32, 64 ]
+activ: relu
+normalize_emb: True
+

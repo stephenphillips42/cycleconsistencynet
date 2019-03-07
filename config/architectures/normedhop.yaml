@@ -1,0 +1,8 @@
+architecture_type: 'normedhop'
+layer_lens: [ 32, 64, 128, 256 ]
+activ: relu
+hop_layers: [ 1, 3 ]
+start_normed: 1
+group_size: 32
+normalize_emb: True
+
