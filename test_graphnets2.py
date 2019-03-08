@@ -32,7 +32,7 @@ def mygraphprint(x):
   print(x.n_edge)
   print(x.nodes.shape)
 
-sys.argv.extend(['--dataset', 'synth0',
+sys.argv.extend(['--dataset', 'synth3view',
                  '--datasets_dir', '/data',
                  '--rome16k_dir', '/mount/data/Rome16K',
                  '--batch_size', '2',

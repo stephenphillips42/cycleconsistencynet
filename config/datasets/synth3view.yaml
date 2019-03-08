@@ -1,0 +1,10 @@
+sizes: { 'train': 40000, 'test': 3000 }
+# sizes: { 'train': 400, 'test': 300 }
+dataset_type: 'synth'
+views: [3]
+points: [25]
+descriptor_dim: 12
+descriptor_var: 1.0
+descriptor_noise_var: 0.05
+noise_level: 0.1
+dtype: 'float32'
