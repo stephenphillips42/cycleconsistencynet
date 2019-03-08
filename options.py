@@ -30,10 +30,6 @@ class DatasetParams(YamlLoader):
     fname = os.path.join('config', 'datasets', opts.dataset + '.yaml')
     super().__init__(fname)
     self.data_dir=os.path.join(opts.datasets_dir, opts.dataset)
-    if not os.path.exists(self.data_dir):
-      errstr = "ERROR: No files in {}, cannot use dataset"
-      print(errstr.format(self.data_dir))
-      sys.exit(1)
     default_sizes={ 'train': 40000, 'test': 3000 }
     if 'sizes' not in self.__dict__:
       self.sizes = default_sizes
