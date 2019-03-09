@@ -320,13 +320,13 @@ class Trainer(object):
 
 
 if __name__ == "__main__":
-  sys.argv.extend(['--dataset', 'synth0',
-                   '--architecture', 'basic0',
-                   '--datasets_dir', '/data',
-                   '--rome16k_dir', '/mount/data/Rome16K',
-                   '--test_freq_steps', '300',
-                   '--batch_size', '32',
-                   '--save_dir', 'save/testing'])
+  # sys.argv.extend(['--dataset', 'synth3view',
+  #                  '--architecture', 'basic0',
+  #                  '--datasets_dir', '/data',
+  #                  '--rome16k_dir', '/mount/data/Rome16K',
+  #                  '--test_freq_steps', '300',
+  #                  '--batch_size', '32',
+  #                  '--save_dir', 'save/testing'])
   opts = options.get_opts()
   trainer = Trainer(opts)
   trainer.train()

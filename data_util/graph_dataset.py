@@ -63,7 +63,7 @@ class GraphDataset(object):
                          description='Number of edges in this graph'),
       'globals':
            tf_helpers.VarLenFloatFeature(
-                         key='edges',
+                         key='globals',
                          shape=[None],
                          description='Edge features'),
       'edges':
