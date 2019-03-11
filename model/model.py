@@ -9,16 +9,21 @@ import tfutils
 import myutils
 import options
 
-from model import networks
+from model import graph_net_networks
+from model import adjmat_networks
 
 def get_network(opts, arch):
   regularizers = None
   if arch.architecture_type == 'basic':
-    network = networks.GraphBasicNetwork(opts, arch)
-  # elif arch.architecture_type == 'skip':
-  #   network = skip_networks.GraphSkipLayerNetwork(opts, arch)
-  # elif arch.architecture_type == 'skiphop':
-  #   network = skip_networks.GraphSkipHopLayerNetwork(opts, arch)
+    network = graph_net_networks.GraphBasicNetwork(opts, arch)
+  elif arch.architecture_type == 'skip':
+    network = graph_net_networks.GraphSkipNetwork(opts, arch)
+  elif arch.architecture_type == 'skiphop':
+    network = graph_net_networks.GraphSkipHopNetwork(opts, arch)
+  elif arch.architecture_type == 'adjmat0':
+    network = graph_net_networks.GraphSkipHopNetwork(opts, arch)
+  elif arch.architecture_type == 'adjmat0':
+    network = graph_net_networks.GraphSkipHopNetwork(opts, arch)
   # elif arch.architecture_type == 'normedhop':
   #   pass
   else:
