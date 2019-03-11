@@ -1,0 +1,6 @@
+architecture_type: 'skiphop'
+layer_lens: [ 32, 64, 128, 256, 256, 256, 256, 256 ]
+activ: relu
+skip_layers: [ 1, 4, 6 ]
+normalize_emb: True
+
