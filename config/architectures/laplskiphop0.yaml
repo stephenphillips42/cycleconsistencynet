@@ -1,7 +1,0 @@
-architecture_type: 'laplskiphop'
-layer_lens: [ 32, 64, 128, 256 ]
-activ: relu
-skip_layers: [ 1, 3 ]
-hop_layers: [ 1, 3 ]
-normalize_emb: True
-

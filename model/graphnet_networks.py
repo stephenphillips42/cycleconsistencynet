@@ -138,7 +138,7 @@ class GraphSkipHopNetwork(mygraphnetwork.MyGraphNetwork):
       self.final_linear = self.GraphLinear(self.final_embedding_dim,
                                           name="final_block")
       self._skips = {
-        skip_idx : self.GraphLinear(self._layer_lens[skip_idx], name="hop")
+        skip_idx : self.GraphLinear(self._layer_lens[skip_idx], name="skip")
         for skip_idx in self._skip_layers
       }
       self._hops = {

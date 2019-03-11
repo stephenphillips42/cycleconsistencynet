@@ -238,7 +238,7 @@ class Trainer(object):
     self._test_save['input_nodes'] = test_sample['graph'].nodes
     self._test_save['adj_mat'] = test_sample['adj_mat']
     self._test_save['true_match'] = test_sample['true_match']
-    self._test_save['output'] = network(test_sample['graph'])
+    self._test_save['output'] = network(test_sample)
     # Compute losses
     self._test_values['output_sim'] = \
         self.get_output_sim(self._test_save['output'])
@@ -291,7 +291,7 @@ class Trainer(object):
     # Build network
     network = model.get_network(opts, self.arch)
     # Get training output
-    out_graph = network(sample['graph'])
+    out_graph = network(sample)
     output_sim = self.get_output_sim(out_graph)
     loss = self.get_loss(sample, output_sim, test_mode=False, name='train')
     train_op = self.get_train_op(loss)

@@ -9,23 +9,16 @@ import tfutils
 import myutils
 import options
 
-from model import graph_net_networks
-from model import adjmat_networks
+from model import graphnet_networks
 
 def get_network(opts, arch):
   regularizers = None
   if arch.architecture_type == 'basic':
-    network = graph_net_networks.GraphBasicNetwork(opts, arch)
+    network = graphnet_networks.GraphBasicNetwork(opts, arch)
   elif arch.architecture_type == 'skip':
-    network = graph_net_networks.GraphSkipNetwork(opts, arch)
+    network = graphnet_networks.GraphSkipNetwork(opts, arch)
   elif arch.architecture_type == 'skiphop':
-    network = graph_net_networks.GraphSkipHopNetwork(opts, arch)
-  elif arch.architecture_type == 'adjmat0':
-    network = graph_net_networks.GraphSkipHopNetwork(opts, arch)
-  elif arch.architecture_type == 'adjmat0':
-    network = graph_net_networks.GraphSkipHopNetwork(opts, arch)
-  # elif arch.architecture_type == 'normedhop':
-  #   pass
+    network = graphnet_networks.GraphSkipHopNetwork(opts, arch)
   else:
     print("ERROR: {} not implemented yet".format(arch.architecture_type))
     sys.exit(1)

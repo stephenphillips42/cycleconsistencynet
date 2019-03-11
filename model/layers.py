@@ -320,12 +320,12 @@ class LaplacianGraphSkipLayer(LaplacianGraphLayer):
                  name=name)
     self._activ = tfutils.get_tf_activ(activation)
     self._weight = {
-      "w" : None
-      "u" : None
+      "w" : None,
+      "u" : None,
     }
     self._bias = {
-      "b" : None
-      "c" : None
+      "b" : None,
+      "c" : None,
     }
     self.possible_keys = self.get_possible_initializer_keys(use_bias=use_bias)
 
@@ -402,7 +402,7 @@ class LaplacianGraphSkipLayer(LaplacianGraphLayer):
       tf.add_to_collection('weights', self._u)
     preactiv_ = tfutils.matmul(inputs, self._w)
     preactiv = tfutils.batch_matmul(laplacian, preactiv_)
-    skip = tfutils.matmul(inputs, , self._weight['u'])
+    skip = tfutils.matmul(inputs, laplacian, self._weight['u'])
 
     if self._use_bias:
       bias_shape = (self.output_size,)
