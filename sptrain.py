@@ -55,6 +55,8 @@ class Trainer(object):
     else:
       self._test_freq = np.inf
     # For storing and printing test values
+    self.min_test_value = np.inf
+    self.test_saver = None
     self._test_values = {}
     self._test_save = {}
     self._test_logs = {}
@@ -246,6 +248,8 @@ class Trainer(object):
                                     self._test_values['output_sim'],
                                     test_mode=True,
                                     name='test')
+    # Build saver
+    self.test_saver = tf.train.Saver()
     # Display strings for test
     # TODO: Make this... not magical?
     self._test_disp = collections.OrderedDict([
@@ -281,6 +285,10 @@ class Trainer(object):
     np.savez(myutils.next_file(self.save_dir, 'test', '.npz'), **save_outputs)
     ctime = time.time()
     self.log(teststr.format(*strargs, ctime-start_time))
+    avg_loss = summed_vals['total_loss'] / self._test_values['nsteps']
+    if avg_loss < self.min_test_value:
+      fname = os.path.join(self.save_dir, 'best-loss-model')
+      self.test_saver.save(sess, fname)
 
 
   def train(self):
