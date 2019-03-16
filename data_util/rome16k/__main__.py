@@ -118,6 +118,11 @@ def process_scene_bundle(opts, bundle_file, scene_fname, tuples_fname):
     tuples_sizes.append(tsizes)
     end_time = time.time()
     myprint("Done with {}-tuples ({} sec)".format(k, end_time-start_time))
+    myprint("Saving tuples...")
+    tuples = [ [ x for i, x in enumerate(tups) if tsizes[i] <= opts.max_points ]
+                for tups, tsizes in zip(tuples_full, tuples_sizes) ]
+    with open(tuples_fname,'wb') as f:
+      pickle.dump(tuples, f, protocol=pickle.HIGHEST_PROTOCOL)
 
   tuples = [ [ x for i, x in enumerate(tups) if tsizes[i] <= opts.max_points ]
               for tups, tsizes in zip(tuples_full, tuples_sizes) ]

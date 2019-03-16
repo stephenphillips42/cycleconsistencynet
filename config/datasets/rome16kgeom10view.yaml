@@ -1,0 +1,8 @@
+sizes: { 'train': 400000, 'test': 6000, 'np_test': 1000 }
+dataset_type: 'rome16kgeom'
+views: [10]
+points: [80]
+descriptor_dim: 132 # 128 (sift) + 2 (x-y) + 1 (scale) + 1 (orien)
+rndseed: 9503
+dtype: 'float32'
+
