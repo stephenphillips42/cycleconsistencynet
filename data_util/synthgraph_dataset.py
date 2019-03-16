@@ -13,13 +13,8 @@ from graph_nets import utils_np
 from graph_nets import utils_tf
 from graph_nets import modules
 
-from data_util import mydataset
 from data_util import graph_dataset
 from data_util import tf_helpers
-
-def np_dense_to_sparse(arr):
-  idx = np.where(arr != 0.0)
-  return idx, arr[idx]
 
 class SynthGraphDataset(graph_dataset.GraphDataset):
   MAX_IDX=700
@@ -80,8 +75,8 @@ class SynthGraphDataset(graph_dataset.GraphDataset):
     nx.set_edge_attributes(G_nx, edges_attrs, 'features')
     G = utils_np.networkx_to_data_dict(G_nx)
     G['globals'] = np.array([0,0])
-    G['adj_mat'] = np_dense_to_sparse(AdjMat)
-    G['true_adj_mat'] = np_dense_to_sparse(GTAdjMat)
+    G['adj_mat'] = graph_dataset.np_dense_to_sparse(AdjMat)
+    G['true_adj_mat'] = graph_dataset.np_dense_to_sparse(GTAdjMat)
     G['true_match'] = matches_
     return G
 

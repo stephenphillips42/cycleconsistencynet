@@ -178,8 +178,9 @@ class GraphDataset(object):
     with open(os.path.join(out_dir, timestamp_file), 'w') as date_file:
       date_file.write('TFrecord created {}'.format(str(datetime.datetime.now())))
 
-  def create_np_dataset(self, out_dir, num_entries):
+  def create_np_dataset(self, out_dir):
     """Create npz files to store dataset"""
+    num_entries = self.dataset_params.sizes['np_test']
     fname = 'np_test-{:04d}.npz'
     outfile = lambda idx: os.path.join(out_dir, fname.format(idx))
     print('Writing dataset to {}'.format(out_dir))

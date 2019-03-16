@@ -1,4 +1,4 @@
-sizes: { 'train': 40000, 'test': 3000 }
+sizes: { 'train': 40000, 'test': 3000, 'np_test': 500 }
 dataset_type: 'synth'
 views: [6]
 points: [25]
