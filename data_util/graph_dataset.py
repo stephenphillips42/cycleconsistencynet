@@ -122,7 +122,10 @@ class GraphDataset(object):
                for k in item_keys ]
     dataset = tf.data.TFRecordDataset(data_sources)
     dataset = dataset.map(parser_op)
-    dataset = dataset.repeat(None)
+    if mode == 'test':
+      dataset = dataset.repeat(1)
+    else:
+      dataset = dataset.repeat(None)
     if opts.shuffle_data and mode != 'test':
       dataset = dataset.shuffle(buffer_size=5*opts.batch_size)
     # dataset = dataset.prefetch(buffer_size=opts.batch_size)
