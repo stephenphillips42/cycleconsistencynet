@@ -99,7 +99,7 @@ class GraphDataset(object):
 
   ######### Generic methods ##########
   # Hopefully after this point you won't have to subclass any of these
-  def load_batch(self, mode):
+  def load_batch(self, mode, repeat=None):
     """Return batch loaded from this dataset"""
     params = self.dataset_params
     opts = self.opts
@@ -122,10 +122,7 @@ class GraphDataset(object):
                for k in item_keys ]
     dataset = tf.data.TFRecordDataset(data_sources)
     dataset = dataset.map(parser_op)
-    if mode == 'test':
-      dataset = dataset.repeat(1)
-    else:
-      dataset = dataset.repeat(None)
+    dataset = dataset.repeat(repeat)
     if opts.shuffle_data and mode != 'test':
       dataset = dataset.shuffle(buffer_size=5*opts.batch_size)
     # dataset = dataset.prefetch(buffer_size=opts.batch_size)
