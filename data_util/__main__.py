@@ -27,6 +27,6 @@ for t in types:
 out_dir = os.path.join(opts.data_dir,'np_test')
 if not os.path.exists(out_dir):
   os.makedirs(out_dir)
-mydataset.create_np_dataset(out_dir, opts.dataset_params.sizes['test'])
+mydataset.create_np_dataset(out_dir)
 
 

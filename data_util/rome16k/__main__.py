@@ -37,10 +37,10 @@ def get_build_scene_opts():
                       default=80,
                       type=int,
                       help='Minimum overlap of points for connection')
-  parser.add_argument('--max_points',
-                      default=150,
-                      type=int,
-                      help='Maximum overlap of points for connection')
+  # parser.add_argument('--max_points',
+  #                     default=150,
+  #                     type=int,
+  #                     help='Maximum overlap of points for connection')
   parser.add_argument('--max_tuple_size',
                       default=4,
                       type=int,
@@ -77,10 +77,9 @@ def process_scene_bundle(opts, bundle_file, scene_fname, tuples_fname):
                              get_imsize=opts.save_imsizes,
                              verbose=opts.verbose > 1)
   parse.save_scene(scene, scene_fname, opts.verbose > 0)
-
+  # Early cutoff
   if not opts.build_tuples:
     return 
-
   ######### Build and save out k-tuples ###########
   n = len(scene.cams)
   cam_pts = lambda i: set([ f.point for f in scene.cams[i].features ])
@@ -119,14 +118,13 @@ def process_scene_bundle(opts, bundle_file, scene_fname, tuples_fname):
     end_time = time.time()
     myprint("Done with {}-tuples ({} sec)".format(k, end_time-start_time))
     myprint("Saving tuples...")
-    tuples = [ [ x for i, x in enumerate(tups) if tsizes[i] <= opts.max_points ]
+    tuples = [ [ (x, tsizes[i]) for i, x in enumerate(tups) ]
                 for tups, tsizes in zip(tuples_full, tuples_sizes) ]
     with open(tuples_fname,'wb') as f:
       pickle.dump(tuples, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-  tuples = [ [ x for i, x in enumerate(tups) if tsizes[i] <= opts.max_points ]
+  # Final save of Tuples
+  tuples = [ [ (x, tsizes[i]) for i, x in enumerate(tups) ]
               for tups, tsizes in zip(tuples_full, tuples_sizes) ]
-
   myprint("Saving tuples...")
   with open(tuples_fname,'wb') as f:
     pickle.dump(tuples, f, protocol=pickle.HIGHEST_PROTOCOL)

@@ -49,11 +49,11 @@ bundle_file_split = {
     '10.0.0.0',
     '11.0.0.0',
     '0.0.0.0',
-    '17.0.0.0',
     '16.0.0.0',
     '4.1.0.0',
   },
   'test' : {
+    '17.0.0.0',
     '11.2.0.0',
     '125.0.0.0',
     '41.0.0.0',
@@ -72,8 +72,8 @@ bundle_file_split = {
     '34.1.0.0',
   }
 }
-bundle_files = sorted([ k for k in bundle_file_info['test'] ] + \
-                      [ k for k in bundle_file_info['train'] ])
+bundle_files = sorted([ k for k in bundle_file_split['test'] ] + \
+                      [ k for k in bundle_file_split['train'] ])
 
 # Methods for getting image size
 URL_STR = 'http://www.flickr.com/photo_zoom.gne?id={}'

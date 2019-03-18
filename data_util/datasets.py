@@ -2,8 +2,8 @@
 import numpy as np
 import os
 
-from data_util import synth_dataset
-from data_util import real_dataset
+# from data_util import synth_dataset
+# from data_util import real_dataset
 from data_util import synthgraph_dataset as synthgraph
 from data_util import spreal_dataset as spreal
 

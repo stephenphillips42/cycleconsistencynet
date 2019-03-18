@@ -4,8 +4,10 @@ import os
 import sys
 import glob
 import datetime
+import random
 import tqdm
 import pickle
+import networkx as nx
 
 import tensorflow as tf
 from graph_nets import utils_np
@@ -19,7 +21,7 @@ class Rome16KGraphDataset(graph_dataset.GraphDataset):
   def __init__(self, opts, params):
     super().__init__(opts, params)
     self.rome16k_dir = opts.rome16k_dir
-    self.tuple_size = tuple_size
+    self.tuple_size = self.n_views
     self.tuple_file_sizes = self.get_tuple_file_sizes()
     p = self.n_pts
     v = self.n_views
@@ -50,23 +52,26 @@ class Rome16KGraphDataset(graph_dataset.GraphDataset):
     return os.path.join(self.rome16k_dir, 'scenes', parse.tuples_fname(bundle_file))
 
   def get_tuple_file_sizes(self):
-    # l = sorted(glob.glob(os.path.join(d, 'tuples.*')))
+    print("Extracting tuples...")
     tuple_file_sizes = { 'train': {}, 'test': {} }
-    for mode, bundle_files in bundle_file_split:
+    for mode, bundle_files in parse.bundle_file_split.items():
       for bundle_file in bundle_files:
-        fname = ''
+        fname = self.tuples_fname(bundle_file)
         with open(fname, 'rb') as f:
           ld = pickle.load(f)
-      tuple_file_sizes[mode][bundle_file] = \
-        { i+2: len(x) for i, x in enumerate(ld) }
+        tuple_file_sizes[mode][bundle_file] = \
+            { i+2: len(x) for i, x in enumerate(ld) }
+    print(tuple_file_sizes)
     return tuple_file_sizes
 
   def get_bundle_tuples(self, mode):
     tsize = self.tuple_size
-    np.random.seed((params.rndseed * hash(mode)) % 2**32)
+    rndseed = (self.dataset_params.rndseed * hash(mode)) % 2**32
+    np.random.seed(rndseed)
+    random.seed(rndseed)
     selmode = mode if mode != 'np_test' else 'test' # TODO: Hack...
     bundle_files = [ 
-      tname for tname, sizes in self.tuple_file_sizes[selmode]
+      tname for tname, sizes in self.tuple_file_sizes[selmode].items()
       if tsize in sizes and sizes[tsize] > 0
     ]
     all_tuples = []
@@ -74,18 +79,16 @@ class Rome16KGraphDataset(graph_dataset.GraphDataset):
       with open(self.tuples_fname(bundle_file), 'rb') as f:
         tuples_ = pickle.load(f)
       all_tuples.extend(
-        [ (bundle_file, tt) tuples_[tsize-2] ]
+        [ (bundle_file, tupl) for tupl in tuples_[tsize-2] ]
       )
-    sel_random = np.random.choice(all_tuples,
-                                  size=params.sizes[mode],
-                                  replace=False)
+    print(len(all_tuples))
+    sel_random = random.sample(all_tuples, self.dataset_params.sizes[mode])
     bundle_tuples = { bundle_file: [] for bundle_file in bundle_files }
     for bundle_file, tupl in sel_random:
       bundle_tuples[bundle_file].append(tupl)
     return bundle_tuples
 
   # New Convert dataset function - works quite differently than synth
-  # TODO: Fix the randomness somehow??
   def convert_dataset(self, out_dir, mode):
     """Writes synthetic flow data in .mat format to a TF record file."""
     params = self.dataset_params
@@ -118,7 +121,7 @@ class Rome16KGraphDataset(graph_dataset.GraphDataset):
         writer.write(example.SerializeToString())
         file_idx += 1
         pbar.update()
-
+    pbar.close()
     if writer: writer.close()
     # And save out a file with the creation time for versioning
     timestamp_file = '{}_timestamp.txt'.format(mode)
@@ -145,7 +148,7 @@ class Rome16KGraphDataset(graph_dataset.GraphDataset):
         np.savez(outfile(index), **features)
         index += 1
         pbar.update()
-
+    pbar.close()
     # And save out a file with the creation time for versioning
     timestamp_file = 'np_test_timestamp.txt'
     with open(os.path.join(out_dir, timestamp_file), 'w') as date_file:
@@ -207,11 +210,11 @@ class GeomKNNRome16KDataset(Rome16KGraphDataset):
     # We have to manually normalize these values as they are much larger than the others
     logscale = np.dot(perm, np.log(np.concatenate(scale_)) - 1.5).reshape(-1,1)
     orien = np.dot(perm,np.concatenate(orien_)).reshape(-1,1) / np.pi
+    desc_norms = np.sqrt(np.sum(descs**2, 1).reshape(-1, 1))
+    ndescs = descs / desc_norms
     # Finish the inital node embeddings
     init_emb = np.concatenate([ndescs,xy_pos,logscale,orien], axis=1)
     # Build Graph
-    desc_norms = np.sqrt(np.sum(descs**2, 1).reshape(-1, 1))
-    ndescs = descs / desc_norms
     Dinit = np.dot(ndescs,ndescs.T)
     Dmin = Dinit.min()
     Dmax = Dinit.max()
@@ -224,21 +227,21 @@ class GeomKNNRome16KDataset(Rome16KGraphDataset):
         # Perhaps not the most efficient... oh well
         Asub = np.copy(D[n*i:n*(i+1),n*j:n*(j+1)])
         for u in range(n):
-          Asub[u,Lsub[u].argsort()[:-k]] = 0
+          Asub[u,Asub[u].argsort()[:-k]] = 0
         A_[n*i:n*(i+1),n*j:n*(j+1)] = Asub
     adj_mat = np.maximum(A_, A_.T)
     # Build dataset ground truth
     true_emb = np.concatenate(perm_mats,axis=0)
     gt_adj_mat = np.dot(true_emb, true_emb.T)
-    matchs_ = np.concatenate(perms)
+    matches_ = np.concatenate(perms)
     rots = np.stack([ scene.cams[i].rot.T for i in tupl ], axis=0)
     trans = np.stack([ -np.dot(scene.cams[i].rot.T, scene.cams[i].trans)
                        for i in tupl ], axis=0)
     # Build spart graph representation
-    G_nx = nx.from_numpy_matrix(A, create_using=nx.DiGraph)
-    node_attrs = { i : InitEmbeddings[i].astype(np.float32)
+    G_nx = nx.from_numpy_matrix(adj_mat, create_using=nx.DiGraph)
+    node_attrs = { i : init_emb[i].astype(np.float32)
                    for i in range(len(G_nx)) }
-    edges_attrs = { (i, j) : np.array([ AdjMat[i,j] ]).astype(np.float32)
+    edges_attrs = { (i, j) : np.array([ adj_mat[i,j] ]).astype(np.float32)
                     for (i,j) in G_nx.edges }
     nx.set_node_attributes(G_nx, node_attrs, 'features')
     nx.set_edge_attributes(G_nx, edges_attrs, 'features')
