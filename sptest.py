@@ -57,9 +57,31 @@ def get_np_losses(opts, output_sim, matches):
   true_emb = np.eye(opts.dataset_params.points[-1])[matches]
   adjmat = np.dot(true_emb, true_emb.T).reshape(-1)
   output = output_sim.reshape(-1)
-  roc =  metrics.roc_auc_score(adjmat, output)
-  p_r =  metrics.average_precision_score(adjmat, output)
-  return { 'roc': roc, 'p_r': p_r }
+  # Standard losses
+  l1 = np.mean(np.abs(output-adjmat))
+  l2 = np.mean((output-adjmat)**2)
+  # Histogram losses
+  N = np.sum(adjmat);
+  M = np.sum(1-adjmat);
+  S = output*adjmat
+  D = output*(1-adjmat)
+  ssame = np.sum(S) / N;
+  ssame_std = np.sqrt(np.sum(S**2) / N - ssame**2);
+  sdiff = np.sum(D) / M;
+  sdiff_std = np.sqrt(np.sum(D**2) / M  - sdiff**2);
+  # Classification losses
+  roc = metrics.roc_auc_score(adjmat, output)
+  p_r = metrics.average_precision_score(adjmat, output)
+  return {
+    'l1': l1,
+    'l2': l2,
+    'ssame_m': ssame,
+    'ssame_std': ssame_std,
+    'sdiff_m': sdiff,
+    'sdiff_std': sdiff_std,
+    'roc': roc,
+    'p_r': p_r,
+  }
 
 
 def build_test_session(opts):
@@ -73,27 +95,31 @@ def test_values(opts):
   dataset = data_util.datasets.get_dataset(opts)
   network = model.get_network(opts, opts.arch)
   # Sample and network output
-  sample = dataset.load_batch('test', repeat=1)
-  print('sample')
-  print(sample)
+  # sample = dataset.load_batch('test', repeat=1)
+  # output_graph = network(sample)
+  # output_sim = get_test_output_sim(opts, output_graph)
+  # losses = get_tf_test_losses(opts, sample, output_sim)
+  # tf_evals = [ losses, output_sim, sample['true_match'] ] 
+  sample, placeholders = dataset.get_placeholders()
   output_graph = network(sample)
-  print('output_graph')
-  print(output_graph)
   output_sim = get_test_output_sim(opts, output_graph)
-  losses = get_tf_test_losses(opts, sample, output_sim)
-  tf_evals = [ losses, output_sim, sample['true_match'] ] 
+  tf_evals = [ output_sim, sample['true_match'] ] 
 
   # Tensorflow and logging operations
-  disp_string =  '{idx:06d}: ' \
-                 'L1: {l1:.03e},  L2: {l2:.03e}, ' \
-                 'Same sim: {ssame_m:.03e} +/- {ssame_var:.03e}, ' \
-                 'Diff sim: {sdiff_m:.03e} +/- {sdiff_var:.03e}, ' \
-                 'ROC: {roc:.03e}, ' \
-                 'P-R: {p_r:.03e}, ' \
-                 'Time: {time:.03e}'
+  disp_string = \
+      '{idx:06d}: {{' \
+      'time: {time:.03e}, ' \
+      'l1: {l1:.03e}, ' \
+      'l2: {l2:.03e}, ' \
+      'ssame: {{ m: {ssame_m:.03e}, std: {ssame_std:.03e} }}, ' \
+      'sdiff: {{ m: {sdiff_m:.03e}, std: {sdiff_std:.03e} }}, ' \
+      'roc: {roc:.03e}, ' \
+      'p_r: {p_r:.03e}, ' \
+      '}}' # End of lines
 
   # Build session
   glob_str = os.path.join(opts.dataset_params.data_dir, 'np_test', '*npz')
+  npz_files = sorted(glob.glob(glob_str))
   # vars_restore = [ v for v in tf.get_collection('weights') ] + \
   #                [ v for v in tf.get_collection('biases') ]
   vars_restore = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
@@ -102,15 +128,21 @@ def test_values(opts):
   with open(os.path.join(opts.save_dir, 'test_output.log'), 'a') as log_file:
     with build_test_session(opts) as sess:
       saver.restore(sess, tf.train.latest_checkpoint(opts.save_dir))
-      for i in range(opts.dataset_params.sizes['test']):
+      # for i in range(opts.dataset_params.sizes['test']):
+      for i, npz_file in enumerate(npz_files):
         start_time = time.time()
-        values_, output_sim_, matches_ = sess.run(tf_evals)
-        end_time = time.time()
-        values_['idx'] = i
-        values_['time'] = end_time - start_time
+        with open(npz_file, 'rb') as f:
+          npz_ld = dict(np.load(f))
+        feed_dict = dataset.get_feed_dict(placeholders, npz_ld)
+        stime = time.time()
+        output_sim_, matches_ = sess.run(tf_evals, feed_dict=feed_dict)
+        etime = time.time()
+        values_ = {'idx' : i, 'time': etime - stime }
         values_.update(get_np_losses(opts, output_sim_, matches_[0]))
         dstr = disp_string.format(**values_)
-        print(dstr)
+        end_time = time.time()
+        print(dstr + ' ({:.03f})'.format(end_time - start_time))
+        # print(dstr)
         log_file.write(dstr)
         log_file.write('\n')
 

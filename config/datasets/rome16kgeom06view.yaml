@@ -1,4 +1,4 @@
-sizes: { 'train': 60000, 'test': 5000, 'np_test': 500 }
+sizes: { 'train': 60000, 'test': 5000, 'np_test': 1000 }
 dataset_type: 'rome16kgeom'
 views: [6]
 points: [80]

@@ -159,6 +159,20 @@ class Trainer(object):
               hooks=all_hooks,
               config=config)
 
+  def build_speye(self):
+    b, v, p = self.tensor_sizes
+    x = np.arange(v*p).reshape(-1,1)
+    xb = np.arange(b).reshape(-1,1)
+    o = np.ones((v*p,1))
+    ob = np.ones((b,1))
+    concat_vals = [np.kron(xb ,o)] + [np.kron(ob, x)] * 2
+    speye_idxs = np.concatenate(concat_vals, 1).astype(np.int64)
+    speye_vals = np.ones(b*v*p).astype(np.float32)
+    speye = tf.SparseTensor(indices=tf.convert_to_tensor(speye_idxs),
+                            values=tf.convert_to_tensor(speye_vals),
+                            dense_shape=[ b, v*p, v*p ])
+    return speye
+
   ########## Training and testing functions ##########
   def get_output_sim(self, out_graph):
     out_shape = [self.batch_size, -1, self.final_embedding_dim]
@@ -194,9 +208,7 @@ class Trainer(object):
   def get_loss(self, sample, output_sim, test_mode=False, name='train'):
     # Compute loss
     sim_true = sample['true_adj_mat']
-    b, v, p = self.tensor_sizes
-    speye = tf.sparse_reshape(tf.sparse.eye(num_rows=v*p), [1, v*p, v*p])
-    sim = tf.sparse_add(sample['adj_mat'], tf.sparse_concat(0, [speye] * b))
+    sim = tf.sparse_add(sample['adj_mat'], self.build_speye())
     reconstr_loss = loss_fns[self.loss_type](output_sim, sim)
     if self.geometric_loss > 0:
       geo_loss = self.get_geometric_loss(sample, output_sim, name='geom_loss_{}'.format(name))

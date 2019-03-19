@@ -1,5 +1,7 @@
+import numpy as np
 import tensorflow as tf
 
+# TODO: Add concat feed_dict (not necessary for now)
 class MyFeature(object):
   """Custom class used for decoding a serialized int64 value."""
   def __init__(self, key, description, shape=[], dtype='float32'):
@@ -9,21 +11,15 @@ class MyFeature(object):
     self.shape = shape
     self.dtype = dtype
 
-  def get_placeholder(self):
-    return tf.placeholder(self.dtype, shape=[None] + self.shape)
-
-  def _get_feature_write(self, value):
-    return value
-
-  def _get_feature_read(self):
-    return tf.FixedLenFeature([], self.dtype)
-
   def get_feature_write(self, value):
     feat_write = self._get_feature_write(value)
     if type(feat_write) == dict:
       return feat_write
     else:
       return { self._key : feat_write }
+
+  def _get_feature_write(self, value):
+    return value
 
   def get_feature_read(self):
     feat_read = self._get_feature_read()
@@ -32,12 +28,36 @@ class MyFeature(object):
     else:
       return { self._key : feat_read }
 
+  def _get_feature_read(self):
+    return tf.FixedLenFeature([], self.dtype)
+
   def tensors_to_item(self, keys_to_tensors):
     tensor = keys_to_tensors[self._key]
     return tensor
   
   def stack(self, arr):
     return tf.stack(arr)
+
+  # Placeholder related stuff
+  def get_placeholder(self, batch=True):
+    placeholder = self._get_placeholder(batch)
+    if type(placeholder) == dict:
+      return placeholder
+    else:
+      return { self._key : placeholder }
+
+  def _get_placeholder(self, batch):
+    if batch:
+      return tf.placeholder(self.dtype, shape=[None] + self.shape)
+    else:
+      return tf.placeholder(self.dtype, shape=self.shape)
+
+  def get_feed_dict(self, values, batch=True):
+    value = values[self._key]
+    if batch:
+      return np.expand_dims(value, 0) # Add batch dimension
+    else:
+      return value
 
 
 class Int64Feature(MyFeature):
@@ -76,7 +96,6 @@ class TensorFeature(MyFeature):
     sess = tf.InteractiveSession()
     return tensor
      
-
 
 class VarLenIntListFeature(MyFeature):
   """Custom class used for decoding variable length int64 lists."""
@@ -120,6 +139,19 @@ class SparseTensorFeature(MyFeature):
   def __init__(self, key, shape, description):
     super().__init__(key, description, shape=shape, dtype='float32')
 
+  def _get_placeholder(self, batch=True):
+    return tf.sparse_placeholder(self.dtype)
+
+  def get_feed_dict(self, values, batch=True):
+    idx, value = value[0], value[1]
+    # idxs, vals = values[self._key + '_idx']
+    if batch:
+      idxs = np.stack((np.zeros_like(idxs[0]),) + idxs, -1)
+    else:
+      idxs = np.stack(idxs, -1)
+    return tf.SparseTensorValue(idxs, vals, [1] + self.shape)
+
+  # TODO: Make these change into concatenating for 1 index tensor
   def _get_feature_write(self, value):
     idx, value = value[0], value[1]
     sptensor_feature = { '{}_{:02d}'.format(self._key,i) :
