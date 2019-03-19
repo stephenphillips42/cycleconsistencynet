@@ -1,0 +1,53 @@
+This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: main.aux
+The style file: ieee.bst
+Database file #1: egbib.bib
+You're missing a field name---line 240 of file egbib.bib
+ : 
+ : #   title={Hierarchical Graph Representation Learning with Differentiable Pooling},
+(Error may have been on previous line)
+I'm skipping whatever remains of this entry
+Warning--there's a number but no series in yi2018learning
+You've used 32 entries,
+            2120 wiz_defined-function locations,
+            668 strings with 9635 characters,
+and the built_in function-call counts, 13074 in all, are:
+= -- 1289
+> -- 680
+< -- 15
++ -- 267
+- -- 234
+* -- 900
+:= -- 2078
+add.period$ -- 101
+call.type$ -- 32
+change.case$ -- 212
+chr.to.int$ -- 0
+cite$ -- 33
+duplicate$ -- 514
+empty$ -- 963
+format.name$ -- 234
+if$ -- 2794
+int.to.chr$ -- 0
+int.to.str$ -- 32
+missing$ -- 32
+newline$ -- 163
+num.names$ -- 64
+pop$ -- 242
+preamble$ -- 1
+purify$ -- 180
+quote$ -- 0
+skip$ -- 405
+stack$ -- 0
+substring$ -- 789
+swap$ -- 176
+text.length$ -- 15
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 128
+warning$ -- 1
+while$ -- 117
+width$ -- 34
+write$ -- 349
+(There was 1 error message)

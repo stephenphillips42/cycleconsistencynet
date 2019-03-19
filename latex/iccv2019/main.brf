@@ -1,0 +1,58 @@
+\backcite {lowe2004distinctive}{{1}{1}{section.1}}
+\backcite {fischler1981random}{{1}{1}{section.1}}
+\backcite {wang2017multi}{{1}{1}{section.1}}
+\backcite {yi2016lift}{{1}{1}{section.1}}
+\backcite {li2010location}{{1}{1}{figure.1}}
+\backcite {kipf2016semi}{{2}{2}{figure.2}}
+\backcite {li2010location}{{2}{1}{figure.2}}
+\backcite {fischler1981random}{{2}{2.1}{subsection.2.1}}
+\backcite {lowe2004distinctive}{{2}{2.1}{subsection.2.1}}
+\backcite {bay2006surf}{{2}{2.1}{subsection.2.1}}
+\backcite {calonder2012brief}{{2}{2.1}{subsection.2.1}}
+\backcite {mur2015orb}{{2}{2.1}{subsection.2.1}}
+\backcite {suh2015subgraph, hu2016distributable}{{2}{2.1}{subsection.2.1}}
+\backcite {pachauri2013solving}{{2}{2.2}{subsection.2.2}}
+\backcite {arrigoni2017synchronization}{{2}{2.2}{subsection.2.2}}
+\backcite {zhou2015multi}{{2}{2.2}{subsection.2.2}}
+\backcite {wang2017multi}{{2}{2.2}{subsection.2.2}}
+\backcite {leonardos2016distributed}{{3}{2.2}{subsection.2.2}}
+\backcite {tron2017fast}{{3}{2.2}{subsection.2.2}}
+\backcite {zagoruyko2015learning, yi2016lift, brachmann2017dsac}{{3}{2.3}{subsection.2.3}}
+\backcite {choy2016universal}{{3}{2.3}{subsection.2.3}}
+\backcite {yi2018learning}{{3}{2.3}{subsection.2.3}}
+\backcite {zhu2017unpaired}{{3}{2.3}{subsection.2.3}}
+\backcite {bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2016semi, scarselli2009graph, gama2018mimo, gama2018convolutional, battaglia2018relational}{{3}{2.4}{subsection.2.4}}
+\backcite {bruna2013spectral}{{3}{2.4}{subsection.2.4}}
+\backcite {bronstein2017geometric, kipf2016semi, scarselli2009graph, gama2018convolutional}{{3}{2.4}{subsection.2.4}}
+\backcite {gama2018mimo, gama2018convolutional}{{3}{2.4}{subsection.2.4}}
+\backcite {battaglia2018relational}{{3}{2.4}{subsection.2.4}}
+\backcite {suh2015subgraph, yi2018learning}{{3}{3.1}{subsection.3.1}}
+\backcite {bruna2013spectral}{{4}{3.2}{equation.3.1}}
+\backcite {bronstein2017geometric, gama2018mimo}{{4}{3.2}{equation.3.2}}
+\backcite {kipf2016semi}{{4}{3.2}{equation.3.2}}
+\backcite {gama2018convolutional}{{4}{3.2}{equation.3.4}}
+\backcite {battaglia2018relational}{{4}{3.2}{equation.3.4}}
+\backcite {wu2018group}{{4}{3.2}{equation.3.4}}
+\backcite {zhou2015multi, wang2017multi, leonardos2016distributed}{{4}{3.3}{equation.3.5}}
+\backcite {tron2014quotient}{{5}{3.4}{equation.3.9}}
+\backcite {kingma2014adam}{{5}{4.1}{subsection.4.1}}
+\backcite {li2010location}{{5}{4.2}{subsection.4.2}}
+\backcite {zhou2015multi}{{6}{3.4}{equation.3.12}}
+\backcite {zhou2015multi}{{6}{3.4}{equation.3.12}}
+\backcite {zhou2015multi}{{6}{3.4}{equation.3.12}}
+\backcite {leonardos2016distributed}{{6}{3.4}{equation.3.12}}
+\backcite {leonardos2016distributed}{{6}{3.4}{equation.3.12}}
+\backcite {leonardos2016distributed}{{6}{3.4}{equation.3.12}}
+\backcite {zhou2015multi}{{6}{3.4}{equation.3.12}}
+\backcite {zhou2015multi}{{6}{3.4}{equation.3.12}}
+\backcite {zhou2015multi}{{6}{3.4}{equation.3.12}}
+\backcite {leonardos2016distributed}{{6}{3.4}{equation.3.12}}
+\backcite {leonardos2016distributed}{{6}{3.4}{equation.3.12}}
+\backcite {leonardos2016distributed}{{6}{3.4}{equation.3.12}}
+\backcite {zhou2015multi}{{6}{2}{table.2}}
+\backcite {zhou2015multi}{{6}{2}{table.2}}
+\backcite {leonardos2016distributed}{{6}{2}{table.2}}
+\backcite {kingma2014adam}{{7}{4.2}{subsection.4.2}}
+\backcite {zhou2015multi}{{7}{4.2}{subsection.4.2}}
+\backcite {leonardos2016distributed}{{7}{4.2}{subsection.4.2}}
+\backcite {bremner1994hinton}{{7}{7}{figure.7}}
