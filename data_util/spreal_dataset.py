@@ -145,7 +145,10 @@ class Rome16KGraphDataset(graph_dataset.GraphDataset):
       scene = parse.load_scene(scene_name)
       for tupl in tuples:
         features = self.gen_sample_from_tuple(scene, tupl)
-        np.savez(outfile(index), **features)
+        np_features = {}
+        for k, v in self.features.items():
+          np_features.update(v.npz_value(features[k]))
+        np.savez(outfile(index), **np_features)
         index += 1
         pbar.update()
     pbar.close()

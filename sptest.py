@@ -127,7 +127,11 @@ def test_values(opts):
   saver = tf.train.Saver(vars_restore)
   with open(os.path.join(opts.save_dir, 'test_output.log'), 'a') as log_file:
     with build_test_session(opts) as sess:
-      saver.restore(sess, tf.train.latest_checkpoint(opts.save_dir))
+      best_loss_ckpt = os.path.join(os.path.abspath(opts.save_dir), 'best-loss-model')
+      if os.path.exists(best_loss_ckpt + '.meta'):
+        saver.restore(sess, best_loss_ckpt)
+      else:
+        saver.restore(sess, tf.train.latest_checkpoint(opts.save_dir))
       # for i in range(opts.dataset_params.sizes['test']):
       for i, npz_file in enumerate(npz_files):
         start_time = time.time()

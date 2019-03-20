@@ -59,6 +59,9 @@ class MyFeature(object):
     else:
       return value
 
+  def npz_value(self, value):
+    return { self._key: value }
+
 
 class Int64Feature(MyFeature):
   """Custom class used for decoding a serialized int64 value."""
@@ -139,18 +142,6 @@ class SparseTensorFeature(MyFeature):
   def __init__(self, key, shape, description):
     super().__init__(key, description, shape=shape, dtype='float32')
 
-  def _get_placeholder(self, batch=True):
-    return tf.sparse_placeholder(self.dtype)
-
-  def get_feed_dict(self, values, batch=True):
-    idx, value = value[0], value[1]
-    # idxs, vals = values[self._key + '_idx']
-    if batch:
-      idxs = np.stack((np.zeros_like(idxs[0]),) + idxs, -1)
-    else:
-      idxs = np.stack(idxs, -1)
-    return tf.SparseTensorValue(idxs, vals, [1] + self.shape)
-
   # TODO: Make these change into concatenating for 1 index tensor
   def _get_feature_write(self, value):
     idx, value = value[0], value[1]
@@ -182,5 +173,21 @@ class SparseTensorFeature(MyFeature):
   def stack(self, arr):
     return tf.sparse_concat(0, [ tf.sparse_reshape(x, [1] + self.shape)
                                  for x in arr ])
+
+  # Placeholder related
+  def _get_placeholder(self, batch=True):
+    return tf.sparse_placeholder(self.dtype)
+
+  def get_feed_dict(self, values, batch=True):
+    # idx, value = value[0], value[1]
+    idxs, vals = values[self._key + '_idx'], values[self._key + '_val']
+    if batch:
+      idxs = np.concatenate((np.zeros((len(idxs),1)), idxs), -1)
+    return tf.SparseTensorValue(idxs, vals, [1] + self.shape)
+
+  def npz_value(self, value):
+    idx_, val = value[0], value[1]
+    idx = np.stack(idx_, -1)
+    return { self._key + '_idx': idx, self._key + '_val': val }
 
 
