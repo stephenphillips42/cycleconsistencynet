@@ -23,7 +23,7 @@ sz = 300;
 if plot_vals
   fig = figure('Position', [floor(1.5*sz) 4*sz 3*sz 3*sz]); 
 end
-svals = [ 0.8 ];
+svals = [ 0.8 1.3 2.1 3.0 ];
 % Storage array
 ml_rocs = zeros(niters, length(svals));
 py_rocs = zeros(niters, length(svals));
@@ -96,13 +96,13 @@ end
 end
 
 for si = 1:length(svals)
-  ml_rocerr = abs(ml_rocs - my_rocs);
-  py_rocerr = abs(py_rocs - my_rocs);
-  ml_p_rerr = abs(ml_p_rs - my_p_rs);
-  py_p_rerr = abs(py_p_rs - my_p_rs);
-  mlpy_rocerr = abs(ml_rocs - py_rocs);
-  mlpy_p_rerr = abs(ml_p_rs - py_p_rs);
-  fprintf('Errs for mine vs x (s=%.04f)\n',svals(si))
+  ml_rocerr = abs(ml_rocs(:,si) - my_rocs(:,si));
+  py_rocerr = abs(py_rocs(:,si) - my_rocs(:,si));
+  ml_p_rerr = abs(ml_p_rs(:,si) - my_p_rs(:,si));
+  py_p_rerr = abs(py_p_rs(:,si) - my_p_rs(:,si));
+  mlpy_rocerr = abs(ml_rocs(:,si) - py_rocs(:,si));
+  mlpy_p_rerr = abs(ml_p_rs(:,si) - py_p_rs(:,si));
+  fprintf('\nErrs for mine vs x (s=%.04f)\n',svals(si))
   fprintf('  Mine-MATLAB: ROC: %.6e +/- %.06e, P-R: %.6e +/- %.06e\n', ...
           mean(ml_rocerr), std(ml_rocerr), mean(ml_p_rerr), std(ml_p_rerr));
   fprintf('  Mine-Python: ROC: %.6e +/- %.06e, P-R: %.6e +/- %.06e\n', ...
@@ -130,7 +130,7 @@ function [fpr, tpr, prec, reca, roc, p_r] = run_python(y_true, y_pred)
 writeNPY(y_true, '/tmp/mymatlab/y_true.npy')
 writeNPY(y_pred, '/tmp/mymatlab/y_pred.npy')
 % Get python version
-[status,cmdout] = system('python3 test.py /tmp/mymatlab');
+[status,cmdout] = system('python3 roc_test.py /tmp/mymatlab');
 vals = strsplit(cmdout);
 roc = str2double(vals{1});
 p_r = str2double(vals{2});
