@@ -35,7 +35,7 @@
 \begin{document}
 
 %%%%%%%%% TITLE
-\title{Learning Geometric and Cycle-Consistent Representations with Graph Convolutional Networks}
+\title{All Graphs Lead to Rome: Learning Geometric and Cycle-Consistent Representations with Graph Networks}
 
 \author{Stephen Phillips, Kostas Daniilidis \\
 GRASP Laboratory, University of Pennsylvania\\
@@ -54,7 +54,7 @@ GRASP Laboratory, University of Pennsylvania\\
 %%%%%%%%% ABSTRACT
 \begin{abstract}
     Image feature matching is a fundamental part of many geometric computer vision applications, and using multiple images can improve performance.
-    In this work, we formulate multi-image matching as a graph embedding problem then use a Graph Convolutional Network to learn an appropriate embedding function for aligning image features.
+    In this work, we formulate multi-image matching as a graph embedding problem then use a Graph Neural Networks to learn an appropriate embedding function for aligning image features.
     We use cycle consistency to train our network in an unsupervised fashion, since ground truth correspondence is difficult or expensive to aquire.
     In addition, geometric consistency losses can be added at training time, even if the information is not available in the test set, unlike previous approaches that optimize cycle consistency directly.
     To the best of our knowledge, no other works have used learning for multi-image feature matching.
@@ -68,6 +68,7 @@ Feature matching is an essential part of Structure from Motion and many geometri
 The goal in multi-image feature matching is to take 2D image locations from three or more images and find which ones correspond to the same point in the 3D scene.
 Methods such as SIFT feature matching \cite{lowe2004distinctive} followed by RANSAC \cite{fischler1981random} have been the standard for decades.
 However RANSAC-based approaches are limited to matching pairs of images, which can lead to global inconsistencies in the matching.
+% TODO: Mention trifocal tensors
 Other works, such as Wang et al.~\cite{wang2017multi}, have shown improvement in performance by optimizing cycle consistency, i.e. enforcing the pairwise feature matches to be globally consistent, illustrated in figure \ref{fig:cycconsistex}.
 
 However, these multi-view consistency algorithms struggle in distributed and robust settings.
@@ -100,9 +101,9 @@ In this paper, we want to leverage the power of deep representations in order to
 \end{center}
   \caption{
     An illustration of the approach of this work.
-    The Graph Convolutional Neural Network (GCN) \cite{kipf2016semi} takes as input the graph of matches and then outputs a low rank embedding of the adjacency matrix of the graph.
-    The GCN operates on an embedding over the nodes of the graph.
-    In the figure, the GCN node embeddings are represented by different colors.
+    The Graph Neural Neural Network (GNN) \cite{battaglia2018relational} takes as input the graph of matches and then outputs a low rank embedding of the adjacency matrix of the graph.
+    The GNN operates on an embedding over the vertices of the graph.
+    In the figure, the GNN vertex embeddings are represented by different colors.
     The final embedding is used to construct a pairwise similarity matrix, which we train to be a low dimensional cycle-consistent representation of the graph adjacency matrix, thus pruning the erroneous matches.
     We train the network using a reconstruction loss on the similarity matrix with the noisy adjacency matrix, and thus do not need ground truth matches.
     In addition, we can use geometric consistency information, such as epipolar constraints, to assist training the network.
@@ -117,7 +118,7 @@ In the case of multi-image feature matching, one would need hand labeled point c
 Multi-view constraints are formulated in terms of sparse features, which traditional convolutional neural nets are not designed to handle.
 Additionally, in the case of multi-image feature matching, geometric constraints would be helpful in rejecting outlier matches.
 
-In this work, we propose to solve these problems using a Graph Convolutional Network (GCN) to operate on the correspondence graph.
+In this work, we propose to solve these problems using a Graph Neural Networks (GNNs) to operate on the correspondence graph.
 The proposed method works directly on the correspondence graph, which is agnostic to how the correspondences were computed, thus allowing the algorithm to work in a broad class of environments.
 To the best of our knowledge this work is the first to apply deep learning to the multi-view feature matching problem.
 We use an unsupervised loss - the cycle consistency loss - to train the network, and thus avoiding the difficulty of expensive hand labeling.
@@ -127,7 +128,7 @@ Although our network is simple, it shows promising results compared to baselines
 Furthermore, since inference requires only a single forward pass over the neural network, our approach is faster (to achieve comparable accuracy) than methods which must solve an optimization problem every time.
 Our contributions are:
 \begin{itemize}
-\item We use a novel architecture to address the multi-image feature matching problem using GCNs with graph embeddings.
+\item We use a novel architecture to address the multi-image feature matching problem using GNNs with graph embeddings.
 \item We introduce an unsupervised cycle consistency loss that does not require labeled correspondences to train.
 \item We demonstrate the effectiveness of geometric consistency losses in improving training.
 \item We perform experiments on the Rome16K \cite{li2010location} dataset to test the effectiveness of our method compared to optimization based methods.
@@ -161,9 +162,9 @@ However, they only focus on two view matching and do not exploit the advantages 
 Note that while Zhu et al.~\cite{zhu2017unpaired} use cycle consistency in their loss, their method is restricted to pairwise cycle consistency, while we use multi-image cycle consistency.
 
 \subsection{Graph Neural Networks}
-Graph neural networks have recieved more attention recently \cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2016semi, scarselli2009graph, gama2018mimo, gama2018convolutional, battaglia2018relational}.
+Graph neural networks have recieved more attention recently \cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2017semi, scarselli2009graph, gama2018mimo, gama2018convolutional, battaglia2018relational}.
 Classical so-called Spectral methods used the eigenvectors of the graph Laplacian to compute convolutions as in Bruna et al.~\cite{bruna2013spectral}, but requires an a-priori known graph structure. 
-Non-spectral methods do not require a-priori knowledge \cite{bronstein2017geometric, kipf2016semi, scarselli2009graph, gama2018convolutional}.
+Non-spectral methods do not require a-priori knowledge \cite{bronstein2017geometric, kipf2017semi, scarselli2009graph, gama2018convolutional}.
 Most of these methods use polynomials of the graph Laplacian to compute neighborhood averages.
 Gama et al.~2018 \cite{gama2018mimo, gama2018convolutional} formalize this notion and generalize it beyond the use of the graph Laplacian.
 To improve performance, more sophisticated aggregation techniques and global information passing can be used as discussed in Battaglia et al.~\cite{battaglia2018relational}.
@@ -189,62 +190,69 @@ The input to our algorithm is a set of features and noisy correspondences, and t
 We do this by training the new set of feature embeddings to be cycle consistent.
 We formulate this problem in terms of the correspondence graph of the features.
 Vectors $\mat{x}$ and matrices $\mat{A}$ are denoted with boldface, and the $i^{th}$ row of a matrix is denoted $(\mat{A})_i$.
+Graphs $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ have a set of vertices $\mathcal{V}$ and of edges $\mathcal{E} \subseteq \mathcal{V} \times \mathcal{V}$.
+Implicitly in the subsequent discussions we assume the edges are directed.
+For a vertex $v \in \mathcal{V}$ we use $\mathcal{N}^{h}(v)$ to denote the $h$-hop neighbors of $v$, with the superscript left out for 1-hop neighbors.
+Similarly $\mathcal{E}(v)$ is used to denote the edges associated with $v$.
+To denote the vertices connected to an edge $e \in \mathcal{E}$ we write $e(v_1, v_2)$.
 \subsection{Correspondence Graph}
 We assume there is an initial set of feature matches represented as a graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$.
-Each vertex $v$ of the graph is a feature with its associated descriptor $f_v$. 
-The graph is represented by its Weighted Adjacency Matrix $\mat{A}(\mathcal{G}) \in \bR^{n \times n}$, where $(\mat{A}(\mathcal{G}))_{ij}$ is the strength of the match between nodes $i$ and $j$.
-We introduce the positive diagonal degree matrix $\mat{D}(\mathcal{G}) \in \bR^{n \times n}$, with $\mat{D}(\mathcal{G})_{ii} = \sum_j (\mat{A}(\mathcal{G}))_{ij}$.
-For brevity we denote these matrices $\mat{A}$ and $\mat{D}$ respectively.
-We introduce the notion of an embedding matrix $\mat{E}_0$ by concatenating the features $f_v$ from each of the vertices.
-We use $\mat{E}_0$ as the initialization for our learning algorithm.
-We add any additional knowledge we have into the embedding as well (e.g. scale, orientation, etc.).
-Putative correspondences are computed from these features and represented by weighted edges in which the weight gives the strength of the match.
+The graph is constructed from putative correspondences of image features across images, typically constructed using feature descriptor distance (e.g. SIFT feature distance).
 While there are many interesting methods for computing these putative correspondences \cite{suh2015subgraph, yi2018learning}, we do not explore them in this work.
-
-In the absence of noise or outliers, this graph would have a connected component for each visible point in the world.
-These components should be mutually disjoint. 
-In other words each feature would only have edges to other features corresponding to the same point.
-Since features in this case represent unique locations in the scene, no points in the same image would have edges between them.
-In the noisy case we expect this structure to be corrupted and thus we need to prune the erroneous edges.
-
-To compute this matching graph, we do pairwise feature matching between the images, creating putative correspondences for each of the features.
-Typically these putative correspondences are matched probabilistically, meaning a feature in one image matches to many features in another.
+Typically putative correspondences are matched probabilistically, meaning a feature in one image matches to many features in another.
 The ambiguity in the matches could come from repeated structures in the scene, insufficiently informative low-level feature descriptors, or just an error in the matching algorithm.
 Filtering out these noisy matches is our primary learning goal.
 
-However, this graph structure does not have a regular grid structure and thus we cannot use standard convolutional nets to learn features for this task.
-Instead we use graph convolutions to learn feature representations on this space.
-We describe our approach in the next section.
+Each vertex of the graph $v \in \mathcal{V}$ is an image feature, corresponding to some ground truth 3D point $\mat{P}(v)$.
+Each edge $e = (v_1, v_2) \in \mathcal{E}$ is a potential correspondence.
+Associated with each vertex $v$ is an embedding $\mat{f}_v \in \bR^{m_0}$, which can include the visual feature descriptor, position, scale, orientation, etc.
+Similarly, each edge $e$ has an associated feature $\mat{f}_e \in \bR^{p_0}$ (in this work, initially just the weight of the feature association).
+We use these features as the initialization for our learning algorithm.
+
+In the absence of noise or outliers, this graph would have a connected component for each visible point in the world, all mutually disjoint.
+Without noise, vertices $v$ would only match with other vertices $v'$ that correspond to the same 3D point in the scene.
+Since features in this case represent unique locations in the scene, no points in the same image would have edges $e$ between them.
+Mathematically, this can be expressed as $e = (v_1, v_2) \in \mathcal{E} \implies \mat{P}(v_1) = \mat{P}(v_2)$.
+In the noisy case we expect this structure to be corrupted, i.e. there are some edges $e = (v_1, v_2) \in \mathcal{E}$ such that $\mat{P}(v_1) \neq \mat{P}(v_2)$.
+Thus we need to prune the erroneous edges.
+
+However, standard CNNs cannot operate on this general graph structure.
+Thus we cannot use standard convolutional nets to learn features for this task.
+Instead we use graph networks to learn feature representations on this space, which we describe in the next section.
 
 \subsection{Graph Neural Networks}
-As input to our method we are given the graph Laplacian $\mat{L} \in \bR^{n \times n}$ to encode the graph structure:
-\begin{equation}
-  \mat{L} =\; \mat{I} - \mat{D}^{-1/2} \mat{A} \mat{D}^{-1/2} \\
-\end{equation}
-and an initial embedding $\mat{E}_0 \in \bR^{n \times m_0}$.
-Many older methods assume $\mat{L}$ is known a-priori \cite{bruna2013spectral}, and can encode graph convolutions using the eigenvectors of $L$.
-We do not have this luxury, as the correspondence structure changes from image to image, and thus we use non-spectral Graph Neural Networks.
-The standard form of non-spectral Graph Neural Networks is:
-\begin{equation}
-\mat{E}_{i+1} =\; P\left(\sigma\left( \sum_k \mat{L}^k \mat{E}_i \mat{W}_{i,k} \right)\right)
-\end{equation}
-Here $\sigma$ is the non-linearity (typically a ReLU), $\mat{W}_{k,i}$ are the learned weights of layer $i$,  and $P$ is the `pooling' operation, known as graph coarsening \cite{bronstein2017geometric, gama2018mimo}.
-The maximum degree of $\mat{L}$ determines the number of hops away from a node one layer can access.
-In the feature matching problem, we require an embedding for each vertex.
-Therefore we cannot perform graph coarsening, and thus only perform the non-linearity step.
-This work uses Graph Convolutional Networks, proposed in Kipf and Welling \cite{kipf2016semi}:
-\begin{align}
-      \widetilde{\mat{L}} =&\; (\mat{D} + \mat{I})^{-1/2} (\mat{A} + \mat{I}) (\mat{D} + \mat{I})^{-1/2} \\
-\mat{E}_{l+1} =&\; \sigma\left(\widetilde{\mat{L}} \mat{E}_i \mat{W}_i \right)  \label{eq:graph_conv}
-\end{align}
+As input to our method we are given a graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ with the features described last section $\mat{f}_v \forall v \in \mathcal{V}$ and $\mat{f}_e \forall e in \mathcal{E}$.
+As with any neural network, GNNs have layered outputs.
+We describe the output of layer $k$ as $\mat{f}_v^{(k)} \forall v \in \mathcal{V}$ and $\mat{f}_e^{(k)} \forall e in \mathcal{E}$, with the initial embeddings denoted $\mat{f}_v^{(0)} = \mat{f}_v^{(0)}$ and $\mat{f}_e^{(0)} = \mat{f}_e$.
 
-The matrix $\widetilde{\mat{L}}$ is analogous to the graph Laplacian (with better numerical stability properties).
-$\widetilde{\mat{L}}$ encodes the structure of the graph and is used to perform the actual graph convolution.
-Our network has many layers, and thus the receptive field of the final embedding is quite large, even without the pooling operations.
-In principle we could use higher hop neighborhoods \cite{gama2018convolutional}, or more complicated aggregation structures \cite{battaglia2018relational}, but in this work we restrict ourselves to simpler architectures, and still obtain promising results for this task.
-For faster training, we use group normalization \cite{wu2018group} and skip connections.
-The final output $\mat{E}_n$ gives us a new descriptor for every node.
-In the next sections we will discuss the loss functions to train this network.
+First we describe older methods of GNNs to give context, then we describe the method we use in this work.
+Many older methods assume we have the adjacency matrix $\mat{A}$ of the graph known a-priori \cite{bruna2013spectral}, and can encode graph convolutions using the eigenvectors of $\mat{A}$.
+However, we do not have this luxury, as the correspondence structure changes from image set to image set, and thus we use non-spectral Graph Neural Networks.
+There are many variations on non-spectral methods, often which ultimately amount to message passing between vertices of the graph with learned non-linear transformations between various steps \cite{kipf2017semi, defferrard2016convolutional, gama2018mimo, gama2018convolutional}.
+Some works such as \cite{gama2019convolutional} use pooling operations on the vertices to make the graph smaller and thus aid computation, but as we need labels on every vertex of the original graph, so we cannot use this.
+Most of GNNs used in these works can be expressed mathematically as:
+\begin{align*}
+\mat{\tilde{f}}_v^{(k+1)} =&\; b^{(k)} + \mat{W}_0^{k} \mat{f}_{v}^{(k)} + \sum_{h=0}^H \sum_{v' \in \mathcal{N}^{h}(v)} f_{e(v,v')} \mat{W}_{h}^{k} \mat{f}_{v'}^{(k)} \\
+\mat{f}_v^{(k+1)} =&\; \sigma\left(\mat{\tilde{f}}_v^{(k+1)}\right)
+\end{align*}
+The weights/biases $\mat{W}_{h}^{k}$, $b^{(k)}$ are all learned, with no learning done on the edge weights $f_{e(v,v')}$. 
+Note that this is just sums or averages over $h$-hop neighborhoods, where the weights on the edges remain static through the computation.
+Given that we are trying to prune edges, it would be sensible to add features over edges to learn which ones to prune and which to keep such as in \cite{scarselli2009graph}.
+
+Therefore, in this work we use the method and implementation described in \cite{battaglia2018relational} (more specifically repetitions of the architecture described in \cite{battaglia2016interaction}).
+This work is similar to previous works with one key difference: edges also have weights.
+Thus therefore there is intermediate processing on the edges before information is passed to the vertices. 
+
+Mathematically, this is expressed as: % TODO: Maybe make this MLP oriented?
+\begin{align}
+\mat{\tilde{f}}_{e(v_1,v_2)}^{(k+1)} =&\; \mat{U}_1^{(k)} \mat{f}_{e}^{(k)} + \mat{U}_1^{(k)} \mat{f}_{v_1}^{(k)} + \mat{U}_2^{(k)} \mat{f}_{v_2}^{(k)} \\
+\mat{f}_{e(v_1,v_2)}^{(k+1)} =&\; \sigma \left(a^{(k)} + \mat{\tilde{f}}_{e(v_1,v_2)}^{(k+1)}\right) \\
+\mat{\tilde{f}}_{v}^{(k+1)} =&\; \mat{W}_0^{(k)} \mat{f}_{v}^{(k)} + \sum_{e \in \mathcal{E}(v)} \mat{W}_1^{(k)} \mat{f}_{e}^{(k+1)} \\
+\mat{f}_v^{(k+1)} =&\; \sigma\left(b^{(k)} + \mat{\tilde{f}}_v^{(k+1)}\right)
+\end{align}
+Here the learned weights are denoted $\mat{W}$ and $\mat{U}$, and the biases $a^{(k)}$ and  $b^{(k)}$.
+In \cite{battaglia2018relational}, they allow for more sophisticated aggregation functions, but in this work we simply use the mean function.
+In practice, we use MLPs between message passes between the vertices and edges for better expressiveness. 
 
 \begin{figure}[t]
 \begin{center}
@@ -372,7 +380,7 @@ PGDDS \cite{leonardos2016distributed} 15 Iterations       & 0.016 $\pm$ 0.002   
 PGDDS \cite{leonardos2016distributed} 25 Iterations       & 0.014 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 0.613 $\pm$ 0.089                   \\
 PGDDS \cite{leonardos2016distributed} 50 Iterations       & 0.013 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 1.430 $\pm$ 0.234                   \\ \hline
 Spectral                                                  & 0.054 $\pm$ 0.005                   & 0.018 $\pm$ 0.004                   & 0.018 $\pm$ 0.004                   \\ \hline 
-\textbf{GCN, 12 Layers (ours)}                            & \textbf{0.025} $\pm$ \textbf{0.003} & \textbf{0.016} $\pm$ \textbf{0.003} & \textbf{0.039} $\pm$ \textbf{0.009} \\
+\textbf{GNN, 12 Layers (ours)}                            & \textbf{0.025} $\pm$ \textbf{0.003} & \textbf{0.016} $\pm$ \textbf{0.003} & \textbf{0.039} $\pm$ \textbf{0.009} \\
 \hline\hline
 Method (4 Views)                                                         & $L_1$ Loss                          & $L_2$ Loss                          & Run Time (sec)                     \\
 \hline\hline
@@ -383,7 +391,7 @@ PGDDS \cite{leonardos2016distributed} 15 Iterations                      & 0.015
 PGDDS \cite{leonardos2016distributed} 25 Iterations                      & 0.014 $\pm$ 0.002                   & 0.005 $\pm$ 0.001                   & 0.961 $\pm$ 0.181                   \\
 PGDDS \cite{leonardos2016distributed} 50 Iterations                      & 0.013 $\pm$ 0.002                   & 0.005 $\pm$ 0.002                   & 2.056 $\pm$ 0.424                   \\ \hline
 Spectral Method                                                          & 0.055 $\pm$ 0.004                   & 0.017 $\pm$ 0.003                   & 0.028 $\pm$ 0.003                   \\ \hline
-\textbf{GCN, 12 Layers (ours)}                                           & \textbf{0.023} $\pm$ \textbf{0.003} & \textbf{0.015} $\pm$ \textbf{0.002} & \textbf{0.056} $\pm$ \textbf{0.017} \\ \hline
+\textbf{GNN, 12 Layers (ours)}                                           & \textbf{0.023} $\pm$ \textbf{0.003} & \textbf{0.015} $\pm$ \textbf{0.002} & \textbf{0.056} $\pm$ \textbf{0.017} \\ \hline
 \end{tabular}
 \end{center}
 % save-rome16kgeom0-normedskip2-loss-l1-geom-10-0 (028249) -> train : +3.1467e-02, test : +3.8864e-02, gt_l1 : +2.6321e-02, gt_l2 : +2.6321e-02
@@ -438,8 +446,8 @@ We initialize the input descriptors using the true descriptor, plus some added G
 No geometric losses were added during training for these experiments.
 However, the method was robust in testing with different noise functions and parameters.
 The normalized noisy input descriptors are our baseline - they correlate with the true values but do not preserve the structure well.
-However, the GCN recovered the true structure very well, as shown in Table \ref{fig:synthtable}.
-All experiments were run with a 12 layer GCN with the ReLU nonlinearity and skip connections.
+However, the GNN recovered the true structure very well, as shown in Table \ref{fig:synthtable}.
+All experiments were run with a 12 layer GNN with the ReLU nonlinearity and skip connections.
 All were trained with the Adam optimizer \cite{kingma2014adam} and a learning rate $10^{-4}$
 
 
@@ -485,8 +493,8 @@ Additional comparisons to different iterations numbers of iterations can be foun
 %------------------------------------------------------------------------
 \section{Conclusion}
 
-We have shown a novel method for training feature matching using GCNs, using an unsupervised cycle consistency loss and geometric consistency losses.
-We have demonstrated its effectiveness on the Rome16K dataset compared to the traditional optimization based baselines on a simple GCN.
+We have shown a novel method for training feature matching using GNNs, using an unsupervised cycle consistency loss and geometric consistency losses.
+We have demonstrated its effectiveness on the Rome16K dataset compared to the traditional optimization based baselines on a simple GNN.
 For future work, we will investigate robust losses for better outlier rejection, and using higher order geometric constraints, such as the tri-focal tensor, as additional loss terms.
 A long term goal is to incorporate learning image level features into this pipeline.
 Moreover we hope to adapt this method to a distributed setting, which would be a simple extention given current approach.
