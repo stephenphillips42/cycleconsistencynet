@@ -159,6 +159,20 @@ class Trainer(object):
               hooks=all_hooks,
               config=config)
 
+  def build_speye(self):
+    b, v, p = self.tensor_sizes
+    x = np.arange(v*p).reshape(-1,1)
+    xb = np.arange(b).reshape(-1,1)
+    o = np.ones((v*p,1))
+    ob = np.ones((b,1))
+    concat_vals = [np.kron(xb ,o)] + [np.kron(ob, x)] * 2
+    speye_idxs = np.concatenate(concat_vals, 1).astype(np.int64)
+    speye_vals = np.ones(b*v*p).astype(np.float32)
+    speye = tf.SparseTensor(indices=tf.convert_to_tensor(speye_idxs),
+                            values=tf.convert_to_tensor(speye_vals),
+                            dense_shape=[ b, v*p, v*p ])
+    return speye
+
   ########## Training and testing functions ##########
   def get_output_sim(self, out_graph):
     out_shape = [self.batch_size, -1, self.final_embedding_dim]
@@ -171,10 +185,10 @@ class Trainer(object):
   def get_geometric_loss(self, sample, output_sim, name='geo_loss'):
     b, v, p = self.tensor_sizes
     # Build rotation and cross product matrices
-    R = tf.reshape(tf.tile(sample['Rotations'], [1, 1, p, 1]), [-1, v*p, 3, 3])
-    T = tf.reshape(tf.tile(sample['Translations'], [1, 1, p]), [-1, v*p, 3])
+    R = tf.reshape(tf.tile(sample['rots'], [1, 1, p, 1]), [-1, v*p, 3, 3])
+    T = tf.reshape(tf.tile(sample['trans'], [1, 1, p]), [-1, v*p, 3])
     nodes = sample['graph'].nodes
-    X = tf.concat([ nodes[...,-4:-2],
+    X = tf.concat([ tf.reshape(nodes[...,-4:-2], [b, -1, 2]),
                     tf.tile(tf.ones((1,v*p,1)), [ b, 1, 1 ]) ], axis=-1)
     RX = tf.einsum('bvik,bvk->bvi',R,X)
     TcrossRX = tf.cross(T, RX)
@@ -189,18 +203,21 @@ class Trainer(object):
     tf.summary.image('Geometric matrix {}'.format(name), tf.expand_dims(E, -1))
     tf.summary.histogram('Geometric matrix hist {}'.format(name), E)
     tf.summary.scalar('Geometric matrix norm {}'.format(name), tf.norm(E, ord=np.inf))
-    return tf.reduce_mean(tf.multiply(output_sim, E), name=name)
+    if type(output_sim) == tf.SparseTensor:
+      mul_vals = tf.gather_nd(E, output_sim.indices) * output_sim.values
+      geom_loss = tf.reduce_mean(mul_vals, name=name)
+    else:
+      geom_loss = tf.reduce_mean(tf.multiply(output_sim, E), name=name)
+    return geom_loss
 
   def get_loss(self, sample, output_sim, test_mode=False, name='train'):
     # Compute loss
     sim_true = sample['true_adj_mat']
-    b, v, p = self.tensor_sizes
-    speye = tf.sparse_reshape(tf.sparse.eye(num_rows=v*p), [1, v*p, v*p])
-    sim = tf.sparse_add(sample['adj_mat'], tf.sparse_concat(0, [speye] * b))
+    sim = tf.sparse_add(sample['adj_mat'], self.build_speye())
     reconstr_loss = loss_fns[self.loss_type](output_sim, sim)
     if self.geometric_loss > 0:
       geo_loss = self.get_geometric_loss(sample, output_sim, name='geom_loss_{}'.format(name))
-      geo_loss_gt = get_geometric_loss(opts, sample, sim_true)
+      geo_loss_gt = self.get_geometric_loss(sample, sim_true, name='geom_loss_gt_{}'.format(name))
       loss = self.reconstruction_loss * reconstr_loss + \
                 self.geometric_loss * geo_loss
     else:
@@ -259,7 +276,7 @@ class Trainer(object):
         ('gt_l2' , 'GT L2 Loss'),
     ])
 
-  def run_test(self, sess, verbose=True):
+  def run_test(self, sess, step, verbose=True):
     # Setup
     npsave = {}
     # Build test display string from the losses we want to display
@@ -282,7 +299,8 @@ class Trainer(object):
         summed_vals[k] += save_outputs[k]
     strargs = ( summed_vals[k] / self._test_values['nsteps']
                 for k in self._test_disp )
-    np.savez(myutils.next_file(self.save_dir, 'test', '.npz'), **save_outputs)
+    save_outputs['step'] = step
+    np.savez(os.path.join(self.save_dir, 'test.npz'), **save_outputs)
     ctime = time.time()
     self.log(teststr.format(*strargs, ctime-start_time))
     avg_loss = summed_vals['total_loss'] / self._test_values['nsteps']
@@ -322,7 +340,7 @@ class Trainer(object):
         if (step % opts.log_steps) == 0:
           self.log(trainstr.format(step, loss_, ctime-step_time, ctime-stime))
         if self.test_now(step, ctime - ttime):
-          self.run_test(raw_sess)
+          self.run_test(raw_sess, step)
           ttime = time.time()
         step += 1
 

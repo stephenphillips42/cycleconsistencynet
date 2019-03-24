@@ -85,7 +85,26 @@ class GraphDataset(object):
 
   def get_placeholders(self):
     # TODO: Make this work with utils_tf for graph_nets for GraphTuple
-    return { k:v.get_placeholder() for k, v in self.features.items() }
+    # Build placeholders
+    placeholders = {}
+    for k, v in self.features.items():
+      use_batch = (k not in GRAPH_KEYS)
+      placeholders.update(v.get_placeholder(batch=use_batch))
+    # Other placeholders
+    other_keys = (set(self.features.keys()) - set(GRAPH_KEYS))
+    sample = { k: placeholders[k] for k in other_keys }
+    # Build Graph Tuple
+    sample['graph'] = \
+      graphs.GraphsTuple(**{ k: placeholders[k] for k in GRAPH_KEYS })
+    return sample, placeholders
+
+  def get_feed_dict(self, placeholders, value_dict):
+    feed_dict = {}
+    for k, v in self.features.items():
+      use_batch = (k not in GRAPH_KEYS)
+      feed_dict[placeholders[k]] = \
+        v.get_feed_dict(value_dict, batch=use_batch)
+    return feed_dict
 
   def gen_sample(self):
     print("Error: Unable to generate sample - Not Implemented")
