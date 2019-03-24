@@ -12,3 +12,5 @@ figs/*
 logs/*
 baselines/*txt
 baselines/*log
+baselines/*yaml
+baselines/bkup

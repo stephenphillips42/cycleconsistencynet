@@ -1,11 +1,35 @@
 import os
 import sys
 import numpy as np
-import re
+import yaml
+import copy
+import tqdm
 
 import matplotlib.pyplot as plt
 
 import argparse
+
+# Debug printing
+def process(x):
+  xp = None
+  if type(x) == dict:
+    xp = {}
+    for k in x:
+      xp[k] = process(x[k])
+  elif type(x) == list:
+    xp = [ process(z) for z in x ]
+  elif type(x) == np.ndarray:
+    xp = ( x.shape, x.dtype )
+  else:
+    xp = x
+  return xp
+import pprint
+pp_xfawedfssa = pprint.PrettyPrinter(indent=2)
+def myprint(x):
+  if type(x) == str:
+    print(x)
+  else:
+    pp_xfawedfssa.pprint(process(x))
 
 parser = argparse.ArgumentParser(description='Plot the downloaded model training/testing curves')
 parser.add_argument('files', metavar='files', nargs='+',
@@ -25,6 +49,22 @@ def errorfill(x, y, yerr, color=None, label=None, alpha_fill=0.3, semilogy=None,
   else:
     ax.plot(x, y, color=color)
   ax.fill_between(x, ymax, ymin, color=color, label=label, alpha=alpha_fill)
+
+def disp_plot(y, x=None, color=None, label=None, alpha=0.25, semilogy=None, ax=None):
+  """Fancy mean/median/percentile plotter. y is presumed NxS, x length N."""
+  if x is None:
+    x = np.arange(len(y))
+  ax = ax if ax is not None else plt.gca()
+  if color is None:
+    color = ax._get_lines.color_cycle.next()
+  ymean = np.mean(y,1)
+  ymin, ymax, ymid_b, ymid_u, ymed = np.percentile(y, [ 2, 98, 25, 75, 50 ], axis=1)
+  ax.plot(x,ymean,color=color,linestyle='-', label=label)
+  # ax.plot(x,ymed,color=color,linestyle='--')
+  ax.fill_between(x,ymid_b,ymid_u,facecolor=color,alpha=alpha)
+  # ax.fill_between(x,ymin,ymax,facecolor=color,alpha=alpha**2)
+  return ax
+
 
 def myord(x):
   if x == 'M':
@@ -51,129 +91,228 @@ def myformat_old(x):
   y = "{:.03e}".format(x).split('e')
   return "{}e-{}".format(y[0], y[1][-1])
 
-def get_name(nms):
-  nm = nms[0]
-  if nm[-len('.log'):] == '.log':
-    nm = nm[:-len('.log')]
-  if nm[-len('TestErrors'):] == 'TestErrors':
-    nm = nm[:-len('TestErrors')]
-  if nm[len('Iter'):] == 'Iter':
-    nm = nm[:-len('000Iter')]
-  return nm
+def get_info(fname):
+  fname = os.path.basename(fname)
+  if 'MatchALS' in fname or 'PGDDS' in fname:
+    k = str.find(fname, 'Iter')
+    niters = int(fname[k-3:k])
+    k = str.find(fname, 'View')
+    views = int(fname[k-2:k])
+    return { 'iters': [niters], 'views': views }
+  elif 'Spectral' in fname or 'Random' in fname:
+    k = str.find(fname, 'View')
+    views = int(fname[k-2:k])
+    return { 'iters': [0], 'views': views }
+  elif 'rome16kgeom' in fname:
+    k = str.find(fname, 'skiphop')
+    k = str.find(fname, 'view')
+    views = int(fname[k-2:k])
+    if 'skiphop0' in fname:
+      niters = 8
+    elif 'skiphop1' in fname:
+      niters = 12
+    elif 'skiphop2' in fname:
+      niters = 16
+    else:
+      niters = 2
+    return { 'iters': [niters], 'views': views }
+  else:
+    return { }
 
-dfmt = '\d+'
-d_match = re.compile(dfmt)
-def get_iters(nms):
-  return [ int(d_match.findall(nm)[0]) for nm in nms ]
+def get_title(k):
+  if k == 'p_r':
+    return 'AUC Precision-Recall'
+  elif k == 'roc':
+    return 'AUC ROC'
+  else:
+    return k.title()
 
-efmt = '[-+]?\d+\.\d*e[-+]\d+'
-disp_match = re.compile(efmt)
-names = ['l1', 'l2', 'bce', 'ssame_m', 'ssame_s', 'sdiff_m', 'sdiff_s', 'time']
-def parse(line):
-  return dict(zip(names, [ float(x) for x in disp_match.findall(line) ]))
+def get_label(fname):
+  if 'MatchALS' in fname:
+    return 'MatchALS'
+  elif 'PGDDS' in fname:
+    return 'PGDDS'
+  elif 'Spectral' in fname:
+    return 'Spectral'
+  elif 'Random' in fname:
+    return 'Random'
+  elif 'rome16kgeom' in fname:
+    return 'Ours (6 Passes)'
+  else:
+    return ''
 
-def get_values(files):
-  vls = dict(zip(names, [ [] for nm in names ]))
-  for fname in files:
-    vls_ = dict(zip(names, [ [] for nm in names ]))
-    f = open(fname, 'r')
-    for line in f:
-      vv = parse(line)
-      for k, v in vv.items():
-        vls_[k].append(v)
-    for k, v in vls_.items():
-      vls[k].append(v)
-  # nm_iters = [ get_iters(x) for x in files ]
-  return vls, get_name(files)
+def get_color(label):
+  if label == 'MatchALS':
+    return 'r'
+  elif label == 'PGDDS':
+    return 'g'
+  elif label == 'Spectral':
+    return 'm'
+  elif label == 'Random':
+    return 'y'
+  elif label == 'Ours (6 Passes)':
+    return 'b'
+  else:
+    return 'y'
+
+def gen_agg_dict(default_value=[]):
+  return {
+    **{ k: copy.deepcopy(default_value)
+        for k in ['l1', 'l2', 'roc', 'p_r', 'time'] },
+    **{ k: { 'm': copy.deepcopy(default_value),
+             'std': copy.deepcopy(default_value) }
+        for k in ['ssame', 'sdiff'] },
+  }
+
+# TODO: Error checking
+def append_to(vals, v):
+  if type(vals) == dict:
+    for key in vals:
+      append_to(vals[key], v[key])
+  elif type(vals) == list:
+    vals.append(v)
+
+def npify(vals, transpose=False):
+  if type(vals) == dict:
+    for key in vals:
+      vals[key] = npify(vals[key])
+    return vals
+  elif type(vals) == list:
+    if transpose:
+      return np.array(vals).T
+    else:
+      return np.array(vals)
+
+# def concat_aggs(aggs):
+#   aggs_c = { k: { k0: {} for k0 in [ 'mean', 'std' ] } for k in aggs }
+#   for k in aggs:
+#     for t, v in aggs[k][0].items():
+#       aggs_c[k]['mean'][t] = [ v['mean'] ]
+#       aggs_c[k]['std'][t] = [ v['std'] ]
+#     for a in aggs[k][1:]:
+#       for t, v in a.items():
+#         aggs_c[k]['mean'][t].append(v['mean'])
+#         aggs_c[k]['std'][t].append(v['std'])
+#   return aggs_c
+# 
+# def aggregate(vals):
+#   aggs = { k: { k0: [] for k0 in [ 'mean', 'std' ] } for k in vals }
+#   for k in [ 'l1', 'l2', 'roc', 'p_r', 'time' ]:
+#     aggs[k]['mean'] = np.mean(vals[k])
+#     aggs[k]['std'] = np.std(vals[k])
+#   for k in [ 'ssame', 'sdiff' ]:
+#     aggs[k]['mean'] = np.mean(vals[k]['m'])
+#     aggs[k]['std'] = stdagg(vals[k]['std'])
+#   return aggs
 
 def parse_files(argfiles):
-  inside = False
-  fvals = {}
-  fnames = []
-  cur_files = []
-  for argfile in argfiles:
-    if inside:
-      if argfile == ']':
-        inside = False
-        vls, fnm  = get_values(cur_files)
-        niters = get_iters(cur_files)
-        fvals[fnm] = { k : np.array(vls[k]) for k in vls.keys() }
-        fvals[fnm]['niters'] = niters
-        cur_files = []
-      else:
-        cur_files.append(argfile)
+  iters_view = {}
+  aggs_view = {}
+  # Get info
+  for fname in argfiles:
+    info_ = get_info(fname)
+    # Extract number of views
+    v = info_['views']
+    if v not in iters_view:
+      iters_view[v] = {}
+    if v not in aggs_view:
+      aggs_view[v] = {}
+    # Extract number of iterations
+    if get_label(fname) in iters_view[v]:
+      iters_view[v][get_label(fname)].append(info_['iters'][0])
     else:
-      if argfile == '[':
-        inside = True
-      else:
-        vls, fnm = get_values([argfile])
-        fvals[fnm] = { k : np.array(vls[k]) for k in vls.keys() }
-        # fvals[fnm]['niters'] = []
-  for fname, vals in fvals.items():
-    if 'niters' not in vals:
-      niters_min, niters_max = 10**14, 0
-      for fname2 in fvals.keys():
-        if 'niters' in fvals[fname2]:
-          niters_max = max(niters_max, np.max(fvals[fname2]['niters']))
-          niters_min = min(niters_min, np.min(fvals[fname2]['niters']))
-      vals['niters'] = [ niters_min, niters_max ]
-      for k in vls.keys():
-        if k != 'niters':
-          vals[k] = np.array([ vals[k][0], vals[k][0] ])
-  return fvals
-
-agg_keys = [ 'l1', 'l2', 'time' ] # + [ 'ssame', 'sdiff' ]
-def agg(vals):
-  aggs = dict(zip(agg_keys, [ None for nm in agg_keys ]))
-  for k in [ 'l1', 'l2', 'bce', 'time' ]:
-    aggs[k] = (np.mean(vals[k], 1), np.std(vals[k], 1))
-  # for k in [ 'ssame', 'sdiff' ]:
-  #   aggs[k] = ( np.mean(vals[k + '_m'], 1), stdagg(vals[k + '_s'], 1) )
-  return aggs
+      iters_view[v][get_label(fname)] = info_['iters']
+    # Load the yaml file to get info
+    agg_dict = gen_agg_dict()
+    with open(fname, 'r') as f:
+      yml = yaml.load(f)
+    # Parse file line by line
+    for num, row in yml.items():
+      vals_ = row
+      append_to(agg_dict, row)
+    # Add to aggregation keys
+    if get_label(fname) not in aggs_view[v]:
+      aggs_view[v][get_label(fname)] = gen_agg_dict([])
+    append_to(aggs_view[v][get_label(fname)], agg_dict)
+  for v in aggs_view:
+    aggs_view[v] = npify(aggs_view[v], transpose=False)
+  return aggs_view, iters_view
 
 
-yaxis_name = { 'l1' : 'Error' , 'l2' : 'Error', 'time' : 'Time (sec)' }
-# TODO: Maybe figure out how to make this more general
-labels = { 'MatchALS010Iter' : 'MatchALS',
-           'PGDDS010Iter' : 'PGDDS',
-           'NormedSkip2Geom10-3View' : 'GCN (ours), 12 layers',
-           'Spectral' : 'Spectral', }
-fonttitle = {'fontsize':20, 'fontname':'Times New Roman'}
+# agg_keys = [ 'l1', 'time' ] # + [ 'ssame', 'sdiff' ]
+# def agg(vals):
+#   aggs = dict(zip(agg_keys, [ None for nm in agg_keys ]))
+#   for k in [ 'l1', 'time' ]:
+#     aggs[k] = (np.mean(vals[k], 1), np.std(vals[k], 1))
+#   # for k in [ 'ssame', 'sdiff' ]:
+#   #   aggs[k] = ( np.mean(vals[k + '_m'], 1), stdagg(vals[k + '_s'], 1) )
+#   return aggs
+
+
+plot_keys = [ 'l1', 'roc'  ]
+yaxis_name = {
+  'l1': 'Error (lower better)',
+  'l2': 'Error (lower better)',
+  'time': 'Time (sec)',
+  'p_r': 'AUC Prec.-Recall (lower better)',
+  'roc': 'AUC ROC (higher better)',
+}
+fonttitle = {'fontsize':14, 'fontname':'Times New Roman'}
 fontaxis = {'fontsize':12, 'fontname':'Times New Roman'}
 fontlegend = {'fontsize':13, 'fontname':'Times New Roman'}
 
 args = parser.parse_args()
-fvals = parse_files(args.files)
-fig, ax = plt.subplots(nrows=1, ncols=len(fvals))
-ii = 0
-for fname, vals in fvals.items():
-  ax[ii].hist(vals['l1'][-1])
-  ax[ii].set_title(fname)
-  ii += 1
-plt.show()
-colors_ = [ 'r', 'y', 'm', 'b', 'g' ]
-fnames = sorted(list(fvals.keys()), key=lambda x: myord(x[0]))
-color_map = dict(zip(fnames, colors_[:len(fnames)]))
-fig, ax_ = plt.subplots(nrows=1, ncols=len(agg_keys))
-ax = dict(zip(agg_keys, ax_))
-for fname in fnames:
-  vals = fvals[fname]
-  aggs = agg(vals)
-  for k in agg_keys:
-    mm, mstd = aggs[k]
-    oo = np.ones_like(mm) # + np.random.randn(*mm.shape)*0.01
-    # ax[k].errorbar(vals['niters']*oo, mm, yerr=mstd)
-    errorfill(vals['niters']*oo, mm, yerr=mstd,
-              color=color_map[fname], label=labels[fname],
-              semilogy=(k == 'time'), ax=ax[k])
+aggs_view, iters_view = parse_files(args.files)
+nviews, nplots = len(iters_view), len(plot_keys)
+sz, R, C = 4, nviews, nplots
+fig, ax_ = plt.subplots(nrows=R, ncols=C, figsize=(3+C*sz, 3+R*sz))
+ax = {
+  v: dict(zip(plot_keys, ax_[i]))
+  for i, v in enumerate(sorted(iters_view.keys()))
+}
+miniters = { v: 10**9 for v in iters_view }
+maxiters = { v: 0 for v in iters_view }
+for v in iters_view:
+  for iters_ in iters_view[v].values():
+    if len(iters_) > 1 or iters_[0] > 0:
+      miniters[v] = min(miniters[v], min(iters_))
+      maxiters[v] = max(maxiters[v], max(iters_))
 
-for k in agg_keys:
-  ax[k].set_title(k.title(), fontdict=fonttitle)
-  ax[k].set_xlabel('Iterations', **fontaxis)
-  ax[k].set_ylabel(yaxis_name[k], **fontaxis)
-lgd = ax[agg_keys[0]].legend()
+for v in sorted(iters_view.keys()):
+  iters = iters_view[v]
+  for label, agg_vals in aggs_view[v].items():
+    for k in plot_keys:
+      means = []
+      stds = []
+      # ax[k].errorbar(vals['niters']*oo, mm, yerr=mstd)
+      if len(iters[label]) == 1:
+        y = agg_vals[k]
+        x = np.array([ miniters[v], maxiters[v] ])
+        y = np.concatenate([ y, y ])
+      else:
+        x = iters[label]
+        y = agg_vals[k]
+      disp_plot(y, x=x,
+                color=get_color(label),
+                label=label,
+                ax=ax[v][k],
+                alpha=0.2)
+      title = '{} ({} views)'.format(get_title(k), v)
+      ax[v][k].set_title(title, fontdict=fonttitle)
+      ax[v][k].set_xlabel('Iterations', **fontaxis)
+      ax[v][k].set_ylabel(yaxis_name[k], **fontaxis)
+  # if 'time' in plot_keys:
+  #   ax[v]['time'].set_yscale('log')
+  if 'roc' in plot_keys:
+    ax[v]['roc'].set_ylim([0.75, 1])
+
+lgd = ax_.reshape(-1)[0].legend()
 plt.setp(lgd.texts, **fontlegend)
+plt.tight_layout()
 plt.show()
 
+# fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(6,6))
 
+
+plt.show()
 

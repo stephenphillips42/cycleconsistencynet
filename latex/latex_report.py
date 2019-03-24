@@ -117,11 +117,11 @@ class Experiment(object):
 
   def generate_plot(self, size, index=0):
     if self.view_style == 'default':
-      self.generate_plot_default(size, index=index)
+      return self.generate_plot_default(size, index=index)
     elif self.view_style == 'paper':
-      self.generate_plot_paper(size, index=index)
+      return self.generate_plot_paper(size, index=index)
     elif self.view_style == 'embeddings':
-      self.generate_plot_embeddings(size, index=index)
+      return self.generate_plot_embeddings(size, index=index)
 
   def generate_plot_default(self, size, index=0):
     nrows, ncols = 1, 5
@@ -259,36 +259,55 @@ class Experiment(object):
     return fig
 
   def generate_plot_embeddings(self, size, index=0):
-    nrows, ncols = 1, 2
-    fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols*size,1.4*nrows*size))
+    nrows, ncols = 1, 3
+    fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(0.4*ncols*size,1.3*nrows*size))
     # ax[1] = fig.add_subplot(nrows,ncols,2,projection='3d')
     fig.tight_layout()
 
     ##### Plot embeddings of a specific example
+    ### Load data and format it
+    p = 80 # TODO: Hack
+    with open(glob.glob(os.path.join(self.folder, 'test*npz'))[-1], 'rb') as f:
+      ld = dict(np.load(f))
+    matches = ld['true_match']
+    emb_gt = np.eye(p)[matches]
+    b = len(ld['output'][-2]) # TODO: Hack
+    n = ld['output'][-2][0] # TODO: Hack
+    emb_out = ld['output'][0].reshape(b,n,p)
+    emb_init = ld['input_nodes'].reshape(b,n,-1)
+    A = ld['adj_mat']
+    adjmat = np.zeros(A[2])
+    adjmat[A[0][:,0],A[0][:,1],A[0][:,2]] = A[1]
+    n = len(emb_gt)
     ### Get specific example
-    ldnames = sorted(glob.glob(os.path.join(self.folder, 'test*npz')))
-    ld = np.load(ldnames[-1])
-    emb_init = ld['input'][index]
-    emb_gt = ld['gt'][index]
-    emb_out = ld['output'][index]
-    adjmat = ld['adjmat'][index]
+    emb_init = emb_init[index]
+    emb_gt = emb_gt[index]
+    emb_out = emb_out[index]
+    adjmat = adjmat[index]
+
     ### Create labels
     slabels, sorted_idxs = get_sorted(emb_gt)
     soutput = emb_out[sorted_idxs]
     ### Create plots
+    def disp_vals(x):
+      print((np.median(x), np.mean(x), np.std(x), np.min(x), np.max(x)))
     # fig = plt.figure()
     # return fig, fig.add_subplot(111, projection='3d')
     if soutput.shape[1] == slabels.shape[1]:
-      # im0 = ax[0].imshow(np.abs(soutput))
-      im0 = hinton(soutput.T, ax=ax[0])
+      disp_vals(soutput)
+      im0 = ax[0].imshow(np.abs(soutput))
+      # im0 = hinton(soutput.T, ax=ax[0])
       u, s, v = np.linalg.svd(np.dot(soutput.T, slabels))
       o_ = np.ones_like(s)
       o_[-1] = np.linalg.det(np.dot(u,v))
       Q = np.dot(u, np.dot(np.diag(o_), v))
       soutput = np.dot(soutput, Q)
-      # im1 = ax[1].imshow(np.abs(soutput))
-      # im0 = ax[0].imshow(np.abs(soutput))
-      im1 = hinton(soutput.T, ax=ax[1])
+      disp_vals(soutput)
+      disp_vals(slabels)
+      im1 = ax[1].imshow(np.abs(soutput))
+      im2 = ax[2].imshow(slabels)
+      # im1 = hinton(soutput.T, ax=ax[1])
+      # im2 = hinton(slabels.T, ax=ax[2])
     else:
       im0 = ax[0].imshow(np.abs(soutput))
       ax[1].scatter(X[:,0], X[:,1])
@@ -555,7 +574,7 @@ if __name__ == "__main__":
       print("ERROR: No experiments or plot_generate - nothing to do", file=sys.stderr)
       sys.exit(1)
     print()
-    exp = Experiment(opts.plot_generate, extention='eps')
+    exp = Experiment(opts.plot_generate, extention='png')
     fig = exp.generate_plot(opts.viewer_size, opts.index)
     fname = os.path.join(opts.latex_path, opts.save_dir, exp.get_plot_name())
     fig.savefig(fname)

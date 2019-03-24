@@ -11,6 +11,8 @@ import tqdm
 import myutils
 # import options
 
+def disp_vals(x):
+  return (np.median(x), np.mean(x), np.std(x), np.min(x), np.max(x))
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -103,6 +105,8 @@ def plot_baseline(save_dir, emb_init, emb_gt, emb_out):
 def plot_index(save_dir, emb_init, emb_gt, emb_out):
   # Embeddings
   slabels, sorted_idxs = get_sorted(emb_gt)
+  print(np.max(sorted_idxs))
+  print(emb_out.shape)
   soutput = emb_out[sorted_idxs]
   srand = myutils.dim_normalize(emb_init[sorted_idxs])
   lsim = np.abs(np.dot(slabels, slabels.T))
@@ -216,27 +220,41 @@ if __name__ == "__main__":
   # Build options
   # opts = options.get_opts()
   opts = get_experiment_opts()
-  # Run experiment
-  ld = np.load(opts.data_path)
-  emb_init = ld['input']
-  emb_gt = ld['gt']
-  emb_out = ld['output']
-  adjmat = ld['adjmat']
+  # Load data and format it
+  p = 80 # TODO: Hack
+  with open(opts.data_path, 'rb') as f:
+    ld = dict(np.load(f))
+  matches = ld['true_match']
+  emb_gt = np.eye(p)[matches]
+  b = len(ld['output'][-2]) # TODO: Hack
+  n = ld['output'][-2][0] # TODO: Hack
+  emb_out = ld['output'][0].reshape(b,n,p)
+  emb_init = ld['input_nodes'].reshape(b,n,-1)
+  A = ld['adj_mat']
+  adjmat = np.zeros(A[2])
+  adjmat[A[0][:,0],A[0][:,1],A[0][:,2]] = A[1]
   n = len(emb_gt)
+  print("emb_init.shape")
+  print(emb_init.shape)
+  print("emb_gt.shape")
+  print(emb_gt.shape)
+  print("emb_out.shape")
+  print(emb_out.shape)
+  # Run experiment
   if opts.plot_style == 'none':
-    stats = np.zeros((n,8))
+    stats = np.zeros((b,8))
     if opts.verbose:
-      for i in tqdm.tqdm(range(n)):
+      for i in tqdm.tqdm(range(b)):
         stats[i] = get_stats(emb_init[i], emb_gt[i], emb_out[i])
     else:
-      for i in range(n):
+      for i in range(b):
         stats[i] = get_stats(emb_init[i], emb_gt[i], emb_out[i])
     meanstats = np.mean(stats,0)
     print("Diag: {:.2e} +/- {:.2e}, Off Diag: {:.2e} +/- {:.2e}, " \
           "Baseline Diag: {:.2e} +/- {:.2e}, " \
           "Baseline Off Diag: {:.2e} +/- {:.2e}".format(*list(meanstats)))
     sys.exit()
-  if opts.index > n:
+  if opts.index > b:
     print("ERROR: index out of bounds")
     sys.exit()
   i = opts.index
