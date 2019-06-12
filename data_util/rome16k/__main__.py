@@ -2,7 +2,6 @@ import numpy as np
 import os
 import sys
 import argparse
-import pickle
 import tqdm
 import time
 import itertools as it
@@ -17,7 +16,7 @@ def get_build_scene_opts():
   parser.add_argument('--build_tuples',
                       type=myutils.str2bool,
                       default=True,
-                      help='Name of pickle file to load - None if no loading')
+                      help=' None if no loading')
   parser.add_argument('--save_imsizes',
                       type=myutils.str2bool,
                       default=True,
@@ -28,11 +27,11 @@ def get_build_scene_opts():
                       help='If tuple file exists, overwrite it')
   parser.add_argument('--top_dir',
                       default='/NAS/data/stephen/Rome16K',
-                      help='Storage location for pickle files')
+                      help='Storage location for storage files')
   parser.add_argument('--save',
                       choices=parse.bundle_files + [ 'all' ],
                       default='all',
-                      help='Save out bundle file to pickle file')
+                      help='Save out bundle file to numpy file')
   parser.add_argument('--min_points',
                       default=80,
                       type=int,
@@ -66,7 +65,13 @@ def choose(n, k):
 def silent(x):
   pass
 
-def process_scene_bundle(opts, bundle_file, scene_fname, tuples_fname):
+def tuples_fname(opts, bundle_file, k):
+  return os.path.join(opts.top_dir,
+                      'tuples',
+                      '{:02d}'.format(k),
+                      parse.tuples_fname(bundle_file))
+
+def process_scene_bundle(opts, bundle_file, scene_fname):
   if opts.verbose > 0:
     myprint = lambda x: print(x)
   else:
@@ -83,8 +88,6 @@ def process_scene_bundle(opts, bundle_file, scene_fname, tuples_fname):
   ######### Build and save out k-tuples ###########
   n = len(scene.cams)
   cam_pts = lambda i: set([ f.point for f in scene.cams[i].features ])
-  tuples_full = []
-  tuples_sizes = []
   # Length 2 is a special case
   myprint("Building pairs...")
   start_time = time.time()
@@ -94,16 +97,22 @@ def process_scene_bundle(opts, bundle_file, scene_fname, tuples_fname):
     if p >= opts.min_points:
       pairs.append(x)
       tsizes.append(p)
-  tuples_full.append(pairs)
-  tuples_sizes.append(tsizes)
   end_time = time.time()
   myprint("Done with pairs ({} sec)".format(end_time-start_time))
+  myprint("Saving pairs...")
+  tuples = [ (x, tsizes[i]) for i, x in enumerate(pairs) ]
+  tfname = tuples_fname(opts, bundle_file, 2)
+  if not os.path.exists(os.path.dirname(tfname)):
+    os.makedirs(os.path.dirname(tfname))
+  with open(tuples_fname(opts, bundle_file, 2), 'wb') as f:
+    pickle.dump(tuples, f, protocol=pickle.HIGHEST_PROTOCOL)
   # Length 3 and above
+  tlist = pairs
   for k in range(3,opts.max_tuple_size+1):
     myprint("Selecting {}-tuples...".format(k))
     start_time = time.time()
+    tvals = tlist
     tlist, tsizes = [], []
-    tvals = tuples_full[-1]
     for (i, x) in tqdm.tqdm(enumerate(tvals), total=len(tvals), disable=opts.verbose < 1):
       xpts = cam_pts(x[0])
       for xx in x[1:]:
@@ -113,23 +122,16 @@ def process_scene_bundle(opts, bundle_file, scene_fname, tuples_fname):
         if p >= opts.min_points:
           tlist.append(x + (j,))
           tsizes.append(p)
-    tuples_full.append(tlist)
-    tuples_sizes.append(tsizes)
     end_time = time.time()
     myprint("Done with {}-tuples ({} sec)".format(k, end_time-start_time))
-    myprint("Saving tuples...")
-    tuples = [ [ (x, tsizes[i]) for i, x in enumerate(tups) ]
-                for tups, tsizes in zip(tuples_full, tuples_sizes) ]
-    with open(tuples_fname,'wb') as f:
+    myprint("Saving {}-tuples...".format(k))
+    tuples = [ (x, tsizes[i]) for i, x in enumerate(tlist) ]
+    tfname = tuples_fname(opts, bundle_file, k)
+    if not os.path.exists(os.path.dirname(tfname)):
+      os.makedirs(os.path.dirname(tfname))
+    with open(tuples_fname(opts, bundle_file, k), 'wb') as f:
       pickle.dump(tuples, f, protocol=pickle.HIGHEST_PROTOCOL)
   # Final save of Tuples
-  tuples = [ [ (x, tsizes[i]) for i, x in enumerate(tups) ]
-              for tups, tsizes in zip(tuples_full, tuples_sizes) ]
-  myprint("Saving tuples...")
-  with open(tuples_fname,'wb') as f:
-    pickle.dump(tuples, f, protocol=pickle.HIGHEST_PROTOCOL)
-  # with open(triplets_name(bundle_file, lite=True),'wb') as f:
-  #   pickle.dump(triplets[:100].tolist(), f, protocol=pickle.HIGHEST_PROTOCOL)
   myprint("Done")
 
 
@@ -139,7 +141,6 @@ if opts.save == 'all':
   N = len(parse.bundle_files)
   for i, bundle_file in enumerate(parse.bundle_files):
     scene_fname=os.path.join(opts.top_dir,'scenes',parse.scene_fname(bundle_file))
-    tuples_fname=os.path.join(opts.top_dir,'scenes',parse.tuples_fname(bundle_file))
     if opts.verbose > 0:
       print('Computing {} ({} of {})...'.format(bundle_file,i+1,N))
     if not opts.overwrite_tuples and os.path.exists(tuples_fname):
@@ -147,12 +148,11 @@ if opts.save == 'all':
         print('Already computed tuples, skipping...')
       continue
     start_time = time.time()
-    process_scene_bundle(opts, bundle_file, scene_fname, tuples_fname)
+    process_scene_bundle(opts, bundle_file, scene_fname)
     end_time = time.time()
     if opts.verbose > 0:
       print('Finished {} ({:0.3f} sec)'.format(bundle_file,end_time-start_time))
 else:
   scene_fname=os.path.join(opts.top_dir,'scenes',parse.scene_fname(opts.save))
-  tuples_fname=os.path.join(opts.top_dir,'scenes',parse.tuples_fname(opts.save))
-  process_scene_bundle(opts, opts.save, scene_fname, tuples_fname)
+  process_scene_bundle(opts, opts.save, scene_fname)
 

@@ -97,7 +97,10 @@ def get_image_size(imname):
   url_ = URL_STR.format(photoid)
   ret = requests.get(url_)
   PARSER.feed(ret.text)
-  im_ = requests.get(PARSER.image_url)
+  try:
+    im_ = requests.get(PARSER.image_url)
+  except:
+    return (0,0)
   image = Image.open(io.BytesIO(im_.content))
   return image.size
 
