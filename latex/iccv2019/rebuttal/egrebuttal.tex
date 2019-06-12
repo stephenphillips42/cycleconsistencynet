@@ -28,24 +28,66 @@
 
 
 %%%%%%%%% BODY TEXT - ENTER YOUR RESPONSE BELOW
-\section{Introduction}
 Thank you to all the reviewers for all of your constructive comments and feedback.
-We will fix all the minor typos and misunderstandings you have pointed out. 
-We hope to point out the more important points here.
+We will fix all minor typos. 
+We hope to address the more important points of criticism here.
 % Thank you to all the reviewers for all of your constructive comments and feedback. We fully understand your concerns and we elaborate on them here. We kindly ask you to trust us that the presentation will be clear in the camera-ready and to reward the novelty of the idea in your ratings.
 
 
 %-------------------------------------------------------------------------
-\subsection{Reviewer 1}
-\textit{Things are not what they seem}: This is an ominous quote that makes things appear much more dramatic.
+% \textit{Things are not what they seem}: This is an ominous quote that makes things appear much more dramatic.
+\textbf{(R1)}
+\textit{The network is evaluated on generated synthetic data and on triplets and quadruplets of real data from the Rome 16K dataset}, and
+\textit{The only experiments described are on randomly generated synthetic data an on image triplets and quadruplets of real data}, and
+\textit{Moreover, the experiments are limited.}
+:
+This was an unfortunate misunderstanding.
+There was a mistake written on line 700 where we wrote `triplets and quadruplets' instead of `6-tuples and 10-tuples'.
+If you look at Figures 5 and 6 and Table 2, you can see we correctly label them as 6 and 10 views, and thus our method works are larger scales than what the typo would imply.
+
+\textbf{(R1)} \textit{The very related approach: Disambiguating visual relations using loop constraints, Zach et al. CVPR 2010, is not discussed}:
+This paper seems to be focusing on pose graph optimization and thus we overlooked it.
+We will cite it should this in the final version paper.
+
+\textbf{(R1)} \textit{There has been earlier work which used more than than two images such as, Learning Dense Correspondence via 3D-guided Cycle Consistency, Zhou et al. CVPR 2016}:
+We should have cited this, however this work \cite{zhou2016learning} to our understanding only does cycle consistency between two images, using ground truth CAD models to gain longer cycles.
+They never do cycle consistency on more than two images. 
+
+\textbf{(R1)} \textit{I feel that this statement is a bit broad and might be overstating the contribution, works such as "LIFT: Learned Invariant Feature Transform" or "Learned Multi-Patch Similarity" seem to already tackle some aspects of this problem}:
+% We are sorry we did not make this clearer.
+What is meant by this is that this is the first algorithm we know of learning the matching algorithm itself on sparse features (not too clear with our language) on more than 2 images (hence multi-image).
+LIFT \cite{yi2016lift} clearly does feature matching, and thus we cite it, however it only does pairwise image matching.
+You are correct in that we did not cite Multi-patch similarity \cite{hartmann2017learned} learned mutli-patch similarity, indeed an important contribution, and we will cite it in the paper.
+We will reword it to say `To the best of our knowledge this work is the first to apply Graph Neural Networks to the sparse feature matching problem on more than 2 images'.
+% TODO: That paper only has 19 citations which is why we did not find it but it does pre-date us. Drat
+
+\textbf{(R1)} \textit{It is not very clear how this approach can be used to improve geometric computer vision problems such as SfM as mentioned in the introduction} and \textbf{(R3)} \textit{It would be nice to see how the proposed algorithm can benefit many practical computer vision tasks, such as 3D reconstruction using SfM}:
+We feel this can be used in existing SfM pipelines before bundle adjustment to improve matching.
+Also it can be used to improve works such as \cite{zhu2015single} for reconstruction using semantic features in an end to end fashion.
+We hope to address this more fully with future work, and integrate it into a SfM pipeline.
+
+
 
 %------------------------------------------------------------------------
-\subsection{Reviewer 2}
-\textit{So it has come to this}: This is another ominous quote that while basically vacuous makes everything appear much more dramatic.
+% \textit{So it has come to this}: This is another ominous quote that while basically vacuous makes everything appear much more dramatic.
+\textbf{(R2)} \textit{Line 417 says "we use the mean function" and "we use MLPs" but it is unclear how that corresponds to the equations above. At least in the supplemental material, they should prove a more precise and complete explanation of the neural network architecture}:
+Indeed the sentence you specify could be made clearer and we can add more detail in the paper and supplemental material to make it clearer.
+
+\textbf{(R2)} \textit{The matching matrices M in Equation 5 are not explained -- one has to read the related work in order to understand what they are} and \textit{Also, Equation 5 is only valid if all 3D points are visible in all views under consideration}:
+We can more clearly define the matching matrices.
+And Equation 5 can hold more generally if you allow rows of all zeros for places where there are no matches.
+However this is not made clear, and we will clarify it more when we clarify our language about the matching matrices.
+
+\textbf{(R2)} \textit{ Line 517 mentions $E_i$, $E_j$ but they are not used in Equation 12?}:
+No that is just a typo, thank you for catching it.
 
 %------------------------------------------------------------------------
-\subsection{Reviewer 3}
-\textit{So it begins}: This also is an ominous quote that applies to most beginnings but makes things appear much more dramatic.
+% \textit{So it begins}: This also is an ominous quote that applies to most beginnings but makes things appear much more dramatic.
+\textbf{(R3)} \textit{If we only look at a local image patch, without global/geometric constraints, there might exist multiple valid matches for a candidate patches ... How does the proposed GNN method handle such cases?}:
+This is where the Geometric Consistency Loss would come in, as it would disambiguate such features.
+However, if such geometric information is not available then we could learn features with more information about the intra-image feature matches.
+This could help disambiguate visually similar features within the same image, and is a direction we are working on now.
+
 
 
 
@@ -62,7 +104,7 @@ We hope to point out the more important points here.
 % \label{fig:onecol}
 % \end{figure}
 
-{\small
+{\footnotesize
 \bibliographystyle{ieee}
 \bibliography{egbib}
 }
