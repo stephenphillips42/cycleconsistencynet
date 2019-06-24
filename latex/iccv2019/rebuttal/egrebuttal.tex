@@ -37,51 +37,56 @@ We hope to address the more important points of criticism here.
 %-------------------------------------------------------------------------
 % \textit{Things are not what they seem}: This is an ominous quote that makes things appear much more dramatic.
 \textbf{(R1)}
-\textit{The network is evaluated on generated synthetic data and on triplets and quadruplets of real data from the Rome 16K dataset}, and
-\textit{The only experiments described are on randomly generated synthetic data an on image triplets and quadruplets of real data}, and
-\textit{Moreover, the experiments are limited.}
-:
+\textit{The network is evaluated \ldots triplets and quadruplets of real data from the Rome 16K dataset} (and related comments):
 This was an unfortunate misunderstanding.
 There was a mistake written on line 700 where we wrote `triplets and quadruplets' instead of `6-tuples and 10-tuples'.
-If you look at Figures 5 and 6 and Table 2, you can see we correctly label them as 6 and 10 views, and thus our method works are larger scales than what the typo would imply.
+In Figures 5 and 6 and Table 2, you can see we correctly label them as 6 and 10 views, and thus our method works are larger scales than what the typo would imply.
 
-\textbf{(R1)} \textit{The very related approach: Disambiguating visual relations using loop constraints, Zach et al. CVPR 2010, is not discussed}:
+\textbf{(R1)} \textit{Zach et al. CVPR 2010} \cite{zach2010disambiguating}:
 This paper seems to be focusing on pose graph optimization and thus we overlooked it.
 We will cite it in the final version paper.
+% More
 
-\textbf{(R1)} \textit{There has been earlier work which used more than than two images such as, Learning Dense Correspondence via 3D-guided Cycle Consistency, Zhou et al. CVPR 2016}:
+\textbf{(R1)} \textit{Zhou et al. CVPR 2016} (\cite{zhou2016learning}):
 We should have cited this.
 However this work \cite{zhou2016learning} to our understanding only does cycle consistency between two images, using ground truth CAD models to gain longer cycles.
-They never do cycle consistency on more than two images. 
+While methodology wise this paper also uses cycle consistency, they learn cycle consistency though CAD models, while our enforces cycle consistent features through multiple views.
+% They never do cycle consistency on more than two images. 
 
-\textbf{(R1)} \textit{I feel that this statement is a bit broad and might be overstating the contribution, works such as "LIFT: Learned Invariant Feature Transform" or "Learned Multi-Patch Similarity" seem to already tackle some aspects of this problem}:
+\textbf{(R1)} \textit{works such as "LIFT: Learned Invariant Feature Transform" or "Learned Multi-Patch Similarity"}:
 % We are sorry we did not make this clearer.
-What is meant by this is that this is the first algorithm we know of learning the matching algorithm itself on sparse features (not too clear with our language) on more than 2 images (hence multi-image).
 LIFT \cite{yi2016lift} clearly does feature matching, and thus we cite it, however it only does pairwise image matching.
 You are correct in that we did not cite `Learned Multi-patch Similarity' \cite{hartmann2017learned}, which is an important step for our research question, so we will cite it in the paper.
-We will update the referenced sentence in the paper to say `To the best of our knowledge, this work is the first to apply Graph Neural Networks to the sparse feature matching problem on more than 2 images'.
 % TODO: That paper only has 19 citations which is why we did not find it but it does pre-date us. Drat
 
-\textbf{(R1)} \textit{It is not very clear how this approach can be used to improve geometric computer vision problems such as SfM as mentioned in the introduction} and \textbf{(R3)} \textit{It would be nice to see how the proposed algorithm can benefit many practical computer vision tasks, such as 3D reconstruction using SfM}:
+\textbf{(R1)} \textit{It is not very clear how this approach can be used to improve \ldots SfM} and \textbf{(R3)} \textit{It would be nice to see \ldots 3D reconstruction using SfM}:
 We feel this can be used in existing SfM pipelines before bundle adjustment to improve matching.
-Also it can be used to improve works such as \cite{zhu2015single} for reconstruction using semantic features in an end to end fashion.
+However this work shows more promise in reconstructing semantic features as in \cite{wang2017multi}, but using pixels directly.
 We hope to address this more fully with future work, and integrate it into a SfM pipeline.
 
+\textbf{(R1)} \textit{Also the contribution of the submission seems a bit overstated}:
+We will be careful to not overstate the contributions in camera-ready paper.
+What is meant by this is that this is the first algorithm we know of learning the matching algorithm itself on sparse features (not too clear with our language) on more than 2 images.
+We will update the referenced sentence in the paper to say `To the best of our knowledge, this work is the first to apply Graph Neural Networks to the sparse feature matching problem on more than 2 images'.
+None of the reviewers have doubted the novelty of learning representations through correspondence and geometric constraints.
 
 
 %------------------------------------------------------------------------
 % \textit{So it has come to this}: This is another ominous quote that while basically vacuous makes everything appear much more dramatic.
-\textbf{(R2)} \textit{Line 417 says "we use the mean function" and "we use MLPs" but it is unclear how that corresponds to the equations above. At least in the supplemental material, they should prove a more precise and complete explanation of the neural network architecture}:
-Indeed the sentence you specify could be made clearer and we can add more detail in the paper and supplemental material to make it clearer, adding details on layer and filter sizes.
-When we say `we use the mean function', we mean that to aggregate the edge features into the node features we just take the mean of the transformed features as opposed to for example max.
+\textbf{(R2)} \textit{"we use the mean function" and "we use MLPs" but it is unclear \ldots}
+When we say `we use the mean function', we mean that to aggregate the edge features into the node features we just take the mean of the transformed features as opposed to the maximum.
 What we mean by `we use MLPs' is instead of taking a linear transformation of the node and edge embeddings between passes, we could learn a nonlinear transform using MLP.
 
+\textbf{(R2)} \textit{\ldots more precise and complete explanation of the neural network architecture}:
+Indeed the sentence you specify could be made clearer and we can add more detail in the paper and supplemental material to make it clearer, adding details on layer and filter sizes.
+Right now we use 6 message passes through between the node and edge features, with the number of hidden nodes starting at 32 and doubling until flattening at 256. Between each message pass we process the features with a 2 layer MLP.
+
 \textbf{(R2)} \textit{The matching matrices M in Equation 5 are not explained -- one has to read the related work in order to understand what they are} and \textit{Also, Equation 5 is only valid if all 3D points are visible in all views under consideration}:
-We can more clearly define the matching matrices.
-And Equation 5 can hold more generally if you allow rows of all zeros for places where there are no matches.
+We will more clearly define the matching matrices.
+Equation 5 can hold more generally if you allow rows of all zeros for places where there are no matches.
 However this is not made clear, and we will clarify it more when we clarify our language about the matching matrices.
 
-\textbf{(R2)} \textit{ Line 517 mentions $E_i$, $E_j$ but they are not used in Equation 12?}:
+\textbf{(R2)} \textit{$E_i$, $E_j$ but they are not used in Equation 12?}:
 No that is just a typo, thank you for catching it.
 
 %------------------------------------------------------------------------
@@ -92,7 +97,10 @@ We will make this more explicit in the paper.
 In cases where such geometric information is not available, we could learn features with more information about the intra-image feature matches.
 This could help disambiguate visually similar features within the same image, and is a direction we are working on now.
 
-
+\textbf{(R3)} \textit{it seems that PGDDS is both faster and more accurate in their tests, even for 15 iterations.}
+As we know from one pass inference on graph or geometry problems, it is difficult to outperform multi-iteration optimization methods.
+The advantage our method has is allowing for end-to-end training to allow learning features on pixels directly, a direction we hope to pursue in future work.
+PGDDS also uses many optimizations between passes through the graph, so in future work we could use methods like OptNet \cite{amos2017optnet} to help improve performance.
 
 
 
