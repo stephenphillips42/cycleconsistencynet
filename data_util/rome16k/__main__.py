@@ -100,12 +100,11 @@ def process_scene_bundle(opts, bundle_file, scene_fname):
   end_time = time.time()
   myprint("Done with pairs ({} sec)".format(end_time-start_time))
   myprint("Saving pairs...")
-  tuples = [ (x, tsizes[i]) for i, x in enumerate(pairs) ]
   tfname = tuples_fname(opts, bundle_file, 2)
   if not os.path.exists(os.path.dirname(tfname)):
     os.makedirs(os.path.dirname(tfname))
   with open(tuples_fname(opts, bundle_file, 2), 'wb') as f:
-    pickle.dump(tuples, f, protocol=pickle.HIGHEST_PROTOCOL)
+    np.save(f, np.array(pairs))
   # Length 3 and above
   tlist = pairs
   for k in range(3,opts.max_tuple_size+1):
@@ -125,12 +124,11 @@ def process_scene_bundle(opts, bundle_file, scene_fname):
     end_time = time.time()
     myprint("Done with {}-tuples ({} sec)".format(k, end_time-start_time))
     myprint("Saving {}-tuples...".format(k))
-    tuples = [ (x, tsizes[i]) for i, x in enumerate(tlist) ]
     tfname = tuples_fname(opts, bundle_file, k)
     if not os.path.exists(os.path.dirname(tfname)):
       os.makedirs(os.path.dirname(tfname))
     with open(tuples_fname(opts, bundle_file, k), 'wb') as f:
-      pickle.dump(tuples, f, protocol=pickle.HIGHEST_PROTOCOL)
+      np.save(f, np.array(tlist).astype(np.uint16))
   # Final save of Tuples
   myprint("Done")
 

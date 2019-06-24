@@ -124,12 +124,12 @@ def triplets_name(bundle_file, lite=False):
   else:
     return 'triplets.{}.pkl'.format(bundle_file)
 
-def tuples_fname(bundle_file):
+def tuples_fname(bundle_file, ext='npy'):
   if not check_valid_name(bundle_file):
     print("ERROR: Specified bundle file does not exist: {}".format(bundle_files))
     sys.exit(1)
   else:
-    return 'tuples.{}.pkl'.format(bundle_file)
+    return 'tuples.{}.{}'.format(bundle_file, ext)
 
 # Main parsing functions
 def parse_sift_gzip(fname):

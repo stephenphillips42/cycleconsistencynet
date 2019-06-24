@@ -6,7 +6,6 @@ import glob
 import datetime
 import random
 import tqdm
-import pickle
 import networkx as nx
 
 import tensorflow as tf
@@ -51,6 +50,7 @@ class Rome16KGraphDataset(graph_dataset.GraphDataset):
   def tuples_fname(self, bundle_file):
     return os.path.join(self.rome16k_dir, 'scenes', parse.tuples_fname(bundle_file))
 
+  # TODO: NEED TO FIX ALL OF THIS
   def get_tuple_file_sizes(self):
     print("Extracting tuples...")
     tuple_file_sizes = { 'train': {}, 'test': {} }
@@ -58,7 +58,7 @@ class Rome16KGraphDataset(graph_dataset.GraphDataset):
       for bundle_file in bundle_files:
         fname = self.tuples_fname(bundle_file)
         with open(fname, 'rb') as f:
-          ld = pickle.load(f)
+          ld = np.load(f)
         tuple_file_sizes[mode][bundle_file] = \
             { i+2: len(x) for i, x in enumerate(ld) }
     print(tuple_file_sizes)
@@ -77,7 +77,7 @@ class Rome16KGraphDataset(graph_dataset.GraphDataset):
     all_tuples = []
     for bundle_file in bundle_files:
       with open(self.tuples_fname(bundle_file), 'rb') as f:
-        tuples_ = pickle.load(f)
+        tuples_ = np.load(f)
       all_tuples.extend(
         [ (bundle_file, tupl) for tupl in tuples_[tsize-2] ]
       )
