@@ -21,7 +21,7 @@
 \begin{document}
 
 %%%%%%%%% TITLE - PLEASE UPDATE
-\title{\LaTeX\ Guidelines for Author Response}  % **** Enter the paper title here
+\title{Rebuttal to ``All Graphs Lead to Rome''}  % **** Enter the paper title here
 
 \maketitle
 \thispagestyle{empty}
@@ -47,18 +47,19 @@ If you look at Figures 5 and 6 and Table 2, you can see we correctly label them 
 
 \textbf{(R1)} \textit{The very related approach: Disambiguating visual relations using loop constraints, Zach et al. CVPR 2010, is not discussed}:
 This paper seems to be focusing on pose graph optimization and thus we overlooked it.
-We will cite it should this in the final version paper.
+We will cite it in the final version paper.
 
 \textbf{(R1)} \textit{There has been earlier work which used more than than two images such as, Learning Dense Correspondence via 3D-guided Cycle Consistency, Zhou et al. CVPR 2016}:
-We should have cited this, however this work \cite{zhou2016learning} to our understanding only does cycle consistency between two images, using ground truth CAD models to gain longer cycles.
+We should have cited this.
+However this work \cite{zhou2016learning} to our understanding only does cycle consistency between two images, using ground truth CAD models to gain longer cycles.
 They never do cycle consistency on more than two images. 
 
 \textbf{(R1)} \textit{I feel that this statement is a bit broad and might be overstating the contribution, works such as "LIFT: Learned Invariant Feature Transform" or "Learned Multi-Patch Similarity" seem to already tackle some aspects of this problem}:
 % We are sorry we did not make this clearer.
 What is meant by this is that this is the first algorithm we know of learning the matching algorithm itself on sparse features (not too clear with our language) on more than 2 images (hence multi-image).
 LIFT \cite{yi2016lift} clearly does feature matching, and thus we cite it, however it only does pairwise image matching.
-You are correct in that we did not cite Multi-patch similarity \cite{hartmann2017learned} learned mutli-patch similarity, indeed an important contribution, and we will cite it in the paper.
-We will reword it to say `To the best of our knowledge this work is the first to apply Graph Neural Networks to the sparse feature matching problem on more than 2 images'.
+You are correct in that we did not cite `Learned Multi-patch Similarity' \cite{hartmann2017learned}, which is an important step for our research question, so we will cite it in the paper.
+We will update the referenced sentence in the paper to say `To the best of our knowledge, this work is the first to apply Graph Neural Networks to the sparse feature matching problem on more than 2 images'.
 % TODO: That paper only has 19 citations which is why we did not find it but it does pre-date us. Drat
 
 \textbf{(R1)} \textit{It is not very clear how this approach can be used to improve geometric computer vision problems such as SfM as mentioned in the introduction} and \textbf{(R3)} \textit{It would be nice to see how the proposed algorithm can benefit many practical computer vision tasks, such as 3D reconstruction using SfM}:
@@ -71,7 +72,9 @@ We hope to address this more fully with future work, and integrate it into a SfM
 %------------------------------------------------------------------------
 % \textit{So it has come to this}: This is another ominous quote that while basically vacuous makes everything appear much more dramatic.
 \textbf{(R2)} \textit{Line 417 says "we use the mean function" and "we use MLPs" but it is unclear how that corresponds to the equations above. At least in the supplemental material, they should prove a more precise and complete explanation of the neural network architecture}:
-Indeed the sentence you specify could be made clearer and we can add more detail in the paper and supplemental material to make it clearer.
+Indeed the sentence you specify could be made clearer and we can add more detail in the paper and supplemental material to make it clearer, adding details on layer and filter sizes.
+When we say `we use the mean function', we mean that to aggregate the edge features into the node features we just take the mean of the transformed features as opposed to for example max.
+What we mean by `we use MLPs' is instead of taking a linear transformation of the node and edge embeddings between passes, we could learn a nonlinear transform using MLP.
 
 \textbf{(R2)} \textit{The matching matrices M in Equation 5 are not explained -- one has to read the related work in order to understand what they are} and \textit{Also, Equation 5 is only valid if all 3D points are visible in all views under consideration}:
 We can more clearly define the matching matrices.
@@ -85,7 +88,8 @@ No that is just a typo, thank you for catching it.
 % \textit{So it begins}: This also is an ominous quote that applies to most beginnings but makes things appear much more dramatic.
 \textbf{(R3)} \textit{If we only look at a local image patch, without global/geometric constraints, there might exist multiple valid matches for a candidate patches ... How does the proposed GNN method handle such cases?}:
 This is where the Geometric Consistency Loss would come in, as it would disambiguate such features.
-However, if such geometric information is not available then we could learn features with more information about the intra-image feature matches.
+We will make this more explicit in the paper.
+In cases where such geometric information is not available, we could learn features with more information about the intra-image feature matches.
 This could help disambiguate visually similar features within the same image, and is a direction we are working on now.
 
 
@@ -104,7 +108,8 @@ This could help disambiguate visually similar features within the same image, an
 % \label{fig:onecol}
 % \end{figure}
 
-{\footnotesize
+% {\footnotesize
+{\tiny
 \bibliographystyle{ieee}
 \bibliography{egbib}
 }
