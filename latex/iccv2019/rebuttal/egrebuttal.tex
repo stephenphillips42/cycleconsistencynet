@@ -15,7 +15,7 @@
 \usepackage[pagebackref=true,breaklinks=true,letterpaper=true,colorlinks,bookmarks=false]{hyperref}
 
 %%%%%%%%% PAPER ID  - PLEASE UPDATE
-\def\iccvPaperID{****} % *** Enter the ICCV Paper ID here
+\def\iccvPaperID{4115} % *** Enter the ICCV Paper ID here
 \def\httilde{\mbox{\tt\raisebox{-.5ex}{\symbol{126}}}}
 
 \begin{document}
@@ -28,99 +28,88 @@
 
 
 %%%%%%%%% BODY TEXT - ENTER YOUR RESPONSE BELOW
-Thank you to all the reviewers for all of your constructive comments and feedback.
-We will fix all minor typos. 
-We hope to address the more important points of criticism here.
-% Thank you to all the reviewers for all of your constructive comments and feedback. We fully understand your concerns and we elaborate on them here. We kindly ask you to trust us that the presentation will be clear in the camera-ready and to reward the novelty of the idea in your ratings.
-
+Thank you to the reviewers for all of your constructive comments and feedback.
+We hope to address some concerns expressed by the reviewers here.
+We will also address any concerns or typos not mentioned.
 
 %-------------------------------------------------------------------------
-% \textit{Things are not what they seem}: This is an ominous quote that makes things appear much more dramatic.
-\textbf{(R1)}
-\textit{The network is evaluated \ldots triplets and quadruplets of real data from the Rome 16K dataset} (and related comments):
+\textbf{(R1)} \textit{Insufficient experiments}:
 This was an unfortunate misunderstanding.
-There was a mistake written on line 700 where we wrote `triplets and quadruplets' instead of `6-tuples and 10-tuples'.
-In Figures 5 and 6 and Table 2, you can see we correctly label them as 6 and 10 views, and thus our method works are larger scales than what the typo would imply.
+We accidentally reported on line 700 where we wrote `triplets and quadruplets' instead of `6-tuples and 10-tuples'.
+In Figures 5 and 6 and Table 2, you can see we correctly label them as 6 and 10 views.
+Thus our method works with a larger number of images as well.
 
-\textbf{(R1)} \textit{Zach et al. CVPR 2010} \cite{zach2010disambiguating}:
-This paper seems to be focusing on pose graph optimization and thus we overlooked it.
-We will cite it in the final version paper.
-% More
+\textbf{(R1)} \textit{Prohibitive size of embedding vector for large SfM}:
+This is a limitation of many works using cycle consistency, such as works [32, 28, 19, 23] cited in our paper.
+Learning cycle consistent subwindows can still be useful in filtering erroneous matches in a sliding window fashion.
 
-\textbf{(R1)} \textit{Zhou et al. CVPR 2016} (\cite{zhou2016learning}):
-We should have cited this.
-However this work \cite{zhou2016learning} to our understanding only does cycle consistency between two images, using ground truth CAD models to gain longer cycles.
-While methodology wise this paper also uses cycle consistency, they learn cycle consistency though CAD models, while our enforces cycle consistent features through multiple views.
-% They never do cycle consistency on more than two images. 
+\textbf{(R1)} \textit{Citing Zach et al 2010}:
+This paper seems to be focusing on pose graph optimization and thus we did not include it in the related work.
+This work handles cycle inconsistencies by solving a convex relaxation of probabilistic inference over the validity of edges.
+It requires composable geometric relations between each of the nodes in the graph, which we do not have with our feature matches at inference time.
+Regardless, this is still very relevant and we will cite it in the final version paper.
 
-\textbf{(R1)} \textit{works such as "LIFT: Learned Invariant Feature Transform" or "Learned Multi-Patch Similarity"}:
-% We are sorry we did not make this clearer.
-LIFT \cite{yi2016lift} clearly does feature matching, and thus we cite it, however it only does pairwise image matching.
-You are correct in that we did not cite `Learned Multi-patch Similarity' \cite{hartmann2017learned}, which is an important step for our research question, so we will cite it in the paper.
-% TODO: That paper only has 19 citations which is why we did not find it but it does pre-date us. Drat
+\textbf{(R1)} \textit{Citing Zhou et al 2016}:
+We will cite this in the camera-ready version.
+% To our understanding this work does cycle consistency between only two images. %, using ground truth CAD models to gain longer cycles.
+While methodology wise this paper uses cycle consistency, they learn cycle consistency of two images though ground truth CAD models, while our work enforces cycle consistent features through 3 or more views.
 
-\textbf{(R1)} \textit{It is not very clear how this approach can be used to improve \ldots SfM} and \textbf{(R3)} \textit{It would be nice to see \ldots 3D reconstruction using SfM}:
-We feel this can be used in existing SfM pipelines before bundle adjustment to improve matching.
-However this work shows more promise in reconstructing semantic features as in \cite{wang2017multi}, but using pixels directly.
+\textbf{(R1)} \textit{Regarding ``LIFT: Learned Invariant Feature Transform'' or ``Learned Multi-Patch Similarity''}:
+LIFT ([29] in the paper) clearly does feature matching, and thus we cite it, however it only does pairwise image matching.
+You are correct in that we did not cite `Learned Multi-patch Similarity' by Hartmann et al, which is an important step for our research question, so we will cite it in the paper.
+
+\textbf{(R1)} and \textbf{(R3)} \textit{Applying this to SfM}:
+Our approach could be incorporated in existing SfM pipelines before bundle adjustment to improve matching.
+However this work shows more promise in reconstructing and matching semantic features, similar in Wang et al ([28] in the paper) but using pixels directly.
 We hope to address this more fully with future work, and integrate it into a SfM pipeline.
 
-\textbf{(R1)} \textit{Also the contribution of the submission seems a bit overstated}:
-We will be careful to not overstate the contributions in camera-ready paper.
-What is meant by this is that this is the first algorithm we know of learning the matching algorithm itself on sparse features (not too clear with our language) on more than 2 images.
+\textbf{(R1)} \textit{Overstating the contribution}:
+We will be careful to not overstate the contributions in camera-ready version.
+Our intention was to state that this is the first algorithm we know of learning the matching algorithm itself on sparse features (not too clear with our language) on more than 2 images.
 We will update the referenced sentence in the paper to say `To the best of our knowledge, this work is the first to apply Graph Neural Networks to the sparse feature matching problem on more than 2 images'.
-None of the reviewers have doubted the novelty of learning representations through correspondence and geometric constraints.
-
+Despite this, we appreciate the reviewers acknowledging the novelty of learning representations through correspondence and geometric constraints.
 
 %------------------------------------------------------------------------
-% \textit{So it has come to this}: This is another ominous quote that while basically vacuous makes everything appear much more dramatic.
-\textbf{(R2)} \textit{"we use the mean function" and "we use MLPs" but it is unclear \ldots}
+\textbf{(R2)} \textit{Meaning of "we use the mean function" and "we use MLPs"}
 When we say `we use the mean function', we mean that to aggregate the edge features into the node features we just take the mean of the transformed features as opposed to the maximum.
 What we mean by `we use MLPs' is instead of taking a linear transformation of the node and edge embeddings between passes, we could learn a nonlinear transform using MLP.
+We will clarify this in the camera ready version.
 
-\textbf{(R2)} \textit{\ldots more precise and complete explanation of the neural network architecture}:
-Indeed the sentence you specify could be made clearer and we can add more detail in the paper and supplemental material to make it clearer, adding details on layer and filter sizes.
-Right now we use 6 message passes through between the node and edge features, with the number of hidden nodes starting at 32 and doubling until flattening at 256. Between each message pass we process the features with a 2 layer MLP.
+\textbf{(R2)} \textit{More detail on architecture}:
+Indeed the sentence you specify could be made clearer and we will add more details in the paper and supplemental material.
+We will also publicly release our code and the implementation details in the supplemental.
+% Right now we use 6 message passes through between the node and edge features, with the number of hidden nodes starting at 32 and doubling until flattening at 256. Between each message pass we process the features with a 2 layer MLP.
 
-\textbf{(R2)} \textit{The matching matrices M in Equation 5 are not explained -- one has to read the related work in order to understand what they are} and \textit{Also, Equation 5 is only valid if all 3D points are visible in all views under consideration}:
+\textbf{(R2)} \textit{Explaining matching matrices Equation 5}:
 We will more clearly define the matching matrices.
 Equation 5 can hold more generally if you allow rows of all zeros for places where there are no matches.
-However this is not made clear, and we will clarify it more when we clarify our language about the matching matrices.
+However this is not made clear, and we will clarify it more when we clean up our language about the matching matrices.
 
-\textbf{(R2)} \textit{$E_i$, $E_j$ but they are not used in Equation 12?}:
+\textbf{(R2)} \textit{$E_i$, $E_j$ not used in Equation 12?}:
 No that is just a typo, thank you for catching it.
 
+\textbf{(R2)} \textit{Only on par with state of the art}:
+We agree that the contribution of this work is to allow deep learning to be applied to this problem, and to allow future works to build on top for further improvement on performance.
+% TODO: Is this comment necessary?
+
 %------------------------------------------------------------------------
-% \textit{So it begins}: This also is an ominous quote that applies to most beginnings but makes things appear much more dramatic.
-\textbf{(R3)} \textit{If we only look at a local image patch, without global/geometric constraints, there might exist multiple valid matches for a candidate patches ... How does the proposed GNN method handle such cases?}:
+\textbf{(R3)} \textit{Handling ambiguous matches when using purely local image patches}:
 This is where the Geometric Consistency Loss would come in, as it would disambiguate such features.
 We will make this more explicit in the paper.
 In cases where such geometric information is not available, we could learn features with more information about the intra-image feature matches.
-This could help disambiguate visually similar features within the same image, and is a direction we are working on now.
+This could help disambiguate visually similar features within the same image, and is a very interesting direction for future work.
 
-\textbf{(R3)} \textit{it seems that PGDDS is both faster and more accurate in their tests, even for 15 iterations.}
+\textbf{(R3)} \textit{PGDDS being faster and more accurate}:
 As we know from one pass inference on graph or geometry problems, it is difficult to outperform multi-iteration optimization methods.
-The advantage our method has is allowing for end-to-end training to allow learning features on pixels directly, a direction we hope to pursue in future work.
-PGDDS also uses many optimizations between passes through the graph, so in future work we could use methods like OptNet \cite{amos2017optnet} to help improve performance.
+The advantage our method has is allowing for end-to-end training to enable learning features from pixels directly, a direction we hope to pursue in future work.
+In addition, PGDDS uses many optimizations between passes through the graph, so in future work we could use methods like OptNet by Amos et al ICML 2017 to help improve performance.
 
-
-
-% \begin{figure}[t]
-% \begin{center}
-% \fbox{\rule{0pt}{1.8in} \rule{0.9\linewidth}{0pt}}
-%    %\includegraphics[width=0.8\linewidth]{egfigure.eps}
-% \end{center}
-%    \caption{Example of caption.  It is set in Roman so that mathematics
-%    (always set in Roman: $B \sin A = A \sin B$) may be included without an
-%    ugly clash.}
-% \label{fig:long}
-% \label{fig:onecol}
-% \end{figure}
 
 % {\footnotesize
-{\tiny
-\bibliographystyle{ieee}
-\bibliography{egbib}
-}
+% {\tiny
+% \bibliographystyle{ieee}
+% \bibliography{egbib}
+% }
 
 
 
