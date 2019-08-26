@@ -89,26 +89,35 @@ def process_scene_bundle(opts, bundle_file, scene_fname):
   n = len(scene.cams)
   cam_pts = lambda i: set([ f.point for f in scene.cams[i].features ])
   # Length 2 is a special case
-  myprint("Building pairs...")
-  start_time = time.time()
-  pairs, tsizes = [], []
-  for x in tqdm.tqdm(it.combinations(range(n),2), total=choose(n,2), disable=opts.verbose < 1):
-    p = len(cam_pts(x[0]) & cam_pts(x[1]))
-    if p >= opts.min_points:
-      pairs.append(x)
-      tsizes.append(p)
-  end_time = time.time()
-  myprint("Done with pairs ({} sec)".format(end_time-start_time))
-  myprint("Saving pairs...")
+  myprint("Checking pairs...")
   tfname = tuples_fname(opts, bundle_file, 2)
-  if not os.path.exists(os.path.dirname(tfname)):
-    os.makedirs(os.path.dirname(tfname))
-  with open(tuples_fname(opts, bundle_file, 2), 'wb') as f:
-    np.save(f, np.array(pairs))
+  if opts.overwrite_tuples or not os.path.exists(tfname):
+    myprint("Building pairs...")
+    start_time = time.time()
+    pairs, tsizes = [], []
+    for x in tqdm.tqdm(it.combinations(range(n),2), total=choose(n,2), disable=opts.verbose < 1):
+      p = len(cam_pts(x[0]) & cam_pts(x[1]))
+      if p >= opts.min_points:
+        pairs.append(x)
+        tsizes.append(p)
+    end_time = time.time()
+    myprint("Done with pairs ({} sec)".format(end_time-start_time))
+    myprint("Saving pairs...")
+    if not os.path.exists(os.path.dirname(tfname)):
+      os.makedirs(os.path.dirname(tfname))
+    with open(tuples_fname(opts, bundle_file, 2), 'wb') as f:
+      np.save(f, np.array(pairs))
+  else:
+    pairs = np.load(tfname)
   # Length 3 and above
   tlist = pairs
   for k in range(3,opts.max_tuple_size+1):
-    myprint("Selecting {}-tuples...".format(k))
+    tfname = tuples_fname(opts, bundle_file, k)
+    myprint("Checking {}-tuples...".format(k))
+    if not opts.overwrite_tuples and os.path.exists(tfname):
+      tlist = np.load(tfname)
+      continue
+    myprint("Building {}-tuples...".format(k))
     start_time = time.time()
     tvals = tlist
     tlist, tsizes = [], []
@@ -124,7 +133,6 @@ def process_scene_bundle(opts, bundle_file, scene_fname):
     end_time = time.time()
     myprint("Done with {}-tuples ({} sec)".format(k, end_time-start_time))
     myprint("Saving {}-tuples...".format(k))
-    tfname = tuples_fname(opts, bundle_file, k)
     if not os.path.exists(os.path.dirname(tfname)):
       os.makedirs(os.path.dirname(tfname))
     with open(tuples_fname(opts, bundle_file, k), 'wb') as f:
@@ -141,10 +149,6 @@ if opts.save == 'all':
     scene_fname=os.path.join(opts.top_dir,'scenes',parse.scene_fname(bundle_file))
     if opts.verbose > 0:
       print('Computing {} ({} of {})...'.format(bundle_file,i+1,N))
-    if not opts.overwrite_tuples and os.path.exists(tuples_fname):
-      if opts.verbose > 0:
-        print('Already computed tuples, skipping...')
-      continue
     start_time = time.time()
     process_scene_bundle(opts, bundle_file, scene_fname)
     end_time = time.time()
