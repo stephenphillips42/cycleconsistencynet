@@ -1,0 +1,241 @@
+\begin{thebibliography}{33}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Abadi et~al.(2015)Abadi, Agarwal, Barham, Brevdo, Chen, Citro,
+  Corrado, Davis, Dean, Devin, Ghemawat, Goodfellow, Harp, Irving, Isard, Jia,
+  Jozefowicz, Kaiser, Kudlur, Levenberg, Man\'{e}, Monga, Moore, Murray, Olah,
+  Schuster, Shlens, Steiner, Sutskever, Talwar, Tucker, Vanhoucke, Vasudevan,
+  Vi\'{e}gas, Vinyals, Warden, Wattenberg, Wicke, Yu, and
+  Zheng]{tensorflow2015}
+Mart\'{\i}n Abadi, Ashish Agarwal, Paul Barham, Eugene Brevdo, Zhifeng Chen,
+  Craig Citro, Greg~S. Corrado, Andy Davis, Jeffrey Dean, Matthieu Devin,
+  Sanjay Ghemawat, Ian Goodfellow, Andrew Harp, Geoffrey Irving, Michael Isard,
+  Yangqing Jia, Rafal Jozefowicz, Lukasz Kaiser, Manjunath Kudlur, Josh
+  Levenberg, Dandelion Man\'{e}, Rajat Monga, Sherry Moore, Derek Murray, Chris
+  Olah, Mike Schuster, Jonathon Shlens, Benoit Steiner, Ilya Sutskever, Kunal
+  Talwar, Paul Tucker, Vincent Vanhoucke, Vijay Vasudevan, Fernanda Vi\'{e}gas,
+  Oriol Vinyals, Pete Warden, Martin Wattenberg, Martin Wicke, Yuan Yu, and
+  Xiaoqiang Zheng.
+\newblock {TensorFlow}: Large-scale machine learning on heterogeneous systems,
+  2015.
+\newblock URL \url{https://www.tensorflow.org/}.
+\newblock Software available from tensorflow.org.
+
+\bibitem[Arrigoni et~al.(2017)Arrigoni, Maset, and
+  Fusiello]{arrigoni2017synchronization}
+Federica Arrigoni, Eleonora Maset, and Andrea Fusiello.
+\newblock Synchronization in the symmetric inverse semigroup.
+\newblock In \emph{International Conference on Image Analysis and Processing},
+  pp.\  70--81. Springer, 2017.
+
+\bibitem[Battaglia et~al.(2016)Battaglia, Pascanu, Lai, Rezende,
+  et~al.]{battaglia2016interaction}
+Peter Battaglia, Razvan Pascanu, Matthew Lai, Danilo~Jimenez Rezende, et~al.
+\newblock Interaction networks for learning about objects, relations and
+  physics.
+\newblock In \emph{Advances in neural information processing systems}, pp.\
+  4502--4510, 2016.
+
+\bibitem[Battaglia et~al.(2018)Battaglia, Hamrick, Bapst, Sanchez-Gonzalez,
+  Zambaldi, Malinowski, Tacchetti, Raposo, Santoro, Faulkner,
+  et~al.]{battaglia2018relational}
+Peter~W Battaglia, Jessica~B Hamrick, Victor Bapst, Alvaro Sanchez-Gonzalez,
+  Vinicius Zambaldi, Mateusz Malinowski, Andrea Tacchetti, David Raposo, Adam
+  Santoro, Ryan Faulkner, et~al.
+\newblock Relational inductive biases, deep learning, and graph networks.
+\newblock \emph{arXiv preprint arXiv:1806.01261}, 2018.
+
+\bibitem[Bay et~al.(2006)Bay, Tuytelaars, and Van~Gool]{bay2006surf}
+Herbert Bay, Tinne Tuytelaars, and Luc Van~Gool.
+\newblock Surf: Speeded up robust features.
+\newblock In \emph{European conference on computer vision}, pp.\  404--417.
+  Springer, 2006.
+
+\bibitem[Brachmann et~al.(2017)Brachmann, Krull, Nowozin, Shotton, Michel,
+  Gumhold, and Rother]{brachmann2017dsac}
+Eric Brachmann, Alexander Krull, Sebastian Nowozin, Jamie Shotton, Frank
+  Michel, Stefan Gumhold, and Carsten Rother.
+\newblock Dsac-differentiable ransac for camera localization.
+\newblock In \emph{IEEE Conference on Computer Vision and Pattern Recognition
+  (CVPR)}, volume~3, 2017.
+
+\bibitem[Bronstein et~al.(2017)Bronstein, Bruna, LeCun, Szlam, and
+  Vandergheynst]{bronstein2017geometric}
+Michael~M Bronstein, Joan Bruna, Yann LeCun, Arthur Szlam, and Pierre
+  Vandergheynst.
+\newblock Geometric deep learning: going beyond euclidean data.
+\newblock \emph{IEEE Signal Processing Magazine}, 34\penalty0 (4):\penalty0
+  18--42, 2017.
+
+\bibitem[Bruna et~al.(2013)Bruna, Zaremba, Szlam, and LeCun]{bruna2013spectral}
+Joan Bruna, Wojciech Zaremba, Arthur Szlam, and Yann LeCun.
+\newblock Spectral networks and locally connected networks on graphs.
+\newblock \emph{arXiv preprint arXiv:1312.6203}, 2013.
+
+\bibitem[Calonder et~al.(2012)Calonder, Lepetit, Ozuysal, Trzcinski, Strecha,
+  and Fua]{calonder2012brief}
+Michael Calonder, Vincent Lepetit, Mustafa Ozuysal, Tomasz Trzcinski, Christoph
+  Strecha, and Pascal Fua.
+\newblock Brief: Computing a local binary descriptor very fast.
+\newblock \emph{IEEE Transactions on Pattern Analysis and Machine
+  Intelligence}, 34\penalty0 (7):\penalty0 1281--1298, 2012.
+
+\bibitem[Choy et~al.(2016)Choy, Gwak, Savarese, and
+  Chandraker]{choy2016universal}
+Christopher~B Choy, JunYoung Gwak, Silvio Savarese, and Manmohan Chandraker.
+\newblock Universal correspondence network.
+\newblock In \emph{Advances in Neural Information Processing Systems}, pp.\
+  2414--2422, 2016.
+
+\bibitem[Defferrard et~al.(2016)Defferrard, Bresson, and
+  Vandergheynst]{defferrard2016convolutional}
+Micha{\"e}l Defferrard, Xavier Bresson, and Pierre Vandergheynst.
+\newblock Convolutional neural networks on graphs with fast localized spectral
+  filtering.
+\newblock In \emph{Advances in Neural Information Processing Systems}, pp.\
+  3844--3852, 2016.
+
+\bibitem[Fischler \& Bolles(1981)Fischler and Bolles]{fischler1981random}
+Martin~A Fischler and Robert~C Bolles.
+\newblock Random sample consensus: a paradigm for model fitting with
+  applications to image analysis and automated cartography.
+\newblock \emph{Communications of the ACM}, 24\penalty0 (6):\penalty0 381--395,
+  1981.
+
+\bibitem[Gama et~al.()Gama, Marques, Leus, and Ribeiro]{gama2019convolutional}
+Fernando Gama, Antonio~G Marques, Geert Leus, and Alejandro Ribeiro.
+\newblock Convolutional neural network architectures for signals supported on
+  graphs.
+\newblock \emph{IEEE Transactions on Signal Processing}, 67\penalty0
+  (4):\penalty0 1034--1049.
+
+\bibitem[Gama et~al.(2018{\natexlab{a}})Gama, Leus, Marques, and
+  Ribeiro]{gama2018convolutional}
+Fernando Gama, Geert Leus, Antonio~G Marques, and Alejandro Ribeiro.
+\newblock Convolutional neural networks via node-varying graph filters.
+\newblock In \emph{2018 IEEE Data Science Workshop (DSW)}, pp.\  1--5. IEEE,
+  2018{\natexlab{a}}.
+
+\bibitem[Gama et~al.(2018{\natexlab{b}})Gama, Marques, Ribeiro, and
+  Leus]{gama2018mimo}
+Fernando Gama, Antonio~G Marques, Alejandro Ribeiro, and Geert Leus.
+\newblock Mimo graph filters for convolutional neural networks.
+\newblock \emph{arXiv preprint arXiv:1803.02247}, 2018{\natexlab{b}}.
+
+\bibitem[Hu et~al.(2016)Hu, Thibert, and Guibas]{hu2016distributable}
+Nan Hu, Boris Thibert, and Leonidas Guibas.
+\newblock Distributable consistent multi-graph matching.
+\newblock \emph{arXiv preprint arXiv:1611.07191}, 2016.
+
+\bibitem[Kingma \& Ba(2014)Kingma and Ba]{kingma2014adam}
+Diederik~P Kingma and Jimmy Ba.
+\newblock Adam: A method for stochastic optimization.
+\newblock \emph{arXiv preprint arXiv:1412.6980}, 2014.
+
+\bibitem[Kipf \& Welling(2017)Kipf and Welling]{kipf2017semi}
+Thomas~N. Kipf and Max Welling.
+\newblock Semi-supervised classification with graph convolutional networks.
+\newblock In \emph{International Conference on Learning Representations
+  (ICLR)}, 2017.
+
+\bibitem[Leonardos et~al.(2016)Leonardos, Zhou, and
+  Daniilidis]{leonardos2016distributed}
+Spyridon Leonardos, Xiaowei Zhou, and Kostas Daniilidis.
+\newblock Distributed consistent data association.
+\newblock \emph{arXiv preprint arXiv:1609.07015}, 2016.
+
+\bibitem[Li et~al.(2010)Li, Snavely, and Huttenlocher]{li2010location}
+Yunpeng Li, Noah Snavely, and Daniel~P Huttenlocher.
+\newblock Location recognition using prioritized feature matching.
+\newblock In \emph{European conference on computer vision}, pp.\  791--804.
+  Springer, 2010.
+
+\bibitem[Lowe(2004)]{lowe2004distinctive}
+David~G Lowe.
+\newblock Distinctive image features from scale-invariant keypoints.
+\newblock \emph{International journal of computer vision}, 60\penalty0
+  (2):\penalty0 91--110, 2004.
+
+\bibitem[Mur-Artal et~al.(2015)Mur-Artal, Montiel, and Tardos]{mur2015orb}
+Raul Mur-Artal, Jose Maria~Martinez Montiel, and Juan~D Tardos.
+\newblock Orb-slam: a versatile and accurate monocular slam system.
+\newblock \emph{IEEE Transactions on Robotics}, 31\penalty0 (5):\penalty0
+  1147--1163, 2015.
+
+\bibitem[Pachauri et~al.(2013)Pachauri, Kondor, and Singh]{pachauri2013solving}
+Deepti Pachauri, Risi Kondor, and Vikas Singh.
+\newblock Solving the multi-way matching problem by permutation
+  synchronization.
+\newblock In \emph{Advances in neural information processing systems}, pp.\
+  1860--1868, 2013.
+
+\bibitem[Scarselli et~al.(2009)Scarselli, Gori, Tsoi, Hagenbuchner, and
+  Monfardini]{scarselli2009graph}
+Franco Scarselli, Marco Gori, Ah~Chung Tsoi, Markus Hagenbuchner, and Gabriele
+  Monfardini.
+\newblock The graph neural network model.
+\newblock \emph{IEEE Transactions on Neural Networks}, 20\penalty0
+  (1):\penalty0 61--80, 2009.
+
+\bibitem[Suh et~al.(2015)Suh, Adamczewski, and Mu~Lee]{suh2015subgraph}
+Yumin Suh, Kamil Adamczewski, and Kyoung Mu~Lee.
+\newblock Subgraph matching using compactness prior for robust feature
+  correspondence.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pp.\  5070--5078, 2015.
+
+\bibitem[Tron \& Daniilidis(2014)Tron and Daniilidis]{tron2014quotient}
+Roberto Tron and Kostas Daniilidis.
+\newblock On the quotient representation for the essential manifold.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pp.\  1574--1581, 2014.
+
+\bibitem[Tron et~al.(2017)Tron, Zhou, Esteves, and Daniilidis]{tron2017fast}
+Roberto Tron, Xiaowei Zhou, Carlos Esteves, and Kostas Daniilidis.
+\newblock Fast multi-image matching via density-based clustering.
+\newblock In \emph{Proc. IEEE Conf. Comput. Vis. Pattern Recognit.}, pp.\
+  4057--4066, 2017.
+
+\bibitem[Wang et~al.(2017)Wang, Zhou, and Daniilidis]{wang2017multi}
+Qianqian Wang, Xiaowei Zhou, and Kostas Daniilidis.
+\newblock Multi-image semantic matching by mining consistent features.
+\newblock \emph{arXiv preprint arXiv:1711.07641}, 2017.
+
+\bibitem[Yi et~al.(2016)Yi, Trulls, Lepetit, and Fua]{yi2016lift}
+Kwang~Moo Yi, Eduard Trulls, Vincent Lepetit, and Pascal Fua.
+\newblock Lift: Learned invariant feature transform.
+\newblock In \emph{European Conference on Computer Vision}, pp.\  467--483.
+  Springer, 2016.
+
+\bibitem[Yi et~al.(2018)Yi, Trulls, Ono, Lepetit, Salzmann, and
+  Fua]{yi2018learning}
+Kwang~Moo Yi, Eduard Trulls, Yuki Ono, Vincent Lepetit, Mathieu Salzmann, and
+  Pascal Fua.
+\newblock Learning to find good correspondences.
+\newblock In \emph{Proceedings of the 2018 IEEE/CVF Conference on Computer
+  Vision and Pattern Recognition (CVPR)}, number CONF, 2018.
+
+\bibitem[Zagoruyko \& Komodakis(2015)Zagoruyko and
+  Komodakis]{zagoruyko2015learning}
+Sergey Zagoruyko and Nikos Komodakis.
+\newblock Learning to compare image patches via convolutional neural networks.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pp.\  4353--4361, 2015.
+
+\bibitem[Zhou et~al.(2015)Zhou, Zhu, and Daniilidis]{zhou2015multi}
+Xiaowei Zhou, Menglong Zhu, and Kostas Daniilidis.
+\newblock Multi-image matching via fast alternating minimization.
+\newblock In \emph{Proceedings of the IEEE International Conference on Computer
+  Vision}, pp.\  4032--4040, 2015.
+
+\bibitem[Zhu et~al.(2017)Zhu, Park, Isola, and Efros]{zhu2017unpaired}
+Jun-Yan Zhu, Taesung Park, Phillip Isola, and Alexei~A Efros.
+\newblock Unpaired image-to-image translation using cycle-consistent
+  adversarial networks.
+\newblock \emph{arXiv preprint}, 2017.
+
+\end{thebibliography}

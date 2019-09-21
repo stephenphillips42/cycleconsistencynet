@@ -1,0 +1,55 @@
+This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: main.aux
+The style file: iclr2020_conference.bst
+Database file #1: egbib.bib
+You're missing a field name---line 240 of file egbib.bib
+ : 
+ : #   title={Hierarchical Graph Representation Learning with Differentiable Pooling},
+(Error may have been on previous line)
+I'm skipping whatever remains of this entry
+Warning--empty year in gama2019convolutional
+Warning--empty year in gama2019convolutional
+Warning--there's a number but no series in yi2018learning
+You've used 33 entries,
+            2773 wiz_defined-function locations,
+            766 strings with 11763 characters,
+and the built_in function-call counts, 20742 in all, are:
+= -- 1789
+> -- 1544
+< -- 22
++ -- 517
+- -- 483
+* -- 1766
+:= -- 3106
+add.period$ -- 105
+call.type$ -- 33
+change.case$ -- 258
+chr.to.int$ -- 32
+cite$ -- 69
+duplicate$ -- 863
+empty$ -- 1461
+format.name$ -- 526
+if$ -- 4391
+int.to.chr$ -- 2
+int.to.str$ -- 1
+missing$ -- 32
+newline$ -- 174
+num.names$ -- 132
+pop$ -- 557
+preamble$ -- 1
+purify$ -- 225
+quote$ -- 0
+skip$ -- 752
+stack$ -- 0
+substring$ -- 740
+swap$ -- 192
+text.length$ -- 16
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 363
+warning$ -- 3
+while$ -- 155
+width$ -- 0
+write$ -- 432
+(There was 1 error message)

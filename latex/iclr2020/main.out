@@ -1,0 +1,15 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Related Work}{}% 2
+\BOOKMARK [2][-]{subsection.2.1}{Feature Matching}{section.2}% 3
+\BOOKMARK [2][-]{subsection.2.2}{Multi-image Matching}{section.2}% 4
+\BOOKMARK [2][-]{subsection.2.3}{Deep Learning for Matching}{section.2}% 5
+\BOOKMARK [2][-]{subsection.2.4}{Graph Neural Networks}{section.2}% 6
+\BOOKMARK [1][-]{section.3}{Method}{}% 7
+\BOOKMARK [2][-]{subsection.3.1}{Correspondence Graph}{section.3}% 8
+\BOOKMARK [2][-]{subsection.3.2}{Graph Neural Networks}{section.3}% 9
+\BOOKMARK [2][-]{subsection.3.3}{Cycle Consistency}{section.3}% 10
+\BOOKMARK [2][-]{subsection.3.4}{Geometric Consistency Loss}{section.3}% 11
+\BOOKMARK [1][-]{section.4}{Experiments}{}% 12
+\BOOKMARK [2][-]{subsection.4.1}{Synthetic Graph Dataset}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.2}{Rome 16K Graph Dataset}{section.4}% 14
+\BOOKMARK [1][-]{section.5}{Conclusion}{}% 15
