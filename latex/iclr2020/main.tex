@@ -164,6 +164,37 @@ To improve performance, more sophisticated aggregation techniques and global inf
 \section{Method}
 
 \begin{figure}[t]
+\begin{subfigure}[b]{.55\linewidth}
+  \centering
+  \includegraphics[width=0.95\linewidth]{figures-GeometricConsistency-v2.pdf}
+  \caption{Illustrated here is an example of how the geometric loss is computed for one feature.}
+  \label{fig:1b}
+  \label{fig:geoconsist}
+\end{subfigure}
+\begin{subfigure}[b]{.30\textwidth}
+  \centering
+  % \includegraphics[width=0.65\linewidth]{figures-GeometricLoss.pdf}
+  \includegraphics[height=180px]{figures-GeometricLoss.pdf}
+  \caption{}
+  \label{fig:3b}
+  \label{fig:geomloss}
+\end{subfigure}
+\caption{
+  \textbf{(a)} Errors are computed via absolute distance from the epipolar line, as expressed by (\ref{eq:essential_constraint}) via the epipolar constraint.
+  The epipolar line is the line of projection of the feature on the first image, projected onto to the second.
+  The distance to this line on the second image indicates how likely that point is to correspond geometrically to the original feature.
+  There can be false positives along the projected line, as shown by the square feature in the figure, but other points will be eliminated, such as the hexagonal feature.
+  Best viewed in color.
+  \textbf{(b)} Training curves with and without Geometric Training loss, described in \ref{eq:geom_cost2}.
+  The geometric training loss improves testing performance.
+  While the training is higher due to the additional loss terms, the ground truth L1 error is substantially better with the Geometric Loss.
+  Best viewed in color.
+}
+\label{fig:1}
+\end{figure}
+
+
+\begin{figure}[t]
 \begin{subfigure}[b]{.45\linewidth}
   \centering
   \includegraphics[width=0.95\linewidth]{figures-UniverseOfFeatures-v2.pdf}
@@ -171,21 +202,22 @@ To improve performance, more sophisticated aggregation techniques and global inf
   \label{fig:1a}
   \label{fig:universefeatures}
 \end{subfigure}%
-\begin{subfigure}[b]{.45\linewidth}
+\begin{subfigure}[b]{.55\linewidth}
   \centering
-  \includegraphics[width=0.95\linewidth]{figures-GeometricConsistency-v2.pdf}
-  \caption{Illustrated here is an example of how the geometric loss is computed for one feature.}
+  \includegraphics[width=0.75\linewidth]{figures-EmbeddingsViz.png}
+  % \includegraphics[height=150px]{figures-EmbeddingsViz.png}
+  \caption{}
   \label{fig:1b}
-  \label{fig:geoconsist}
+  \label{fig:embeddingsviz}
 \end{subfigure}
 \caption{
   \textbf{(a)} Each feature in each image corresponds to a 3D point in the scene.
   We can construct cycle consistent embeddings of the features by mapping each one to the one-hot vector of its corresponding 3D point.
   While there can be many features, there are fewer 3D points and thus this corresponds to a low rank factorization of the correspondence matrix.
-  \textbf{(b)} Errors are computed via absolute distance from the epipolar line, as expressed by (\ref{eq:essential_constraint}) via the epipolar constraint.
-  The epipolar line is the line of projection of the feature on the first image, projected onto to the second.
-  The distance to this line on the second image indicates how likely that point is to correspond geometrically to the original feature.
-  There can be false positives along the projected line, as shown by the square feature in the figure, but other points will be eliminated, such as the hexagonal feature.
+  \textbf{(b)} Visualization of the learned embeddings.
+  On the left we have the raw outputs, which are difficult to interpret.
+  In the center, we rotated the features to best match the ground truth for a more interpretable visualization.
+  On the right, we have the ground truth embeddings, given as indicator vectors for which feature in the world the points correspond to.
   Best viewed in color.
 }
 \label{fig:1}
@@ -320,7 +352,7 @@ $ \mE R(\mE R)^\top
 = \mE RR^\top \mE^\top
 = \mE\mE^\top
 \label{eq:rotinvar} $
-% Thus when visualizing embeddings, we rotate them to make them more interpretable (see figure \ref{fig:embeddingsviz}).
+Thus when visualizing embeddings, we rotate them to make them more interpretable (see figure \ref{fig:embeddingsviz}).
 
 \subsection{Geometric Consistency Loss}
 
@@ -428,35 +460,52 @@ With this simple test on synthetic data passed, we now move to more challenging 
 
 \begin{figure}[t]
 \centering
-\begin{subfigure}[b]{.70\textwidth}
-  \centering
-  % \includegraphics[width=0.95\linewidth]{figures-error_lines.pdf}
-  \includegraphics[height=200px]{figures-error_lines.pdf}
-  \caption{}
-  \label{fig:3a}
-  \label{fig:errorlines}
-\end{subfigure}
-\begin{subfigure}[b]{.25\textwidth}
-  \centering
-  % \includegraphics[width=0.65\linewidth]{figures-GeometricLoss.pdf}
-  \includegraphics[height=200px]{figures-GeometricLoss.pdf}
-  \caption{}
-  \label{fig:3b}
-  \label{fig:geomloss}
-\end{subfigure}
+\includegraphics[width=0.95\linewidth]{figures-error_lines.pdf}
+% \includegraphics[height=200px]{figures-error_lines.pdf}
+\label{fig:3}
+\label{fig:errorlines}
 \caption{
-  \textbf{(a)} Plot of the losses of the baselines at different iteration numbers.
+  Plot of the losses of the baselines at different iteration numbers.
   The line shows the mean of the graph while the translucent coloring shows the $25^{th}$ to $75^{th}$ percentiles.
   The ROC AUC curves remain fairly consistent while the L1 loss goes noticibly down after more iterations.
   Our method compares to 35-45 iterations of MatchALS, while only having 16 layers and 8 message passes.
   PGDDS performs better than us in $L_1$ but we perform similarly in the ROC AUC metric.
-  \textbf{(b)} Training curves with and without Geometric Training loss, described in \ref{eq:geom_cost2}.
-  The geometric training loss improves testing performance.
-  While the training is higher due to the additional loss terms, the ground truth L1 error is substantially better with the Geometric Loss.
-  Best viewed in color.
 }
 \label{fig:3}
 \end{figure}
+
+% 
+% \begin{figure}[t]
+% \centering
+% \begin{subfigure}[b]{.70\textwidth}
+%   \centering
+%   % \includegraphics[width=0.95\linewidth]{figures-error_lines.pdf}
+%   \includegraphics[height=200px]{figures-error_lines.pdf}
+%   \caption{}
+%   \label{fig:3a}
+%   \label{fig:errorlines}
+% \end{subfigure}
+% \begin{subfigure}[b]{.25\textwidth}
+%   \centering
+%   % \includegraphics[width=0.65\linewidth]{figures-GeometricLoss.pdf}
+%   \includegraphics[height=200px]{figures-GeometricLoss.pdf}
+%   \caption{}
+%   \label{fig:3b}
+%   \label{fig:geomloss}
+% \end{subfigure}
+% \caption{
+%   \textbf{(a)} Plot of the losses of the baselines at different iteration numbers.
+%   The line shows the mean of the graph while the translucent coloring shows the $25^{th}$ to $75^{th}$ percentiles.
+%   The ROC AUC curves remain fairly consistent while the L1 loss goes noticibly down after more iterations.
+%   Our method compares to 35-45 iterations of MatchALS, while only having 16 layers and 8 message passes.
+%   PGDDS performs better than us in $L_1$ but we perform similarly in the ROC AUC metric.
+%   \textbf{(b)} Training curves with and without Geometric Training loss, described in \ref{eq:geom_cost2}.
+%   The geometric training loss improves testing performance.
+%   While the training is higher due to the additional loss terms, the ground truth L1 error is substantially better with the Geometric Loss.
+%   Best viewed in color.
+% }
+% \label{fig:3}
+% \end{figure}
 
 \subsection{Rome 16K Graph Dataset}
 We  use the Rome16K dataset (\cite{li2010location}) to test our algorithm in real world settings.
@@ -490,19 +539,6 @@ Although our method does not outperform the Projected Gradient Descent - Doubly 
 % Our network, though only 12 layers, has comparable accuracy to MatchALS \cite{zhou2015multi} run between 25 and 50 iterations.
 % Additional comparisons to different iterations numbers of iterations can be found in the supplementary material.
 
-% \begin{figure}[t]
-% \begin{center}
-%   % \fbox{\rule{0pt}{2in} \rule{.9\linewidth}{0pt}}
-%   \includegraphics[width=0.7\linewidth]{figures-EmbeddingsViz.png}
-%   \end{center}
-%      \caption{
-%          Visualization of the learned embeddings.
-%          On the left we have the raw outputs, which are difficult to interpret.
-%          In the center, we rotated the features to best match the ground truth for a more interpretable visualization.
-%          On the right, we have the ground truth embeddings, given as indicator vectors for which feature in the world the points correspond to.
-%      }
-%   \label{fig:embeddingsviz}
-% \end{figure}
 %------------------------------------------------------------------------
 \section{Conclusion}
 
