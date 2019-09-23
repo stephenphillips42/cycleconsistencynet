@@ -58,13 +58,13 @@ Pennsylvania, PA 19104, USA \\
 
 Feature matching is an essential part of Structure from Motion and many geometric computer vision applications.
 The goal in multi-image feature matching is to take 2D image locations from three or more images and find which ones correspond to the same point in the 3D scene.
-Methods such as SIFT feature matching \cite{lowe2004distinctive} followed by RANSAC \cite{fischler1981random} have been the standard for decades.
+Methods such as SIFT feature matching (\cite{lowe2004distinctive}) followed by RANSAC (\cite{fischler1981random}) have been the standard for decades.
 However RANSAC-based approaches are limited to matching pairs of images, which can lead to global inconsistencies in the matching.
 % TODO: Mention trifocal tensors
 Other works, such as Wang et al.~\cite{wang2017multi}, have shown improvement in performance by optimizing cycle consistency, i.e. enforcing the pairwise feature matches to be globally consistent.
 
 However, these multi-view consistency algorithms struggle in distributed and robust settings.
-Having image features suited for this task would help improve performance, and deep learning has revolutionized how image features are computed \cite{yi2016lift}.
+Having image features suited for this task would help improve performance, and deep learning has revolutionized how image features are computed (\cite{yi2016lift}).
 In this paper, we want to leverage the power of deep representations in order to compute feature descriptors that are robust across multiple views.
 % Typically when applied to image or feature matching, deep neural networks (DNNs) are trained with photometric losses, directly using pixel color values.
 % However direct, pixel-based losses have are not robust to the many confounding factors in the environment, such as lighting and view-point changes.
@@ -92,7 +92,7 @@ In this paper, we want to leverage the power of deep representations in order to
 \end{center}
   \caption{
     An illustration of the approach of this work.
-    The Graph Neural Neural Network (GNN) \cite{battaglia2018relational} takes as input the graph of matches and then outputs a low rank embedding of the adjacency matrix of the graph.
+    The Graph Neural Neural Network (GNN) (\cite{battaglia2018relational}) takes as input the graph of matches and then outputs a low rank embedding of the adjacency matrix of the graph.
     The GNN operates on an embedding over the vertices of the graph.
     In the figure, the GNN vertex embeddings are represented by different colors.
     The final embedding is used to construct a pairwise similarity matrix, which we train to be a low dimensional cycle-consistent representation of the graph adjacency matrix, thus pruning the erroneous matches.
@@ -114,9 +114,9 @@ The proposed method works directly on the correspondence graph, which is agnosti
 To the best of our knowledge this work is the first to apply deep learning to the multi-view feature matching problem.
 We use an unsupervised loss - the cycle consistency loss - to train the network, and thus avoiding the difficulty of expensive hand labeling.
 Geometric consistency losses can aid training, even if such information is not available at test time.
-Although our network is simple, it shows promising results compared to baselines which optimize for cycle-consistency without learned embeddings, using a matrix factorization loss \cite{zhou2015multi, leonardos2016distributed}.
+Although our network is simple, it shows promising results compared to baselines which optimize for cycle-consistency without learned embeddings, using a matrix factorization loss (\cite{zhou2015multi, leonardos2016distributed}).
 Furthermore, since inference requires only a single forward pass over the neural network, our approach is faster (to achieve comparable accuracy) than methods which must solve an optimization problem every time.
-We perform experiments on the Rome16K \cite{li2010location} dataset to test the effectiveness of our method compared to optimization based methods.
+We perform experiments on the Rome16K dataset (\cite{li2010location}) to test the effectiveness of our method compared to optimization based methods.
 Our contributions in this work are:
 \begin{itemize}
 \item We use a novel architecture to address the multi-image feature matching problem using GNNs with graph embeddings.
@@ -130,36 +130,36 @@ Our contributions in this work are:
 
 \subsection{Feature Matching}
 Matching has a rich history of research in computer vision.
-Much work has be done using hand-crafted feature descriptors such as SIFT \cite{lowe2004distinctive}, SURF \cite{bay2006surf}, BRIEF \cite{calonder2012brief}, or ORB \cite{mur2015orb}.
+Much work has be done using hand-crafted feature descriptors such as SIFT (\cite{lowe2004distinctive}), SURF (\cite{bay2006surf}), BRIEF (\cite{calonder2012brief}), or ORB (\cite{mur2015orb}).
 RANSAC \cite{fischler1981random} is the most widely used robust estimation technique to filter out outliers from the matches.
 The combination of RANSAC and hand-crafted feature descriptors has constituted the bulk of the matching literature for the last 40 years.
-Finally, graph matching \cite{suh2015subgraph, hu2016distributable} can be used as a final step for more robust matches.
+Finally, graph matching (\cite{suh2015subgraph, hu2016distributable}) can be used as a final step for more robust matches.
 
 \subsection{Multi-image Matching}
 Multi-image matching has traditionally been done using optimization based methods minimizing a cycle consistency based loss (see Section 3.3).
-Pachauri et al.~\cite{pachauri2013solving} and Arrigoni et al.~\cite{arrigoni2017synchronization} use the eigenvectors of the matching matrix to obtain a low dimensional embedding. 
+\cite{pachauri2013solving} and \cite{arrigoni2017synchronization} use the eigenvectors of the matching matrix to obtain a low dimensional embedding. 
 However, the low Gaussian noise assumption is not realistic.
-Zhou et al.~\cite{zhou2015multi} and Wang et al.~\cite{wang2017multi} use most sophisticated optimization techniques on the matching matrix and thus produce more robust solutions.
-Leonardos et al.~\cite{leonardos2016distributed} implement a distributed optimization scheme to solve for cycle consistency.
-As an alternative to optimization based techniques, Tron et al.~\cite{tron2017fast} used density based clustering techniques to compute multi-image correspondence.
+\cite{zhou2015multi} and \cite{wang2017multi} use most sophisticated optimization techniques on the matching matrix and thus produce more robust solutions.
+\cite{leonardos2016distributed} implement a distributed optimization scheme to solve for cycle consistency.
+As an alternative to optimization based techniques, \cite{tron2017fast} used density based clustering techniques to compute multi-image correspondence.
 To the best of our knowledge, we are the first to use neural networks for multi-image matching.
 
 \subsection{Deep Learning for Matching}
-Previous attempts to improve image matching techniques using machine learning have focused on learning the descriptors given ground truth correspondence from curated datasets \cite{zagoruyko2015learning, yi2016lift, brachmann2017dsac}.
+Previous attempts to improve image matching techniques using machine learning have focused on learning the descriptors given ground truth correspondence from curated datasets such as \cite{zagoruyko2015learning}; \cite{yi2016lift}; and \cite{brachmann2017dsac}.
 This approach is limited if one do not have the ability to get the ground truth correspondences.
-There are other methods to build correspondences such as Choy et al.~\cite{choy2016universal}, but they only handle two-view constraints and require dense correspondences.
-Most similar to our work, Yi et al.~\cite{yi2018learning} attempts to improve correspondences by learning match probabilities for RANSAC for greater robustness and speed.
+There are other methods to build correspondences such as \cite{choy2016universal}, but they only handle two-view constraints and require dense correspondences.
+Most similar to our work, \cite{yi2018learning} attempts to improve correspondences by learning match probabilities for RANSAC for greater robustness and speed.
 However, they only focus on two view matching and do not exploit the advantages of the correspondence structure.
-Note that while Zhu et al.~\cite{zhu2017unpaired} use cycle consistency in their loss, their method is restricted to pairwise cycle consistency (i.e. enforcing consistency by going back and forth between two images).
+Note that while \cite{zhu2017unpaired} use cycle consistency in their loss, their method is restricted to pairwise cycle consistency (i.e. enforcing consistency by going back and forth between two images).
 We use multi-image cycle consistency, which require consistency between 3 or more images.
 
 \subsection{Graph Neural Networks}
-Graph neural networks have recieved more attention recently \cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2017semi, scarselli2009graph, gama2018mimo, gama2018convolutional, battaglia2018relational}.
-Classical so-called Spectral methods used the eigenvectors of the graph Laplacian to compute convolutions as in Bruna et al.~\cite{bruna2013spectral}, but requires an a-priori known graph structure. 
-Non-spectral methods do not require a-priori knowledge \cite{bronstein2017geometric, kipf2017semi, scarselli2009graph, gama2018convolutional}.
+Graph neural networks have recieved more attention recently e.g. \cite{bronstein2017geometric, bruna2013spectral, defferrard2016convolutional, kipf2017semi, scarselli2009graph, gama2018mimo, gama2018convolutional}; and \cite{battaglia2018relational}.
+Classical so-called Spectral methods used the eigenvectors of the graph Laplacian to compute convolutions as in \cite{bruna2013spectral}, but requires an a-priori known graph structure. 
+Non-spectral methods do not require a-priori knowledge, as seen in \cite{bronstein2017geometric, kipf2017semi, scarselli2009graph}; and \cite{gama2018convolutional}.
 Most of these methods use polynomials of the graph Laplacian to compute neighborhood averages.
-Gama et al.~2018 \cite{gama2018mimo, gama2018convolutional} formalize this notion and generalize it beyond the use of the graph Laplacian.
-To improve performance, more sophisticated aggregation techniques and global information passing can be used as discussed in Battaglia et al.~\cite{battaglia2018relational}.
+\cite{gama2018mimo, gama2018convolutional} formalize this notion and generalize it beyond the use of the graph Laplacian.
+To improve performance, more sophisticated aggregation techniques and global information passing can be used as discussed in \cite{battaglia2018relational}.
 
 \section{Method}
 
@@ -203,7 +203,7 @@ To denote the vertices connected to an edge $e \in \mathcal{E}$ we write $e(v_1,
 \subsection{Correspondence Graph}
 We assume there is an initial set of feature matches represented as a graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$, with an associated adjacency matrix $\mA$.
 The graph is constructed from putative correspondences of image features across images, typically constructed using feature descriptor distance (e.g. SIFT feature distance).
-While there are many interesting methods for computing these putative correspondences \cite{suh2015subgraph, yi2018learning}, we do not explore them in this work.
+While there are many interesting methods for computing these putative correspondences (\cite{suh2015subgraph, yi2018learning}), we do not explore them in this work.
 Typically putative correspondences are matched probabilistically, meaning a feature in one image matches to many features in another.
 The ambiguity in the matches could come from repeated structures in the scene, insufficiently informative low-level feature descriptors, or just an error in the matching algorithm.
 Filtering out these noisy matches is our primary learning goal.
@@ -235,7 +235,7 @@ If a superscript is not specified then it refers to the final output of the netw
 First we describe older methods of GNNs to give context, then we describe the method we use in this work.
 Many older methods assume we have the adjacency matrix $\mA$ of the graph known a-priori \cite{bruna2013spectral}, and can encode graph convolutions using the eigenvectors of $\mA$.
 However, we do not have this luxury, as the correspondence structure changes from image set to image set, and thus we use non-spectral Graph Neural Networks.
-There are many variations on non-spectral methods, often which ultimately amount to message passing between vertices of the graph with learned non-linear transformations between various steps \cite{kipf2017semi, defferrard2016convolutional, gama2018mimo, gama2018convolutional}.
+There are many variations on non-spectral methods, often which ultimately amount to message passing between vertices of the graph with learned non-linear transformations between various steps (\cite{kipf2017semi, defferrard2016convolutional, gama2018mimo, gama2018convolutional}).
 Some works such as \cite{gama2019convolutional} use pooling operations on the vertices to make the graph smaller and thus aid computation, but as we need labels on every vertex of the original graph, so we cannot use this.
 Most of GNNs used in these works can be expressed mathematically as:
 \begin{align*}
@@ -268,7 +268,7 @@ If the pairwise matches are globally consistent, then for all $i, j, k$:
 \label{eq:cycconsist1}
 \end{equation}
 In other words, the matches between two images stay the same no matter what path is taken to get there. 
-This constraint is known as \textit{cycle consistency}, and has been used in a number of works to optimize for global consistency \cite{zhou2015multi, wang2017multi, leonardos2016distributed}.
+This constraint is known as \textit{cycle consistency}, and has been used in a number of works to optimize for global consistency (\cite{zhou2015multi, wang2017multi, leonardos2016distributed}).
 Stated in this form, there are $O(n^3)$ cycle consistency constraints to check.
 A more elegant way to represent cycle consistency is to first create a `universe' of features that all images match to (see figure \ref{fig:universefeatures}).
 Then, one can match the $i^{th}$ set of features to the universe using a ground-truth matching matrix $\mX_i$.
@@ -329,7 +329,7 @@ The simplest way to add geometric consistency losses, and the approach we use he
 The epipolar constraint describes how the positions of features in different images corresponding to the same point should be related.
 An illustration of this is provided in figure \ref{fig:geoconsist}, showing how this loss can help reject erroneous points.
 Given a relative pose $(R_{ij}, T_{ij})$ between two cameras $i$ and $j$  (transforms $j$ to $i$) the epipolar on corresponding feature locations $X_i$ and $X_j$: $X_{i}^\top \cross{T_{ij}}R_{ij} X_{j} = 0$.
-In this work we use the two pose epipolar constraint \cite{tron2014quotient}:
+In this work we use the two pose epipolar constraint (\cite{tron2014quotient}):
 \begin{equation}
 X_{i}^\top R_{i}^\top \cross{T_{j} - T_{i}}R_{j} X_{j} = 0
 \label{eq:essential_constraint}
@@ -359,7 +359,6 @@ For our purposes, since we use low rank embeddings $\mE_{i}$, $\mE_{j}$, the los
 Method (6 Views)                                     & $L_1$             & $L_2$             & Area under ROC    & Time (sec)        \\
 \hline\hline
 MatchALS 15 Iterations & 0.101 $\pm$ 0.008 & 0.022 $\pm$ 0.004 & 0.918 $\pm$ 0.073 & 0.074 $\pm$ 0.008 \\ \hline
-MatchALS 25 Iterations & 0.059 $\pm$ 0.010 & 0.012 $\pm$ 0.004 & 0.921 $\pm$ 0.077 & 0.143 $\pm$ 0.064 \\ \hline
 MatchALS 35 Iterations & 0.046 $\pm$ 0.016 & 0.010 $\pm$ 0.005 & 0.910 $\pm$ 0.072 & 0.139 $\pm$ 0.041 \\ \hline
 MatchALS 50 Iterations & 0.029 $\pm$ 0.017 & 0.008 $\pm$ 0.005 & 0.905 $\pm$ 0.068 & 0.260 $\pm$ 0.048 \\ \hline
 PGDDS0 15 Iterations   & 0.017 $\pm$ 0.002 & 0.007 $\pm$ 0.001 & 0.918 $\pm$ 0.087 & 0.796 $\pm$ 0.147 \\ \hline
@@ -371,7 +370,6 @@ Spectral               & 0.073 $\pm$ 0.006 & 0.027 $\pm$ 0.003 & 0.921 $\pm$ 0.0
 \hline\hline
 Method (10 Views)                                   & $L_1$             & $L_2$             & Area under ROC    & Time (sec)        \\
 \hline\hline
-MatchALS 15 Iterations & 0.114 $\pm$ 0.008 & 0.028 $\pm$ 0.004 & 0.915 $\pm$ 0.051 & 0.142 $\pm$ 0.009 \\ \hline
 MatchALS 25 Iterations & 0.092 $\pm$ 0.008 & 0.019 $\pm$ 0.003 & 0.912 $\pm$ 0.055 & 0.228 $\pm$ 0.014 \\ \hline
 MatchALS 35 Iterations & 0.065 $\pm$ 0.009 & 0.013 $\pm$ 0.003 & 0.907 $\pm$ 0.053 & 0.355 $\pm$ 0.073 \\ \hline
 MatchALS 50 Iterations & 0.045 $\pm$ 0.012 & 0.011 $\pm$ 0.004 & 0.914 $\pm$ 0.051 & 0.455 $\pm$ 0.022 \\ \hline
@@ -388,10 +386,10 @@ Spectral               & 0.073 $\pm$ 0.005 & 0.029 $\pm$ 0.002 & 0.912 $\pm$ 0.0
 Results on Rome16K Correspondence graphs, showing the mean and standard deviation of the $L_1$ and $L_2$.
 Our method was not trained on ground truth correspondences but using unsupervised methods and geometric side losses.
 Thus we test against ground truth correspondence graph adjacency matrices computed from the bundle adjustment output.
-Our method performs better than 25 iteration of the MatchALS \cite{zhou2015multi} method, but does not perform as well as 50 iterations.
+Our method performs better than 25 iteration of the MatchALS (\cite{zhou2015multi}) method, but does not perform as well as 50 iterations.
 % Our network has only 12 layers, thus we have much greater efficiency per iteration.
-We do not perform as well as the Projected Gradient Descent Doubly Stochastic (PGDDS) \cite{leonardos2016distributed} but we perform significantly faster than them.
-We perform better than a simple eigenvalue based method \cite{pachauri2013solving}.
+We do not perform as well as the Projected Gradient Descent Doubly Stochastic (PGDDS) (\cite{leonardos2016distributed}) but we perform significantly faster than them.
+We perform better than a simple eigenvalue based method (\cite{pachauri2013solving}).
 Note that we perform much better in $L_1$ performance rather than $L_2$, as we optimized the network weights using an $L_1$ loss.
 }
 \label{tab:rome16ktab}
@@ -413,7 +411,7 @@ Note that we perform much better in $L_1$ performance rather than $L_2$, as we o
 
 \subsection{Synthetic Graph Dataset}
 We first test our method on synthetically generated data as a simple proof of concept.
-As these were simpler datasets, we the simpler edge-feature free model of \cite{kipf2017semi}.
+As these were simpler datasets, we the simpler edge-feature free model of (\cite{kipf2017semi}).
 To generate the data, we generate $p$ points, each with its own randomly generated descriptor.
 To create the graph, we generate random permutation matrices, with a noise applied to it after it is generated.
 % The initial descriptors we use as input we created using the true descriptor plus some added Gaussian noise.
@@ -424,8 +422,8 @@ The normalized noisy input descriptors are our baseline - they correlate with th
 However, the GNN recovered the true structure very well, as shown in Table \ref{fig:synthtable}.
 All experiments were run with a 12 layer GNN with the ReLU nonlinearity and skip connections.
 The feature vector lengths were 32, 64, 128, 256, 512, 512, 512, 512, 512, 512, 1024, 1024, with skip connections between layers 1 and 6, 6 and 12, and 1 and 12.
-All were trained with the Adam optimizer \cite{kingma2014adam} and a learning rate $10^{-4}$
-The network was implemented in Tensorflow \cite{tensorflow2015}, version 1.11.
+All were trained with the Adam optimizer (\cite{kingma2014adam}) and a learning rate $10^{-4}$
+The network was implemented in Tensorflow (\cite{tensorflow2015}), version 1.11.
 With this simple test on synthetic data passed, we now move to more challenging datasets.
 
 \begin{figure}[t]
@@ -461,7 +459,7 @@ With this simple test on synthetic data passed, we now move to more challenging 
 \end{figure}
 
 \subsection{Rome 16K Graph Dataset}
-We  use the Rome16K dataset \cite{li2010location} to test our algorithm in real world settings.
+We  use the Rome16K dataset (\cite{li2010location}) to test our algorithm in real world settings.
 Rome16K consists of 16 thousand images of various historical sites in Rome extracted from Flickr, along with the 3D structure of the sites provided by bundle adjustment.
 While not a standard dataset to test cycle consistency, other datasets had insufficient data to train a network on.
 Rome16K is typically used to test bundle adjustment methods.
@@ -478,17 +476,17 @@ For this method to work, we need the dimension of the embedding to be at least t
 Picking the correct number is difficult a-priori, and is a problem with all cycle consistency based methods.
 Here we use the ground truth dimension of the embedding to test both our method and the baselines.
 
-The network was implemented using the code provided by \cite{battaglia2018relational} using Tensorflow \cite{tensorflow2015} 1.11.
+The network was implemented using the code provided by \cite{battaglia2018relational} using Tensorflow 1.11 (\cite{tensorflow2015}).
 Our network has 16 layers, with 8 message passing operations placed every other layer.
 All layers were simple Multi-layer Perceptrons, with no batch norm.
-The network was trained with the Adam optimizer \cite{kingma2014adam} with a learning rate of $10^{-4}$, with an exponentially decaying learning rate.
+The network was trained with the Adam optimizer (\cite{kingma2014adam}) with a learning rate of $10^{-4}$, with an exponentially decaying learning rate.
 We incorporate skip connections between the input, $6^{th}$, and $12^{th}$ layers (all possible pairs). 
 
 % Our method performs better than nearly 
 We compare our method to spectral and optimization based baselines with different maximum iteration cutoffs.
 Figure \ref{fig:errorlines} illustrates this by plotting the means of various metrics and their $25^{th}$ and $75^{th}$ percentiles, with table \ref{tab:rome16ktab} giving the exact numbers.
-Our network, though only using 8 message passes, has comparable accuracy to MatchALS \cite{zhou2015multi} run 35 to 45 iterations, with an equivalent message passing step at each phase.
-Although our method does not outperform the Projected Gradient Descent - Doubly Stochastic (PGDDS) \cite{leonardos2016distributed} method, we perform comparably to them in the ROC AUC metric.
+Our network, though only using 8 message passes, has comparable accuracy to MatchALS (\cite{zhou2015multi}) run 35 to 45 iterations, with an equivalent message passing step at each phase.
+Although our method does not outperform the Projected Gradient Descent - Doubly Stochastic (PGDDS) (\cite{leonardos2016distributed}) method, we perform comparably to them in the ROC AUC metric.
 % Our network, though only 12 layers, has comparable accuracy to MatchALS \cite{zhou2015multi} run between 25 and 50 iterations.
 % Additional comparisons to different iterations numbers of iterations can be found in the supplementary material.
 
@@ -529,3 +527,54 @@ We can also extend this to distributed settings where we can train for matching 
 % You may include other additional sections here. 
 
 \end{document}
+
+
+% \begin{table*}[t]
+% \begin{center}
+% \begin{tabular}{|l|c|c|c|c|}
+% \hline
+% Method (6 Views)                                     & $L_1$             & $L_2$             & Area under ROC    & Time (sec)        \\
+% \hline\hline
+% MatchALS 15 Iterations & 0.101 $\pm$ 0.008 & 0.022 $\pm$ 0.004 & 0.918 $\pm$ 0.073 & 0.074 $\pm$ 0.008 \\ \hline
+% MatchALS 25 Iterations & 0.059 $\pm$ 0.010 & 0.012 $\pm$ 0.004 & 0.921 $\pm$ 0.077 & 0.143 $\pm$ 0.064 \\ \hline
+% MatchALS 35 Iterations & 0.046 $\pm$ 0.016 & 0.010 $\pm$ 0.005 & 0.910 $\pm$ 0.072 & 0.139 $\pm$ 0.041 \\ \hline
+% MatchALS 50 Iterations & 0.029 $\pm$ 0.017 & 0.008 $\pm$ 0.005 & 0.905 $\pm$ 0.068 & 0.260 $\pm$ 0.048 \\ \hline
+% PGDDS0 15 Iterations   & 0.017 $\pm$ 0.002 & 0.007 $\pm$ 0.001 & 0.918 $\pm$ 0.087 & 0.796 $\pm$ 0.147 \\ \hline
+% PGDDS0 25 Iterations   & 0.016 $\pm$ 0.002 & 0.007 $\pm$ 0.002 & 0.919 $\pm$ 0.087 & 1.670 $\pm$ 0.328 \\ \hline
+% PGDDS0 50 Iterations   & 0.015 $\pm$ 0.002 & 0.006 $\pm$ 0.002 & 0.920 $\pm$ 0.087 & 3.363 $\pm$ 0.528 \\ \hline
+% Spectral               & 0.073 $\pm$ 0.006 & 0.027 $\pm$ 0.003 & 0.921 $\pm$ 0.083 & 0.036 $\pm$ 0.005 \\ \hline
+% \textbf{GNN (ours)}    & 0.044 $\pm$ 0.005 & 0.031 $\pm$ 0.005 & 0.872 $\pm$ 0.081 & 0.765 $\pm$ 0.046 \\ \hline
+% 
+% \hline\hline
+% Method (10 Views)                                   & $L_1$             & $L_2$             & Area under ROC    & Time (sec)        \\
+% \hline\hline
+% MatchALS 15 Iterations & 0.114 $\pm$ 0.008 & 0.028 $\pm$ 0.004 & 0.915 $\pm$ 0.051 & 0.142 $\pm$ 0.009 \\ \hline
+% MatchALS 25 Iterations & 0.092 $\pm$ 0.008 & 0.019 $\pm$ 0.003 & 0.912 $\pm$ 0.055 & 0.228 $\pm$ 0.014 \\ \hline
+% MatchALS 35 Iterations & 0.065 $\pm$ 0.009 & 0.013 $\pm$ 0.003 & 0.907 $\pm$ 0.053 & 0.355 $\pm$ 0.073 \\ \hline
+% MatchALS 50 Iterations & 0.045 $\pm$ 0.012 & 0.011 $\pm$ 0.004 & 0.914 $\pm$ 0.051 & 0.455 $\pm$ 0.022 \\ \hline
+% PGDDS 15 Iterations    & 0.017 $\pm$ 0.001 & 0.008 $\pm$ 0.001 & 0.903 $\pm$ 0.061 & 1.225 $\pm$ 0.159 \\ \hline
+% PGDDS 25 Iterations    & 0.016 $\pm$ 0.001 & 0.007 $\pm$ 0.001 & 0.904 $\pm$ 0.061 & 2.637 $\pm$ 0.357 \\ \hline
+% PGDDS 50 Iterations    & 0.016 $\pm$ 0.001 & 0.007 $\pm$ 0.001 & 0.905 $\pm$ 0.061 & 6.116 $\pm$ 1.009 \\ \hline
+% Spectral               & 0.073 $\pm$ 0.005 & 0.029 $\pm$ 0.002 & 0.912 $\pm$ 0.057 & 0.081 $\pm$ 0.021 \\ \hline
+% \textbf{GNN (ours)}    & 0.053 $\pm$ 0.006 & 0.035 $\pm$ 0.005 & 0.872 $\pm$ 0.061 & 2.438 $\pm$ 0.070 \\ \hline
+% 
+% \end{tabular}
+% \end{center}
+% 
+% \caption{
+% Results on Rome16K Correspondence graphs, showing the mean and standard deviation of the $L_1$ and $L_2$.
+% Our method was not trained on ground truth correspondences but using unsupervised methods and geometric side losses.
+% Thus we test against ground truth correspondence graph adjacency matrices computed from the bundle adjustment output.
+% Our method performs better than 25 iteration of the MatchALS (\cite{zhou2015multi}) method, but does not perform as well as 50 iterations.
+% % Our network has only 12 layers, thus we have much greater efficiency per iteration.
+% We do not perform as well as the Projected Gradient Descent Doubly Stochastic (PGDDS) (\cite{leonardos2016distributed}) but we perform significantly faster than them.
+% We perform better than a simple eigenvalue based method (\cite{pachauri2013solving}).
+% Note that we perform much better in $L_1$ performance rather than $L_2$, as we optimized the network weights using an $L_1$ loss.
+% }
+% \label{tab:rome16ktab}
+% \end{table*}
+
+
+
+
+
