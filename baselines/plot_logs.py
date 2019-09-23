@@ -92,18 +92,18 @@ def myformat_old(x):
   return "{}e-{}".format(y[0], y[1][-1])
 
 def get_info(fname):
-  fname = os.path.basename(fname)
-  if 'MatchALS' in fname or 'PGDDS' in fname:
-    k = str.find(fname, 'Iter')
+  fname = os.path.basename(fname).lower()
+  if 'matchals' in fname or 'pgdds' in fname:
+    k = str.find(fname, 'iter')
     niters = int(fname[k-3:k])
-    k = str.find(fname, 'View')
+    k = str.find(fname, 'view')
     views = int(fname[k-2:k])
     return { 'iters': [niters], 'views': views }
-  elif 'Spectral' in fname or 'Random' in fname:
-    k = str.find(fname, 'View')
+  elif 'spectral' in fname or 'random' in fname:
+    k = str.find(fname, 'view')
     views = int(fname[k-2:k])
     return { 'iters': [0], 'views': views }
-  elif 'rome16kgeom' in fname:
+  elif 'rome16kgeom' in fname or 'skiphop' in fname:
     k = str.find(fname, 'skiphop')
     k = str.find(fname, 'view')
     views = int(fname[k-2:k])
@@ -128,15 +128,16 @@ def get_title(k):
     return k.title()
 
 def get_label(fname):
-  if 'MatchALS' in fname:
+  fname = fname.lower()
+  if 'matchals' in fname:
     return 'MatchALS'
-  elif 'PGDDS' in fname:
+  elif 'pgdds' in fname:
     return 'PGDDS'
-  elif 'Spectral' in fname:
+  elif 'spectral' in fname:
     return 'Spectral'
-  elif 'Random' in fname:
+  elif 'random' in fname:
     return 'Random'
-  elif 'rome16kgeom' in fname:
+  elif 'rome16kgeom' in fname or 'skiphop' in fname:
     return 'Ours (6 Passes)'
   else:
     return ''
@@ -266,10 +267,16 @@ aggs_view, iters_view = parse_files(args.files)
 nviews, nplots = len(iters_view), len(plot_keys)
 sz, R, C = 4, nviews, nplots
 fig, ax_ = plt.subplots(nrows=R, ncols=C, figsize=(3+C*sz, 3+R*sz))
-ax = {
-  v: dict(zip(plot_keys, ax_[i]))
-  for i, v in enumerate(sorted(iters_view.keys()))
-}
+if R > 1:
+  ax = {
+    v: dict(zip(plot_keys, ax_[i]))
+    for i, v in enumerate(sorted(iters_view.keys()))
+  }
+else:
+  ax = {
+    k: dict(zip(plot_keys, ax_))
+    for k in iters_view.keys()
+  }
 miniters = { v: 10**9 for v in iters_view }
 maxiters = { v: 0 for v in iters_view }
 for v in iters_view:
@@ -278,6 +285,7 @@ for v in iters_view:
       miniters[v] = min(miniters[v], min(iters_))
       maxiters[v] = max(maxiters[v], max(iters_))
 
+print([ aggs_view[6].keys() ])
 for v in sorted(iters_view.keys()):
   iters = iters_view[v]
   for label, agg_vals in aggs_view[v].items():
@@ -304,7 +312,7 @@ for v in sorted(iters_view.keys()):
   # if 'time' in plot_keys:
   #   ax[v]['time'].set_yscale('log')
   if 'roc' in plot_keys:
-    ax[v]['roc'].set_ylim([0.75, 1])
+    ax[v]['roc'].set_ylim([0.6, 1])
 
 lgd = ax_.reshape(-1)[0].legend()
 plt.setp(lgd.texts, **fontlegend)

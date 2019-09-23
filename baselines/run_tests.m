@@ -46,9 +46,9 @@ end
 
 % matchals_iters = [ 15, 25, 50, 100 ];
 % pgdds_iters = [ 15, 25, 50 ];
-% matchals_iters = [ 10, 20 ];
-matchals_iters = [ 30, 35, 40, 45 ];
-pgdds_iters = [  ];
+% matchals_iters = [ 10, 15, 20, 25, 30, 35, 40, 45 ];
+matchals_iters = [  ];
+pgdds_iters = [ 10, 15, 20, 25, 30, 35, 40, 45 ];
 test_fns = cell(2 + length(matchals_iters) + length(pgdds_iters),2);
 test_fns{1,1} = 'Spectral';
 test_fns{1,2} = @(W) myspectral(W, p);
@@ -68,7 +68,7 @@ for i = 1:length(pgdds_iters)
   offset = offset + 1;
 end
 
-saveout_str = '%sOutputs/%04d.npy';
+saveout_str = '%s%02dOutputs/%04d.npy';
 for test_fn_index = 1:size(test_fns,1)
   test_fn_tic = tic;
   test_fn = test_fns{test_fn_index,2};
@@ -92,7 +92,7 @@ for test_fn_index = 1:size(test_fns,1)
     disp_values(metric_info, fid, npz_index, values, run_time);
     test_index = test_index + 1;
     if save_out
-      output_name = sprintf(saveout_str, test_fns{test_fn_index,1}, npz_index);
+      output_name = sprintf(saveout_str, test_fns{test_fn_index,1}, views, npz_index);
       writeNPY(single(Ah), output_name);
       adjmat_name = sprintf('Adjmats/%04d.npy', npz_index);
       if ~exist(adjmat_name)
