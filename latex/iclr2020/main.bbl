@@ -1,4 +1,4 @@
-\begin{thebibliography}{33}
+\begin{thebibliography}{34}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -218,6 +218,13 @@ Kwang~Moo Yi, Eduard Trulls, Yuki Ono, Vincent Lepetit, Mathieu Salzmann, and
 \newblock Learning to find good correspondences.
 \newblock In \emph{Proceedings of the 2018 IEEE/CVF Conference on Computer
   Vision and Pattern Recognition (CVPR)}, number CONF, 2018.
+
+\bibitem[Zach et~al.(2010)Zach, Klopschitz, and
+  Pollefeys]{zach2010disambiguating}
+Christopher Zach, Manfred Klopschitz, and Marc Pollefeys.
+\newblock Disambiguating visual relations using loop constraints.
+\newblock In \emph{2010 IEEE Computer Society Conference on Computer Vision and
+  Pattern Recognition}, pp.\  1426--1433. IEEE, 2010.
 
 \bibitem[Zagoruyko \& Komodakis(2015)Zagoruyko and
   Komodakis]{zagoruyko2015learning}

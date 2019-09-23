@@ -11,45 +11,45 @@ I'm skipping whatever remains of this entry
 Warning--empty year in gama2019convolutional
 Warning--empty year in gama2019convolutional
 Warning--there's a number but no series in yi2018learning
-You've used 33 entries,
+You've used 34 entries,
             2773 wiz_defined-function locations,
-            766 strings with 11763 characters,
-and the built_in function-call counts, 20742 in all, are:
-= -- 1789
-> -- 1544
-< -- 22
-+ -- 517
-- -- 483
-* -- 1766
-:= -- 3106
-add.period$ -- 105
-call.type$ -- 33
-change.case$ -- 258
-chr.to.int$ -- 32
-cite$ -- 69
-duplicate$ -- 863
-empty$ -- 1461
-format.name$ -- 526
-if$ -- 4391
+            771 strings with 11990 characters,
+and the built_in function-call counts, 21416 in all, are:
+= -- 1857
+> -- 1574
+< -- 23
++ -- 527
+- -- 492
+* -- 1815
+:= -- 3195
+add.period$ -- 109
+call.type$ -- 34
+change.case$ -- 264
+chr.to.int$ -- 33
+cite$ -- 71
+duplicate$ -- 898
+empty$ -- 1518
+format.name$ -- 536
+if$ -- 4547
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 32
-newline$ -- 174
-num.names$ -- 132
-pop$ -- 557
+missing$ -- 33
+newline$ -- 179
+num.names$ -- 136
+pop$ -- 572
 preamble$ -- 1
-purify$ -- 225
+purify$ -- 230
 quote$ -- 0
-skip$ -- 752
+skip$ -- 781
 stack$ -- 0
-substring$ -- 740
-swap$ -- 192
-text.length$ -- 16
+substring$ -- 782
+swap$ -- 205
+text.length$ -- 17
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 363
+type$ -- 374
 warning$ -- 3
-while$ -- 155
+while$ -- 161
 width$ -- 0
-write$ -- 432
+write$ -- 446
 (There was 1 error message)
