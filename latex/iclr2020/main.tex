@@ -48,17 +48,10 @@ Pennsylvania, PA 19104, USA \\
     In geometric computer vision applications, multi-image feature matching gives more accurate and robust solutions compared to simple two-image matching.
     In this work, we formulate multi-image matching as a graph embedding problem then use a Graph Neural Network to learn an appropriate embedding function for aligning image features.
     We use cycle consistency to train our network in an unsupervised fashion, since ground truth correspondence can be difficult or expensive to acquire.
-    % TODO: Ask Sid if this is any good
     Geometric consistency losses are added to aid training, though unlike optimization based methods no geometric information is necessary at inference time.
     To the best of our knowledge, no other works have used graph neural networks for multi-image feature matching.
     Our experiments show that our method is competitive with other optimization based approaches.
 \end{abstract}
-%     Image feature matching is a fundamental part of many geometric computer vision applications, and using multiple images can improve performance.
-%     In this work, we formulate multi-image matching as a graph embedding problem then use a Graph Neural Network to learn an appropriate embedding function for aligning image features.
-%     We use cycle consistency to train our network in an unsupervised fashion, since ground truth correspondence is difficult or expensive to acquire.
-%     In addition, geometric consistency losses can be added at training time, even if the information is not available in the test set, unlike previous approaches which optimize cycle consistency directly.
-%     To the best of our knowledge, no other works have used graph neural networks for multi-image feature matching.
-%     Our experiments show that our method is competitive with other optimization based approaches.
 
 %%%%%%%%% BODY TEXT
 \section{Introduction}
@@ -128,22 +121,21 @@ The combination of RANSAC and hand-crafted feature descriptors has constituted t
 More recently \cite{suh2015subgraph} and \cite{hu2016distributable} have shown graph matching of the features can be added for more robust matches between images.
 
 \subsection{Multi-image Matching}
-Multi-image matching has traditionally been done using optimization based methods minimizing a cycle consistency based loss (see Section 3.3).
+Multi-image matching has traditionally been done using optimization based methods minimizing a cycle consistency based loss (see Section \ref{sec:cycconsist}).
 \cite{pachauri2013solving} and \cite{arrigoni2017synchronization} use the eigenvectors of the matching matrix to obtain a low dimensional embedding. 
 However, the assumption of low Gaussian noise is not realistic.
 \cite{zhou2015multi} and \cite{wang2017multi} use more sophisticated optimization techniques on the matching matrix and thus produce more robust solutions.
 \cite{leonardos2016distributed} implement a distributed optimization scheme to solve for cycle consistency.
 As an alternative to optimization based techniques, \cite{tron2017fast} used density based clustering techniques to compute multi-image correspondence.
-Moving away from feature matching, \cite{zach2010disambiguating} uses cycle consistency like constraints on pose graphs quite effectively.
+Moving away from feature matching, \cite{zach2010disambiguating} uses cycle-consistency-like constraints on pose graphs quite effectively.
 To the best of our knowledge, we are the first to use graph neural networks for multi-image matching.
 
 \subsection{Deep Learning for Matching}
 Previous attempts to improve image matching techniques using machine learning have focused on learning the descriptors given ground truth correspondence from curated datasets such as \cite{zagoruyko2015learning}; \cite{yi2016lift}; and \cite{brachmann2017dsac}.
-This approach is limited if one do not have the ability to get the ground truth correspondences.
+This approach is limited if one does not have the ability to get the ground truth correspondences.
 There are other methods to build correspondences such as \cite{choy2016universal}, but they only handle two-view constraints and require dense correspondences.
-Most similar to our work, \cite{yi2018learning} attempts to improve correspondences by learning match probabilities for RANSAC for greater robustness and speed.
-However, they only focus on two view matching and do not exploit the advantages of the correspondence structure.
-Like us \cite{zhu2017unpaired} use cycle consistency in their loss, however their method is restricted to pairwise cycle consistency (i.e. enforcing consistency by going back and forth between two images).
+Most similar to our work, \cite{yi2018learning} attempts to improve correspondences by learning match probabilities for two-view RANSAC for greater robustness and speed.
+Like us \cite{zhu2017unpaired} use cycle consistency in their loss; however their method is for image generation and is restricted to pairwise cycle consistency.
 Our method can be applied to 3 or more images. 
 \cite{hartmann2017learned} in fact learns multi-image matching but requires heavy supervision from 3D object reconstructions, which are not available in the context we are in.
 
@@ -152,7 +144,7 @@ Graph neural networks, true to their name, are deep neural networks operating in
 Multi-image matching is novel application of them, as they are more typically used for applications such as citation networks or recommendation systems.
 They have received more attention recently \citep{bronstein2017geometric, defferrard2016convolutional, kipf2017semi, scarselli2009graph, gama2018mimo, gama2018convolutional, battaglia2018relational}.
 The first methods to learn neural networks over graphs were the so-called Spectral methods.
-They used the eigenvectors of the graph Laplacian to compute convolutions as in \cite{bruna2013spectral}, which can learn graph specific convolution kernels, but require an a-priori known graph structure. 
+They used the eigenvectors of the graph Laplacian to compute convolutions, which can learn graph specific convolution kernels (as in \cite{bruna2013spectral}), but require an a-priori known graph structure. 
 Newer non-spectral methods do not require a-priori knowledge, as seen in \cite{bronstein2017geometric, kipf2017semi, scarselli2009graph}; and \cite{gama2018convolutional}.
 Most of these methods use polynomials of the graph Laplacian to compute neighborhood averages.
 \cite{gama2018mimo, gama2018convolutional} formalize this notion and generalize it beyond the use of the graph Laplacian.
@@ -185,7 +177,7 @@ The closest work on Graph Neural Networks to ours is \cite{kipf2016variational},
   Best viewed in color.
   \textbf{(b)} Visualization of the learned embeddings.
   On the left we have the raw outputs, which are difficult to interpret.
-  In the center, we rotated the features to best match the ground truth for a more interpretable visualization (see the end of section \ref{sec:cycconsist}).
+  In the center, we rotated the features to best match the ground truth for a more interpretable visualization (see the end of Section \ref{sec:cycconsist}).
   On the right, we have the ground truth embeddings, given as indicator vectors for which feature in the world the points correspond to.
   For the optimally rotated embedding we can see that the true embedding structure is recovered (with some noise).
 }
@@ -227,7 +219,7 @@ Thus we cannot use standard convolutional nets to learn features for this task.
 Instead we use graph networks to learn feature representations on this space, which we describe in the next section.
 
 \subsection{Graph Neural Networks} \label{sec:gnns}
-As input to our method we are given a graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ with the features described in section \ref{sec:corrgraph} $\vf_v \; \forall v \in \mathcal{V}$ and $\vf_e \; \forall e \in \mathcal{E}$.
+As input to our method we are given a graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ with the features described in Section \ref{sec:corrgraph}: $\vf_v \; \forall v \in \mathcal{V}$ and $\vf_e \; \forall e \in \mathcal{E}$.
 As with any neural network, GNNs have layered outputs.
 We describe the output of layer $k$ as $\vf_v^{(k)} \in \sR^{m_k} \, \forall v \in \mathcal{V}$ and $\vf_e^{(k)} \in \sR^{p_k}\, \forall e \in \mathcal{E}$, with the initial embeddings denoted $\vf_v^{(0)} = \vf_v$ and $\vf_e^{(0)} = \vf_e$.
 To aid future analysis, we will represent the features as matrices, denoting the vertex embedding matrix as $\mF_V^{(k)}$ and the edge embedding matrix as $\mF_E^{(k)}$.
@@ -237,13 +229,13 @@ First we describe older methods of GNNs to give context, then we describe the me
 Many older methods assume we have the adjacency matrix $\mA$ of the graph known a-priori \cite{bruna2013spectral}, and can encode graph convolutions using the eigenvectors of $\mA$ (these are known as spectral methods).
 However, we do not have this luxury, as the correspondence structure changes from image set to image set, and thus we use non-spectral Graph Neural Networks.
 Newer models use non-spectral methods, which often ultimately amount to transforming each node with learned weights then averaging each node's representation with its neighbors, known as a message pass \citep{kipf2017semi, defferrard2016convolutional, gama2018mimo, gama2018convolutional}.
-Some works such as \cite{gama2019convolutional} use pooling operations on the vertices to make the graph smaller and thus aid computation, but as we need labels on every vertex of the original graph, so we cannot use this.
+Some works such as \cite{gama2019convolutional} use pooling operations on the vertices to make the graph smaller and thus aid computation, but as we need labels on every vertex of the original graph, we cannot use this.
 Most GNNs used in these works can be expressed mathematically as:
 \begin{align*}
 \tilde{\vf}_v^{(k+1)} =&\; \sigma\left( b^{(k)} + \mW_0^{k} \vf_{v}^{(k)} + \sum_{h=0}^H \sum_{v' \in \mathcal{N}^{h}(v)} f_{e(v,v')} \mW_{h}^{k} \vf_{v'}^{(k)} \right) \\
 \end{align*}
 The weights/biases $\mW_{h}^{k}$, $b^{(k)}$ are all learned, with no learning done on the edge weights $f_{e(v,v')}$. 
-Note that this is just sums or averages over $h$-hop neighborhoods, where the weights on the edges remain static through the computation.
+Note that this is just averages over $h$-hop neighborhoods, where the weights on the edges remain static through the computation.
 Given that we are trying to prune edges, it would be sensible to add features over edges to learn which ones to prune and which to keep such as in \cite{scarselli2009graph}.
 
 In this work we use the method and implementation described in \cite{battaglia2018relational} (more specifically repetitions of the architecture described in \cite{battaglia2016interaction}).
@@ -315,13 +307,13 @@ Thus when visualizing embeddings, we rotate them to make them more interpretable
   \label{fig:geomloss}
 \end{subfigure}
 \caption{
-  \textbf{(a)} Errors are computed via absolute distance from the epipolar line, as expressed by (\ref{eq:essential_constraint}) via the epipolar constraint.
-  The epipolar line is the line of projection of the feature on the first image, projected onto to the second.
+  \textbf{(a)} Errors are computed via absolute distance from the epipolar line, as expressed by Equation \ref{eq:essential_constraint} via the epipolar constraint.
+  The epipolar line is the line of projection of the feature in the first image, projected into to the second.
   The distance to this line on the second image indicates how likely that point is to correspond geometrically to the original feature.
   There can be false positives along the projected line, as shown by the square feature in the figure, but other points will be eliminated, such as the hexagonal feature.
   \textbf{(b)} Training curves with and without Geometric Training loss, described in \ref{eq:geom_cost2}.
   The geometric training loss improves testing performance.
-  While the training is higher due to the additional loss terms, the ground truth L1 error is substantially better with the Geometric Loss.
+  Note how training with geometric consistency losses decreases the convergence time of the network.
   Best viewed in color.
 }
 \label{fig:1}
