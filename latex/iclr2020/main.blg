@@ -3,7 +3,7 @@ Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: main.aux
 The style file: iclr2020_conference.bst
 Database file #1: egbib.bib
-You're missing a field name---line 240 of file egbib.bib
+You're missing a field name---line 255 of file egbib.bib
  : 
  : #   title={Hierarchical Graph Representation Learning with Differentiable Pooling},
 (Error may have been on previous line)
@@ -11,45 +11,45 @@ I'm skipping whatever remains of this entry
 Warning--empty year in gama2019convolutional
 Warning--empty year in gama2019convolutional
 Warning--there's a number but no series in yi2018learning
-You've used 34 entries,
+You've used 36 entries,
             2773 wiz_defined-function locations,
-            771 strings with 11990 characters,
-and the built_in function-call counts, 21416 in all, are:
-= -- 1857
-> -- 1574
-< -- 23
-+ -- 527
-- -- 492
-* -- 1815
-:= -- 3195
-add.period$ -- 109
-call.type$ -- 34
-change.case$ -- 264
-chr.to.int$ -- 33
-cite$ -- 71
-duplicate$ -- 898
-empty$ -- 1518
-format.name$ -- 536
-if$ -- 4547
+            779 strings with 12261 characters,
+and the built_in function-call counts, 22539 in all, are:
+= -- 1958
+> -- 1643
+< -- 25
++ -- 550
+- -- 513
+* -- 1899
+:= -- 3357
+add.period$ -- 115
+call.type$ -- 36
+change.case$ -- 277
+chr.to.int$ -- 35
+cite$ -- 75
+duplicate$ -- 952
+empty$ -- 1605
+format.name$ -- 561
+if$ -- 4792
 int.to.chr$ -- 2
 int.to.str$ -- 1
-missing$ -- 33
-newline$ -- 179
-num.names$ -- 136
-pop$ -- 572
+missing$ -- 35
+newline$ -- 189
+num.names$ -- 144
+pop$ -- 600
 preamble$ -- 1
-purify$ -- 230
+purify$ -- 241
 quote$ -- 0
-skip$ -- 781
+skip$ -- 830
 stack$ -- 0
-substring$ -- 782
-swap$ -- 205
-text.length$ -- 17
+substring$ -- 826
+swap$ -- 219
+text.length$ -- 18
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 374
+type$ -- 396
 warning$ -- 3
-while$ -- 161
+while$ -- 170
 width$ -- 0
-write$ -- 446
+write$ -- 471
 (There was 1 error message)

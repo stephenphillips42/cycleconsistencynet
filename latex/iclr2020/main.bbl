@@ -1,4 +1,4 @@
-\begin{thebibliography}{34}
+\begin{thebibliography}{36}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -126,6 +126,14 @@ Fernando Gama, Antonio~G Marques, Alejandro Ribeiro, and Geert Leus.
 \newblock Mimo graph filters for convolutional neural networks.
 \newblock \emph{arXiv preprint arXiv:1803.02247}, 2018{\natexlab{b}}.
 
+\bibitem[Hartmann et~al.(2017)Hartmann, Galliani, Havlena, Van~Gool, and
+  Schindler]{hartmann2017learned}
+Wilfried Hartmann, Silvano Galliani, Michal Havlena, Luc Van~Gool, and Konrad
+  Schindler.
+\newblock Learned multi-patch similarity.
+\newblock In \emph{Proceedings of the IEEE International Conference on Computer
+  Vision}, pp.\  1586--1594, 2017.
+
 \bibitem[Hu et~al.(2016)Hu, Thibert, and Guibas]{hu2016distributable}
 Nan Hu, Boris Thibert, and Leonidas Guibas.
 \newblock Distributable consistent multi-graph matching.
@@ -135,6 +143,11 @@ Nan Hu, Boris Thibert, and Leonidas Guibas.
 Diederik~P Kingma and Jimmy Ba.
 \newblock Adam: A method for stochastic optimization.
 \newblock \emph{arXiv preprint arXiv:1412.6980}, 2014.
+
+\bibitem[Kipf \& Welling(2016)Kipf and Welling]{kipf2016variational}
+Thomas~N Kipf and Max Welling.
+\newblock Variational graph auto-encoders.
+\newblock \emph{arXiv preprint arXiv:1611.07308}, 2016.
 
 \bibitem[Kipf \& Welling(2017)Kipf and Welling]{kipf2017semi}
 Thomas~N. Kipf and Max Welling.

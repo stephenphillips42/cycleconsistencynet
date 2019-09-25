@@ -25,7 +25,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -39,20 +39,21 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:window-width="1855"
-     inkscape:window-height="1176"
+     inkscape:window-height="1056"
      id="namedview1380"
      showgrid="false"
      fit-margin-top="0"
      fit-margin-left="0"
      fit-margin-right="0"
      fit-margin-bottom="0"
-     inkscape:zoom="0.8056231"
-     inkscape:cx="293.44359"
-     inkscape:cy="488.05736"
+     inkscape:zoom="1.6112462"
+     inkscape:cx="48.353882"
+     inkscape:cy="606.18116"
      inkscape:window-x="65"
      inkscape:window-y="24"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg2" />
+     inkscape:current-layer="axes_4"
+     showguides="false" />
   <defs
      id="defs4"
      style="stroke-linecap:butt;stroke-linejoin:round">
@@ -61,6 +62,17 @@
        id="style6">
 *{stroke-linecap:butt;stroke-linejoin:round;}
   </style>
+    <clipPath
+       id="p63c493bdad-8"
+       style="stroke-linecap:butt;stroke-linejoin:round">
+      <rect
+         height="237.8376"
+         width="199.42435"
+         x="387.26923"
+         y="37.065601"
+         id="rect1372-9"
+         style="stroke-linecap:butt;stroke-linejoin:round" />
+    </clipPath>
   </defs>
   <g
      style="stroke-linecap:butt;stroke-linejoin:round"
@@ -784,7 +796,7 @@
       <path
          inkscape:connector-curvature="0"
          id="path721"
-         style="fill:none;stroke:#1f77b4;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:round"
+         style="fill:none;stroke:#7f7fff;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:round;stroke-opacity:1;color:#000000;clip-rule:nonzero;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:#000000;solid-opacity:1;fill-opacity:1;fill-rule:nonzero;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;filter-blend-mode:normal;filter-gaussianBlur-deviation:0;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto;enable-background:accumulate"
          d="m 396.33396,58.03686 2.62746,-10.16046 2.55019,12.593369 2.62746,36.125445 2.62746,9.808526 2.70474,10.93298 2.70474,-1.75374 4.71398,-1.29197 4.55941,28.7551 4.6367,20.65537 4.71398,14.5132 4.55941,-11.58485 4.6367,27.02844 4.6367,12.11656 4.71397,5.83505 4.71398,2.21339 4.79126,5.42457 4.63669,1.49341 4.71398,0.46132 4.71397,1.84866 4.71398,19.52201 4.6367,-8.6936 4.55942,12.34592 4.71397,-5.2352 4.6367,9.69928 4.79125,-16.2271 4.71398,15.7212 4.63669,-1.38207 4.79126,1.25732 4.79125,-8.17633 4.71398,13.58783 4.63669,-4.984 4.6367,11.82061 4.6367,-9.05277 4.79125,5.41684 4.71398,-3.0375 4.79125,7.36632 4.6367,1.09241 4.71398,-0.91024"
          clip-path="url(#p63c493bdad)" />
     </g>
@@ -794,7 +806,7 @@
       <path
          inkscape:connector-curvature="0"
          id="path724"
-         style="fill:none;stroke:#ff7f0e;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:round"
+         style="fill:none;stroke:#ff0000;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:round;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:1.5,4.5;stroke-dashoffset:0"
          d="m 398.26592,91.457319 4.71397,19.827341 4.79126,-7.14061 4.94581,15.22444 4.71397,1.74551 4.71398,17.05553 4.86853,14.06936 4.79125,21.21706 4.71398,-0.53047 4.71397,-38.56274 4.71398,3.44776 4.71398,10.6981 4.79125,0.7655 4.86853,29.99576 4.6367,-6.24275 4.71398,-3.28205 4.86853,-9.78067 4.94581,31.54468 5.02309,2.36092 4.86853,1.49164 4.94581,2.33083 5.02309,8.54133 4.86853,-3.16774 4.79125,-3.2605 4.71398,11.04267 4.6367,-1.73285 4.79125,7.3098 4.71398,-1.67805 4.71397,3.94538 4.79126,9.94529 4.63669,-0.89847 4.48214,-2.99853 4.40486,8.40914 4.55942,-7.5184 4.48214,2.11481 4.55942,-3.33385 4.48214,7.00225 4.32759,6.02777 4.32758,-8.17391"
          clip-path="url(#p63c493bdad)" />
     </g>
@@ -1591,7 +1603,7 @@
       <path
          inkscape:connector-curvature="0"
          id="path1306"
-         style="fill:none;stroke:#1f77b4;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:round"
+         style="fill:none;stroke:#7f7fff;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:round;stroke-opacity:1"
          d="m 875.19125,47.8764 6.68809,24.961005 6.92694,-15.483985 6.60847,58.3194 7.00656,-0.77389 10.03213,-18.620068 7.1658,61.457118 7.32505,-2.65905 6.7677,48.65507 6.68809,-50.71645 12.34111,31.09842 6.44922,13.80878 6.92695,14.993 6.68808,-7.75706 7.00657,14.64592 11.86338,22.42623 6.60847,-1.49263 6.92694,13.84019 6.8473,-29.2176 6.927,2.35375 9.7136,10.713 6.927,-0.18571 6.688,25.85056 7.0066,-23.38795 6.7677,-4.0961"
          clip-path="url(#p7146ce9cff)" />
     </g>
@@ -1601,7 +1613,7 @@
       <path
          inkscape:connector-curvature="0"
          id="path1309"
-         style="fill:none;stroke:#ff7f0e;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:round"
+         style="fill:none;stroke:#ff0000;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:round;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:1.5,4.5;stroke-dashoffset:0"
          d="m 874.9524,97.95274 7.1658,6.23252 6.68808,15.50885 7.08619,30.02923 6.52884,-51.081831 12.42073,1.298246 7.00657,-11.351816 7.08618,29.055771 7.24543,46.77517 6.92694,-19.98283 13.45579,38.21817 6.84732,-16.15727 6.84733,-17.88124 7.1658,18.96553 7.32505,-16.03037 11.94301,5.5023 6.36964,23.95798 6.5288,9.48963 6.4492,17.36769 6.4493,-67.56055 7.962,68.95951 6.4492,-42.8022 6.7677,37.52154 6.3696,-26.36583 6.2104,-19.90617"
          clip-path="url(#p7146ce9cff)" />
     </g>
@@ -1799,4 +1811,66 @@
          style="stroke-linecap:butt;stroke-linejoin:round" />
     </clipPath>
   </defs>
+  <g
+     id="legend_1"
+     transform="translate(-106.99925,-13.45634)"
+     style="stroke-linecap:butt;stroke-linejoin:round">
+    <g
+       id="patch_7"
+       style="stroke-linecap:butt;stroke-linejoin:round">
+      <path
+         d="m 188.40153,74.42185 151.98282,0 q 2,0 2,-2 l 0,-28.35625 q 0,-2 -2,-2 l -151.98282,0 q -2,0 -2,2 l 0,28.35625 q 0,2 2,2 z"
+         style="opacity:0.8;fill:#ffffff;stroke:#cccccc;stroke-linecap:butt;stroke-linejoin:miter"
+         id="path6265"
+         inkscape:connector-curvature="0" />
+    </g>
+    <g
+       id="line2d_14"
+       style="stroke-linecap:butt;stroke-linejoin:round">
+      <path
+         d="m 190.40153,50.164038 20,0"
+         style="fill:none;stroke:#7f7fff;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:round;stroke-opacity:1"
+         id="path6268"
+         inkscape:connector-curvature="0" />
+    </g>
+    <g
+       id="line2d_15"
+       style="stroke-linecap:butt;stroke-linejoin:round" />
+    <g
+       id="line2d_16"
+       style="stroke-linecap:butt;stroke-linejoin:round">
+      <path
+         d="m 190.40153,64.842163 20,0"
+         style="fill:none;stroke:#ff0000;stroke-width:1.5;stroke-linecap:square;stroke-linejoin:round;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:1.5,4.5;stroke-dashoffset:0"
+         id="path6320"
+         inkscape:connector-curvature="0" />
+    </g>
+    <g
+       id="line2d_17"
+       style="stroke-linecap:butt;stroke-linejoin:round" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:32px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="215.61447"
+       y="54.853344"
+       id="text8393"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan8395"
+         style="font-size:10px;stroke-linecap:butt;stroke-linejoin:round"
+         x="215.61447"
+         y="54.853344">With Geometric Loss</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:32px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="214.71326"
+       y="68.145058"
+       id="text8393-8"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan8395-3"
+         style="font-size:10px;stroke-linecap:butt;stroke-linejoin:round"
+         x="214.71326"
+         y="68.145058">Without Geometric Loss</tspan></text>
+  </g>
 </svg>
