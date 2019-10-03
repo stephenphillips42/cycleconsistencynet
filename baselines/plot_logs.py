@@ -31,7 +31,19 @@ def myprint(x):
   else:
     pp_xfawedfssa.pprint(process(x))
 
+def str2bool(v):
+  if v.lower() in ('yes', 'true', 't', 'y', '1'):
+    return True
+  elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+    return False
+  else:
+    import argparse
+    raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 parser = argparse.ArgumentParser(description='Plot the downloaded model training/testing curves')
+parser.add_argument('--transpose', type=str2bool, default=True,
+                    help='Columns wise or Row wise errors')
 parser.add_argument('files', metavar='files', nargs='+',
                     help='Files to plot. If concatenating files in list put between parenthesis')
 
@@ -266,17 +278,25 @@ args = parser.parse_args()
 aggs_view, iters_view = parse_files(args.files)
 nviews, nplots = len(iters_view), len(plot_keys)
 sz, R, C = 4, nviews, nplots
+if args.transpose:
+  R, C = C, R
 fig, ax_ = plt.subplots(nrows=R, ncols=C, figsize=(3+C*sz, 3+R*sz))
-if R > 1:
-  ax = {
-    v: dict(zip(plot_keys, ax_[i]))
-    for i, v in enumerate(sorted(iters_view.keys()))
-  }
-else:
+if R == 1 or C == 1:
   ax = {
     k: dict(zip(plot_keys, ax_))
     for k in iters_view.keys()
   }
+elif args.transpose:
+  ax = {
+    v: dict(zip(plot_keys, ax_[:,i]))
+    for i, v in enumerate(sorted(iters_view.keys()))
+  }
+else:
+  ax = {
+    v: dict(zip(plot_keys, ax_[i]))
+    for i, v in enumerate(sorted(iters_view.keys()))
+  }
+
 miniters = { v: 10**9 for v in iters_view }
 maxiters = { v: 0 for v in iters_view }
 for v in iters_view:
@@ -305,14 +325,20 @@ for v in sorted(iters_view.keys()):
                 label=label,
                 ax=ax[v][k],
                 alpha=0.2)
-      title = '{} ({} views)'.format(get_title(k), v)
+      if v == 11: # TODO: such hack
+        title = '{} (Graffiti)'.format(get_title(k))
+      else:
+        title = '{} ({} views)'.format(get_title(k), v)
       ax[v][k].set_title(title, fontdict=fonttitle)
       ax[v][k].set_xlabel('Iterations', **fontaxis)
       ax[v][k].set_ylabel(yaxis_name[k], **fontaxis)
   # if 'time' in plot_keys:
   #   ax[v]['time'].set_yscale('log')
   if 'roc' in plot_keys:
-    ax[v]['roc'].set_ylim([0.6, 1])
+    if v == 11: # TODO: Such hack
+      ax[v]['roc'].set_ylim([0.6, 0.75])
+    else:
+      ax[v]['roc'].set_ylim([0.75, 1])
 
 lgd = ax_.reshape(-1)[0].legend()
 plt.setp(lgd.texts, **fontlegend)
