@@ -46,7 +46,7 @@ Pennsylvania, PA 19104, USA \\
 
 \begin{abstract}
     In geometric computer vision applications, multi-image feature matching gives more accurate and robust solutions compared to simple two-image matching.
-    In this work, we formulate multi-image matching as a graph embedding problem then use a Graph Neural Network to learn an appropriate embedding function for aligning image features.
+    In this work, we formulate multi-image matching as a graph embedding problem, then use a Graph Neural Network to learn an appropriate embedding function for aligning image features.
     We use cycle consistency to train our network in an unsupervised fashion, since ground truth correspondence can be difficult or expensive to acquire.
     Geometric consistency losses are added to aid training, though unlike optimization based methods no geometric information is necessary at inference time.
     To the best of our knowledge, no other works have used graph neural networks for multi-image feature matching.
@@ -58,12 +58,12 @@ Pennsylvania, PA 19104, USA \\
 
 Feature matching is an essential part of Structure from Motion and many geometric computer vision applications.
 The goal in multi-image feature matching is to take 2D feature positions from three or more images and find which ones correspond to the same point in the 3D scene.
-Methods such as SIFT feature matching \citep{lowe2004distinctive} followed by RANSAC \citep{fischler1981random} have been the standard for decades.
+Methods such as SIFT feature matching \citep{lowe2004distinctive} combined with RANSAC \citep{fischler1981random} have been the standard for decades.
 However RANSAC-based approaches are limited to matching pairs of images, which can lead to global inconsistencies in the matching.
 % TODO: Mention trifocal tensors
 Other works, such as \cite{wang2017multi}, have shown improvement in performance by optimizing cycle consistency, i.e. enforcing the pairwise feature matches to be globally consistent.
 
-However, these multi-view consistency algorithms struggle in distributed and robust settings.
+However, these multi-view consistency algorithms struggle in distributed and noisy settings.
 Having image features suited for this task would help improve performance, and deep learning has revolutionized how image features are computed \citep{yi2016lift}.
 In this paper, we want to leverage the power of deep representations in order to compute feature descriptors that are robust across multiple views.
 
@@ -105,7 +105,7 @@ We perform experiments on the Rome16K dataset \citep{li2010location} to test the
 Our contributions in this work are:
 \begin{itemize}
 \item We use a novel architecture to address the multi-image feature matching problem using GNNs with graph embeddings.
-\item We introduce an unsupervised cycle consistency loss that does not require labeled correspondences to train.
+\item We introduce an unsupervised multi-view cycle consistency loss that does not require labeled correspondences to train.
 \item We demonstrate the effectiveness of geometric consistency losses in improving training.
 \end{itemize}
 
@@ -137,7 +137,7 @@ There are other methods to build correspondences such as \cite{choy2016universal
 Most similar to our work, \cite{yi2018learning} attempts to improve correspondences by learning match probabilities for two-view RANSAC for greater robustness and speed.
 Like us \cite{zhu2017unpaired} use cycle consistency in their loss; however their method is for image generation and is restricted to pairwise cycle consistency.
 Our method can be applied to 3 or more images. 
-\cite{hartmann2017learned} in fact learns multi-image matching but requires heavy supervision from 3D object reconstructions, which are not available in the context we are in.
+\cite{hartmann2017learned} learns multi-image matching but requires heavy supervision from 3D object reconstructions, which can be difficult or expensive to obtain.
 
 \subsection{Graph Neural Networks}
 Graph neural networks, true to their name, are deep neural networks operating in graph domains.
@@ -149,7 +149,7 @@ Newer non-spectral methods do not require a-priori knowledge, as seen in \cite{b
 Most of these methods use polynomials of the graph Laplacian to compute neighborhood averages.
 \cite{gama2018mimo, gama2018convolutional} formalize this notion and generalize it beyond the use of the graph Laplacian.
 To improve performance, more sophisticated aggregation techniques and global information passing can be used as discussed in \cite{battaglia2018relational}.
-The closest work on Graph Neural Networks to ours is \cite{kipf2016variational}, which uses GNNs to reconstruct the adjacency matrices, though not in a geometric context.
+The closest work on Graph Neural Networks to ours is \cite{kipf2016variational}, which uses GNNs to reconstruct adjacency matrices, though not in a geometric context.
 
 \section{Method}
 
@@ -189,7 +189,7 @@ The input to our algorithm is a set of features and noisy correspondences, and t
 An outline of our approach can be seen in figure \ref{fig:pipeline}.
 We do this by training the new set of feature embeddings to be cycle consistent.
 We formulate this problem in terms of the correspondence graph of the features.
-Graphs $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ have a set of vertices $\mathcal{V}$ and of edges $\mathcal{E} \subseteq \mathcal{V} \times \mathcal{V}$ and implicitly in the subsequent discussions we assume the edges are directed.
+Graphs $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ have a set of vertices $\mathcal{V}$ and of directed edges $\mathcal{E} \subseteq \mathcal{V} \times \mathcal{V}$.
 For a vertex $v \in \mathcal{V}$ we use $\mathcal{N}^{h}(v)$ to denote the $h$-hop neighbors of $v$, with the superscript left out for 1-hop neighbors.
 Similarly $\mathcal{E}(v)$ is used to denote the edges associated with $v$.
 To denote the vertices connected to an edge $e \in \mathcal{E}$ we write $e(v_1, v_2)$.
@@ -218,7 +218,7 @@ However, standard CNNs cannot operate on this general graph structure.
 Thus we cannot use standard convolutional nets to learn features for this task.
 Instead we use graph networks to learn feature representations on this space, which we describe in the next section.
 
-\subsection{Graph Neural Networks} \label{sec:gnns}
+\subsection{Graph Neural Networks for Feature Matching} \label{sec:gnns}
 As input to our method we are given a graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ with the features described in Section \ref{sec:corrgraph}: $\vf_v \; \forall v \in \mathcal{V}$ and $\vf_e \; \forall e \in \mathcal{E}$.
 As with any neural network, GNNs have layered outputs.
 We describe the output of layer $k$ as $\vf_v^{(k)} \in \sR^{m_k} \, \forall v \in \mathcal{V}$ and $\vf_e^{(k)} \in \sR^{p_k}\, \forall e \in \mathcal{E}$, with the initial embeddings denoted $\vf_v^{(0)} = \vf_v$ and $\vf_e^{(0)} = \vf_e$.
@@ -236,9 +236,9 @@ Most GNNs used in these works can be expressed mathematically as:
 \end{align*}
 The weights/biases $\mW_{h}^{k}$, $b^{(k)}$ are all learned, with no learning done on the edge weights $f_{e(v,v')}$. 
 Note that this is just averages over $h$-hop neighborhoods, where the weights on the edges remain static through the computation.
-Given that we are trying to prune edges, it would be sensible to add features over edges to learn which ones to prune and which to keep such as in \cite{scarselli2009graph}.
+Given that we are trying to prune edges, we add features over edges to learn which ones to prune and which to keep such as in \cite{scarselli2009graph}.
 
-In this work we use the method and implementation described in \cite{battaglia2018relational} (more specifically repetitions of the architecture described in \cite{battaglia2016interaction}).
+In this work we use the method and implementation described in \cite{battaglia2018relational}.
 \cite{battaglia2018relational} uses message passes between node features as well as edge features, which the model can use to prune unnecessary or erroneous edges.
 Therefore there is intermediate processing on the edges before information is passed to the vertices. 
 
@@ -411,7 +411,7 @@ With this simple test on synthetic data passed, we now move to more challenging 
 \begin{center}
 \begin{tabular}{|l|c|c|c|c|}
 \hline
-Method (6 Views)                                     & $L_1$             & $L_2$             & Area under ROC    & Time (sec)        \\
+Method (6 Views)       & $L_1$             & $L_2$             & Area under ROC    & Time (sec)        \\
 \hline\hline
 MatchALS 15 Iterations & 0.101 $\pm$ 0.008 & 0.022 $\pm$ 0.004 & 0.918 $\pm$ 0.073 & 0.074 $\pm$ 0.008 \\ \hline
 MatchALS 35 Iterations & 0.046 $\pm$ 0.016 & 0.010 $\pm$ 0.005 & 0.910 $\pm$ 0.072 & 0.139 $\pm$ 0.041 \\ \hline
@@ -423,7 +423,7 @@ Spectral               & 0.073 $\pm$ 0.006 & 0.027 $\pm$ 0.003 & 0.921 $\pm$ 0.0
 \textbf{GNN (ours)}    & 0.044 $\pm$ 0.005 & 0.031 $\pm$ 0.005 & 0.872 $\pm$ 0.081 & 0.765 $\pm$ 0.046 \\ \hline
 
 \hline\hline
-Method (10 Views)                                   & $L_1$             & $L_2$             & Area under ROC    & Time (sec)        \\
+Method (10 Views)      & $L_1$             & $L_2$             & Area under ROC    & Time (sec)        \\
 \hline\hline
 MatchALS 15 Iterations & 0.114 $\pm$ 0.008 & 0.028 $\pm$ 0.004 & 0.915 $\pm$ 0.051 & 0.142 $\pm$ 0.009 \\ \hline
 MatchALS 35 Iterations & 0.065 $\pm$ 0.009 & 0.013 $\pm$ 0.003 & 0.907 $\pm$ 0.053 & 0.355 $\pm$ 0.073 \\ \hline
@@ -441,8 +441,8 @@ Spectral               & 0.073 $\pm$ 0.005 & 0.029 $\pm$ 0.002 & 0.912 $\pm$ 0.0
 Results on Rome16K Correspondence graphs, showing the mean and standard deviation of the $L_1$ and $L_2$.
 Our method was not trained on ground truth correspondences but using unsupervised methods and geometric side losses.
 Thus we test against ground truth correspondence graph adjacency matrices computed from the bundle adjustment output.
-Our method performs better than 25 iteration of the MatchALS \citep{zhou2015multi} method, but does not perform as well as 50 iterations.
-We do not perform as well as the Projected Gradient Descent Doubly Stochastic (PGDDS) \citep{leonardos2016distributed} but we perform significantly faster than them.
+Our method performs better than 35 iteration of the MatchALS \citep{zhou2015multi} method, but does not perform as well as 50 iterations.
+% We do not perform as well as the Projected Gradient Descent Doubly Stochastic (PGDDS) \citep{leonardos2016distributed} but we perform significantly faster than them.
 We perform better than a simple eigenvalue based method \citep{pachauri2013solving}.
 Note that we perform much better in $L_1$ performance rather than $L_2$, as we optimized the network weights using an $L_1$ loss.
 }
@@ -459,7 +459,7 @@ To construct the graph, we take each feature as a vertex and create edges to the
 
 For these experiments we train with the $L_1$ norm and geometric consistency losses.
 We evaluate on a test set using the ground truth adjacency matrix, which we compute from the bundle adjustment given by the Rome16K dataset.
-However, we do not train with the ground truth adjacency matrix, only with the noisy adjacency matrix from the graph.
+However, we do not train with the ground truth adjacency matrix, only with a noisy version of the adjacency matrix.
 We also add the geometric loss (\ref{eq:geom_cost2}) which helps improve testing performance (see figure \ref{fig:geomloss}).
 We use the $L_1$ and ROC AUC metrics to measure performance.
 For this method to work, we need the dimension of the embedding to be at least the number of unique points in the scene.
@@ -478,8 +478,8 @@ Our network, though only using 8 message passes, has comparable accuracy to Matc
 Although our method does not outperform the Projected Gradient Descent - Doubly Stochastic (PGDDS) \citep{leonardos2016distributed} method, we perform comparably to them in the ROC AUC metric.
 
 \subsubsection{Graffiti Dataset} \label{sec:graffiti}
-We run our trained model on the more Graffiti Dataset (formatted to be able to be input to our model properly).
-The Graffiti Dataset is the most common benchmark used in feature matching algorithms (e.g. \ref{leonardos2016distributed, zhou2015multi}).
+We run our trained model on the more Graffiti Dataset from the Affine Covariant Regions dataset (formatted to be able to be input to our model properly).
+The Graffiti Dataset is the most common benchmark used in feature matching algorithms (e.g. \cite{leonardos2016distributed, zhou2015multi}).
 The results are shown in figure \ref{fig:errorlines} in the rightmost figure.
 As the graffiti dataset is very small (only 6 views total), we were not able to train on it.
 We randomly permute the intra-image order of the features to add some variance - by design the GNN outputs the same result each time, while the optimization methods have a very small amount of variance.

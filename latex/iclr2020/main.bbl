@@ -1,4 +1,4 @@
-\begin{thebibliography}{36}
+\begin{thebibliography}{35}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -31,14 +31,6 @@ Federica Arrigoni, Eleonora Maset, and Andrea Fusiello.
 \newblock Synchronization in the symmetric inverse semigroup.
 \newblock In \emph{International Conference on Image Analysis and Processing},
   pp.\  70--81. Springer, 2017.
-
-\bibitem[Battaglia et~al.(2016)Battaglia, Pascanu, Lai, Rezende,
-  et~al.]{battaglia2016interaction}
-Peter Battaglia, Razvan Pascanu, Matthew Lai, Danilo~Jimenez Rezende, et~al.
-\newblock Interaction networks for learning about objects, relations and
-  physics.
-\newblock In \emph{Advances in neural information processing systems}, pp.\
-  4502--4510, 2016.
 
 \bibitem[Battaglia et~al.(2018)Battaglia, Hamrick, Bapst, Sanchez-Gonzalez,
   Zambaldi, Malinowski, Tacchetti, Raposo, Santoro, Faulkner,
