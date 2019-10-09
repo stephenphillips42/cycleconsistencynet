@@ -70,6 +70,8 @@ bundle_file_split = {
     '56.0.0.0',
     '5.9.0.0',
     '34.1.0.0',
+    # Too Large
+    # '4.7.0.0',
   }
 }
 bundle_files = sorted([ k for k in bundle_file_split['test'] ] + \
