@@ -1,5 +1,5 @@
-sizes: { 'train': 600, 'test': 600, 'np_test': 600 }
-dataset_type: 'rome16kgeom'
+sizes: { 'train': 60, 'test': 60, 'np_test': 600 }
+dataset_type: 'graffiti'
 views: [6]
 points: [80]
 knn: 5

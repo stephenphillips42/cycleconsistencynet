@@ -206,7 +206,10 @@ class GraphDataset(object):
     record_idx = 0
     for index in tqdm.tqdm(range(num_entries)):
       features = self.gen_sample()
-      np.savez(outfile(index), **features)
+      np_features = {}
+      for k, v in self.features.items():
+        np_features.update(v.npz_value(features[k]))
+      np.savez(outfile(index), **np_features)
 
     # And save out a file with the creation time for versioning
     timestamp_file = 'np_test_timestamp.txt'

@@ -67,6 +67,15 @@ def distint_locs(xy, thresh):
   return ids_
 
 def load_graffiti(graffiti_dir='./graff', N_imgs=6, N_data=80, thresh=15):
+  npy_path = os.path.join(graffiti_dir, 'graffiti_emb.npy')
+  if os.path.exists(npy_path):
+    with open(npy_path, 'rb') as f:
+      FullDescs = np.copy(np.load(f))
+  else:
+    FullDescs = load_graffiti_help(graffiti_dir, N_imgs, N_data, thresh)
+  return FullDescs.reshape(N_imgs*N_data, -1)
+
+def load_graffiti_help(graffiti_dir, N_imgs, N_data, thresh):
   # Load graffiti dataset images
   n = N_data
   N_points = 10*n
@@ -143,7 +152,7 @@ def load_graffiti(graffiti_dir='./graff', N_imgs=6, N_data=80, thresh=15):
   return np.stack(FullDescs)
 
 
-class GraffitiDataset(GraphDataset):
+class GraffitiDataset(graph_dataset.GraphDataset):
   def __init__(self, opts, params):
     super().__init__(opts, params)
     # TODO: Hack - should make new parameter (imgs_dir or graffiti_dir)
@@ -176,13 +185,14 @@ class GraffitiDataset(GraphDataset):
     v = self.dataset_params.views[-1]
 
     # Apply permutation to features
-    perms = [ np.random.permutation(len(ff)) for ff in descs_ ]
+    perms = [ np.random.permutation(n) for i in range(v) ]
     perm_mats = [ np.eye(len(perm))[perm] for perm in perms ]
     perm = la.block_diag(*perm_mats)
     # Finish the inital node embeddings
-    init_emb = load_graffiti(graffiti_dir=self.graff_dir,
-                             N_imgs=v, N_data=n,
-                             thresh=15)
+    init_emb_ = load_graffiti(graffiti_dir=self.graff_dir,
+                              N_imgs=v, N_data=n,
+                              thresh=15)
+    init_emb = perm @ init_emb_
     ndescs = init_emb[:, :128] # SIFT descriptor size
     # Build Graph
     Dinit = np.dot(ndescs,ndescs.T)
@@ -204,8 +214,6 @@ class GraffitiDataset(GraphDataset):
     true_emb = np.concatenate(perm_mats,axis=0)
     gt_adj_mat = np.dot(true_emb, true_emb.T)
     matches_ = np.concatenate(perms)
-    rots = np.stack([ np.eye(3) for i in tupl ], axis=0)
-    trans = np.stack([ np.zeros(3) for i in tupl ], axis=0)
     # Build spart graph representation
     G_nx = nx.from_numpy_matrix(adj_mat, create_using=nx.DiGraph)
     node_attrs = { i : init_emb[i].astype(np.float32)
@@ -220,8 +228,6 @@ class GraffitiDataset(GraphDataset):
     G['adj_mat'] = graph_dataset.np_dense_to_sparse(adj_mat)
     G['true_adj_mat'] = graph_dataset.np_dense_to_sparse(gt_adj_mat)
     G['true_match'] = matches_
-    G['rots'] = rots
-    G['trans'] = trans
     return G
 
 

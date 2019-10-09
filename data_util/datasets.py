@@ -6,6 +6,7 @@ import os
 # from data_util import real_dataset
 from data_util import synthgraph_dataset as synthgraph
 from data_util import spreal_dataset as spreal
+from data_util import graffiti_dataset as graffiti
 
 
 def get_dataset(opts):
@@ -19,6 +20,8 @@ def get_dataset(opts):
     return synthgraph.SynthOutlierGraphDataset(opts, opts.dataset_params)
   elif dataset_type in 'rome16kgeom':
     return spreal.GeomKNNRome16KDataset(opts, opts.dataset_params)
+  elif dataset_type in 'graffiti':
+    return graffiti.GraffitiDataset(opts, opts.dataset_params)
   else:
     print("ERROR: Dataset type {} not implemented yet".format(dataset_type))
     sys.exit(1)
