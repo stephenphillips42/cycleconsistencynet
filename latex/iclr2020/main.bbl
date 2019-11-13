@@ -1,4 +1,4 @@
-\begin{thebibliography}{40}
+\begin{thebibliography}{42}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -153,11 +153,13 @@ Thomas~N. Kipf and Max Welling.
 \newblock In \emph{International Conference on Learning Representations
   (ICLR)}, 2017.
 
-\bibitem[Leonardos et~al.(2016)Leonardos, Zhou, and
-  Daniilidis]{leonardos2016distributed}
+\bibitem[Leonardos et~al.(2017)Leonardos, Zhou, and
+  Daniilidis]{leonardos2017distributed}
 Spyridon Leonardos, Xiaowei Zhou, and Kostas Daniilidis.
-\newblock Distributed consistent data association.
-\newblock \emph{arXiv preprint arXiv:1609.07015}, 2016.
+\newblock Distributed consistent data association via permutation
+  synchronization.
+\newblock In \emph{2017 IEEE International Conference on Robotics and
+  Automation (ICRA)}, pp.\  2645--2652. IEEE, 2017.
 
 \bibitem[Li et~al.(2010)Li, Snavely, and Huttenlocher]{li2010location}
 Yunpeng Li, Noah Snavely, and Daniel~P Huttenlocher.
@@ -183,6 +185,14 @@ Deepti Pachauri, Risi Kondor, and Vikas Singh.
   synchronization.
 \newblock In \emph{Advances in neural information processing systems}, pp.\
   1860--1868, 2013.
+
+\bibitem[Rocco et~al.(2018)Rocco, Cimpoi, Arandjelovi{\'c}, Torii, Pajdla, and
+  Sivic]{rocco2018neighbourhood}
+Ignacio Rocco, Mircea Cimpoi, Relja Arandjelovi{\'c}, Akihiko Torii, Tomas
+  Pajdla, and Josef Sivic.
+\newblock Neighbourhood consensus networks.
+\newblock In \emph{Advances in Neural Information Processing Systems}, pp.\
+  1651--1662, 2018.
 
 \bibitem[Scarselli et~al.(2009)Scarselli, Gori, Tsoi, Hagenbuchner, and
   Monfardini]{scarselli2009graph}
@@ -231,10 +241,11 @@ Roberto Tron, Xiaowei Zhou, Carlos Esteves, and Kostas Daniilidis.
 \newblock In \emph{Proc. IEEE Conf. Comput. Vis. Pattern Recognit.}, pp.\
   4057--4066, 2017.
 
-\bibitem[Wang et~al.(2017)Wang, Zhou, and Daniilidis]{wang2017multi}
+\bibitem[Wang et~al.(2018)Wang, Zhou, and Daniilidis]{wang2018multi}
 Qianqian Wang, Xiaowei Zhou, and Kostas Daniilidis.
 \newblock Multi-image semantic matching by mining consistent features.
-\newblock \emph{arXiv preprint arXiv:1711.07641}, 2017.
+\newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
+  Pattern Recognition}, pp.\  685--694, 2018.
 
 \bibitem[Yi et~al.(2016)Yi, Trulls, Lepetit, and Fua]{yi2016lift}
 Kwang~Moo Yi, Eduard Trulls, Vincent Lepetit, and Pascal Fua.
@@ -263,6 +274,14 @@ Sergey Zagoruyko and Nikos Komodakis.
 \newblock Learning to compare image patches via convolutional neural networks.
 \newblock In \emph{Proceedings of the IEEE Conference on Computer Vision and
   Pattern Recognition}, pp.\  4353--4361, 2015.
+
+\bibitem[Zhou et~al.(2019)Zhou, Sattler, Pollefeys, and
+  Leal-Taixe]{zhou2019learn}
+Qunjie Zhou, Torsten Sattler, Marc Pollefeys, and Laura Leal-Taixe.
+\newblock To learn or not to learn: Visual localization from essential
+  matrices.
+\newblock \emph{IEEE Conference on Computer Vision and Pattern Recognition
+  Workshop: Image Matching: Local Features and Beyond}, 2019.
 
 \bibitem[Zhou et~al.(2015{\natexlab{a}})Zhou, Jae~Lee, Yu, and
   Efros]{zhou2015flowweb}

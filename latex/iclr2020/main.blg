@@ -1,56 +1,57 @@
-This is BibTeX, Version 0.99d (TeX Live 2019/Debian)
-Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
 The top-level auxiliary file: main.aux
 The style file: iclr2020_conference.bst
 Database file #1: egbib.bib
-You're missing a field name---line 301 of file egbib.bib
+You're missing a field name---line 317 of file egbib.bib
  : 
  : #   title={Hierarchical Graph Representation Learning with Differentiable Pooling},
 (Error may have been on previous line)
 I'm skipping whatever remains of this entry
+Warning--I didn't find a database entry for "wang2017multi"
 Warning--empty year in gama2019convolutional
 Warning--empty year in gama2019convolutional
 Warning--can't use both volume and number fields in huang2013consistent
 Warning--there's a number but no series in yi2018learning
-You've used 40 entries,
+You've used 42 entries,
             2773 wiz_defined-function locations,
-            799 strings with 12907 characters,
-and the built_in function-call counts, 25363 in all, are:
-= -- 2226
-> -- 1790
-< -- 31
-+ -- 600
-- -- 558
-* -- 2116
-:= -- 3732
-add.period$ -- 128
-call.type$ -- 40
-change.case$ -- 304
-chr.to.int$ -- 38
-cite$ -- 84
-duplicate$ -- 1091
-empty$ -- 1832
-format.name$ -- 612
-if$ -- 5431
+            809 strings with 13422 characters,
+and the built_in function-call counts, 27106 in all, are:
+= -- 2393
+> -- 1886
+< -- 34
++ -- 632
+- -- 588
+* -- 2249
+:= -- 3959
+add.period$ -- 135
+call.type$ -- 42
+change.case$ -- 320
+chr.to.int$ -- 40
+cite$ -- 88
+duplicate$ -- 1174
+empty$ -- 1969
+format.name$ -- 644
+if$ -- 5831
 int.to.chr$ -- 3
 int.to.str$ -- 1
-missing$ -- 39
-newline$ -- 209
-num.names$ -- 160
-pop$ -- 663
+missing$ -- 41
+newline$ -- 219
+num.names$ -- 168
+pop$ -- 704
 preamble$ -- 1
-purify$ -- 264
+purify$ -- 278
 quote$ -- 0
-skip$ -- 955
+skip$ -- 1032
 stack$ -- 0
-substring$ -- 994
-swap$ -- 275
-text.length$ -- 23
+substring$ -- 1110
+swap$ -- 311
+text.length$ -- 26
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 440
+type$ -- 462
 warning$ -- 4
-while$ -- 194
+while$ -- 209
 width$ -- 0
-write$ -- 525
+write$ -- 553
 (There was 1 error message)

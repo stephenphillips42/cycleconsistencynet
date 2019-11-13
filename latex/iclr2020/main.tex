@@ -62,7 +62,7 @@ The goal in multi-image feature matching is to take 2D feature positions from th
 Methods such as SIFT feature matching \citep{lowe2004distinctive} combined with RANSAC \citep{fischler1981random} have been the standard for decades.
 However RANSAC-based approaches are limited to matching pairs of images, which can lead to global inconsistencies in the matching.
 % TODO: Mention trifocal tensors
-Other works, such as \cite{wang2017multi}, have shown improvement in performance by optimizing cycle consistency, i.e. enforcing the pairwise feature matches to be globally consistent.
+Other works, such as \cite{wang2018multi}, have shown improvement in performance by optimizing cycle consistency, i.e. enforcing the pairwise feature matches to be globally consistent.
 
 However, these multi-view consistency algorithms struggle in distributed and noisy settings.
 Having image features suited for this task would help improve performance, and deep learning has revolutionized how image features are computed \citep{yi2016lift}.
@@ -100,7 +100,7 @@ The proposed method works directly on the graph of correspondences between the i
 To the best of our knowledge this work is the first to apply deep learning to the multi-view feature matching problem.
 We use an unsupervised loss, the cycle consistency loss, to train the network, thus avoiding the difficulty of expensive hand-labeling.
 We use geometric consistency losses to aid training, though no geometric information is used at inference time.
-Although our network is simple, it shows promising results compared to baselines which optimize for cycle-consistency without learned embeddings, using a matrix factorization loss \citep{zhou2015multi, leonardos2016distributed}.
+Although our network is simple, it shows promising results compared to baselines which optimize for cycle-consistency without learned embeddings, using a matrix factorization loss \citep{zhou2015multi, leonardos2017distributed}.
 Furthermore, since inference requires only a single forward pass over the neural network, our approach is faster to achieve comparable accuracy than methods which must solve an optimization problem every time.
 We perform experiments on the Rome16K dataset \citep{li2010location} to test the effectiveness of our method compared to optimization based methods.
 Our contributions in this work are:
@@ -126,7 +126,7 @@ Multi-image matching has traditionally been done using optimization based method
 \cite{pachauri2013solving} and \cite{arrigoni2017synchronization} use the eigenvectors of the matching matrix to obtain a low dimensional embedding. 
 However, the assumption of low Gaussian noise is not realistic.
 \cite{zhou2015multi} and \cite{wang2017multi} use more sophisticated optimization techniques on the matching matrix and thus produce more robust solutions.
-\cite{leonardos2016distributed} implement a distributed optimization scheme to solve for cycle consistency.
+\cite{leonardos2017distributed} implement a distributed optimization scheme to solve for cycle consistency.
 \textcolor{red}{\cite{swoboda2019convex} implement a convex relaxation of the low dimensional embedding problem.}
 \textcolor{red}{\cite{shi2016tensor} use tensor power iterations to solve the matching problem, also taking into account the intra-image matching graph.}
 As an alternative to optimization based techniques, \cite{tron2017fast} used density based clustering techniques to compute multi-image correspondence.
@@ -135,7 +135,9 @@ To the best of our knowledge, we are the first to use graph neural networks for 
 
 \subsection{Deep Learning for Matching}
 Previous attempts to improve image matching techniques using machine learning have focused on learning the descriptors given ground truth correspondence from curated datasets such as \cite{zagoruyko2015learning}; \cite{yi2016lift}; and \cite{brachmann2017dsac}.
-This approach is limited if one does not have the ability to get the ground truth correspondences.
+\textcolor{red}{\cite{rocco2018neighbourhood} use a dense matching tensor with a weakly supervised loss to learn good features for matching. \cite{zhou2019learn} has shown that these learned representations have limited ability for improving SfM tasks.}
+% This approach is limited if one does not have the ability to get the ground truth correspondences.
+
 There are other methods to build correspondences such as \cite{choy2016universal}, but they only handle two-view constraints and require dense correspondences.
 Most similar to our work, \cite{yi2018learning} attempts to improve correspondences by learning match probabilities for two-view RANSAC for greater robustness and speed.
 Like us \cite{zhu2017unpaired} use cycle consistency in their loss; however their method is for image generation and is restricted to pairwise cycle consistency.
@@ -268,7 +270,7 @@ If the pairwise matches are globally consistent, then for all $i, j, k$:
 \label{eq:cycconsist1}
 \end{equation}
 In other words, the matches between two images stay the same no matter what path is taken to get there. 
-This constraint is known as \textit{cycle consistency}, and has been used in a number of works to optimize for global consistency \cite{zhou2015multi, wang2017multi, leonardos2016distributed}.
+This constraint is known as \textit{cycle consistency}, and has been used in a number of works to optimize for global consistency \cite{zhou2015multi, wang2017multi, leonardos2017distributed}.
 Stated in this form, there are $O(n^3)$ cycle consistency constraints to check.
 A more elegant way to represent cycle consistency is to first create a `universe' of features that all images match to (see figure \ref{fig:universefeatures}).
 Then, one can match the $i^{th}$ set of features to the universe using a ground-truth matching matrix $\mX_i$.
@@ -448,7 +450,7 @@ Results on Rome16K Correspondence graphs, showing the mean and standard deviatio
 Our method was not trained on ground truth correspondences but using unsupervised methods and geometric side losses.
 Thus we test against ground truth correspondence graph adjacency matrices computed from the bundle adjustment output.
 Our method performs better than 35 iteration of the MatchALS \citep{zhou2015multi} method, but does not perform as well as 50 iterations.
-% We do not perform as well as the Projected Gradient Descent Doubly Stochastic (PGDDS) \citep{leonardos2016distributed} but we perform significantly faster than them.
+% We do not perform as well as the Projected Gradient Descent Doubly Stochastic (PGDDS) \citep{leonardos2017distributed} but we perform significantly faster than them.
 We perform better than a simple eigenvalue based method \citep{pachauri2013solving}.
 Note that we perform much better in $L_1$ performance rather than $L_2$, as we optimized the network weights using an $L_1$ loss.
 }
@@ -481,11 +483,11 @@ We incorporate skip connections between the input, $6^{th}$, and $12^{th}$ layer
 We compare our method to spectral and optimization based baselines with different maximum iteration cutoffs.
 Figure \ref{fig:errorlines} illustrates this by plotting the means of various metrics and their $25^{th}$ and $75^{th}$ percentiles, with table \ref{tab:rome16ktab} giving the exact numbers.
 Our network, though only using 8 message passes, has comparable accuracy to MatchALS \citep{zhou2015multi} run 35 to 45 iterations, with an equivalent message passing step at each phase.
-Although our method does not outperform the Projected Gradient Descent - Doubly Stochastic (PGDDS) \citep{leonardos2016distributed} method, we perform comparably to them in the ROC AUC metric.
+Although our method does not outperform the Projected Gradient Descent - Doubly Stochastic (PGDDS) \citep{leonardos2017distributed} method, we perform comparably to them in the ROC AUC metric.
 
 \subsubsection{Graffiti Dataset} \label{sec:graffiti}
 We run our trained model on the more Graffiti Dataset from the Affine Covariant Regions dataset (formatted to be able to be input to our model properly).
-The Graffiti Dataset is the most common benchmark used in feature matching algorithms (e.g. \cite{leonardos2016distributed, zhou2015multi}).
+The Graffiti Dataset is the most common benchmark used in feature matching algorithms (e.g. \cite{leonardos2017distributed, zhou2015multi}).
 The results are shown in figure \ref{fig:errorlines} in the rightmost figure.
 As the graffiti dataset is very small (only 6 views total), we were not able to train on it.
 We randomly permute the intra-image order of the features to add some variance - by design the GNN outputs the same result each time, while the optimization methods have a very small amount of variance.
