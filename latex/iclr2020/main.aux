@@ -24,7 +24,7 @@
 \citation{battaglia2018relational}
 \citation{zhou2015multi,leonardos2016distributed}
 \citation{li2010location}
-\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}{section.1}\protected@file@percent }
 \citation{lowe2004distinctive}
 \citation{bay2006surf}
 \citation{calonder2012brief}
@@ -37,14 +37,16 @@
 \citation{zhou2015multi}
 \citation{wang2017multi}
 \citation{leonardos2016distributed}
+\citation{swoboda2019convex}
+\citation{shi2016tensor}
 \citation{tron2017fast}
 \citation{zach2010disambiguating}
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces  An illustration of the approach of this work. The Graph Neural Neural Network (GNN) \citep  {battaglia2018relational} takes as input the graph of matches and then outputs a low rank embedding of the adjacency matrix of the graph. The GNN operates on an embedding over the vertices of the graph. In the figure, the GNN vertex embeddings are represented by different colors. The final embedding is used to construct a pairwise similarity matrix, which we train to be a low dimensional cycle-consistent representation of the graph adjacency matrix, thus pruning the erroneous matches. We train the network using a reconstruction loss on the similarity matrix with the noisy adjacency matrix, and thus do not need ground truth matches. In addition, we can use geometric consistency information, such as epipolar constraints, to assist training the network. \relax }}{2}{figure.caption.1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces  An illustration of the approach of this work. The Graph Neural Neural Network (GNN) \citep  {battaglia2018relational} takes as input the graph of matches and then outputs a low rank embedding of the adjacency matrix of the graph. The GNN operates on an embedding over the vertices of the graph. In the figure, the GNN vertex embeddings are represented by different colors. The final embedding is used to construct a pairwise similarity matrix, which we train to be a low dimensional cycle-consistent representation of the graph adjacency matrix, thus pruning the erroneous matches. We train the network using a reconstruction loss on the similarity matrix with the noisy adjacency matrix, and thus do not need ground truth matches. In addition, we can use geometric consistency information, such as epipolar constraints, to assist training the network. \relax }}{2}{figure.caption.1}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
 \newlabel{fig:pipeline}{{1}{2}{An illustration of the approach of this work. The Graph Neural Neural Network (GNN) \citep {battaglia2018relational} takes as input the graph of matches and then outputs a low rank embedding of the adjacency matrix of the graph. The GNN operates on an embedding over the vertices of the graph. In the figure, the GNN vertex embeddings are represented by different colors. The final embedding is used to construct a pairwise similarity matrix, which we train to be a low dimensional cycle-consistent representation of the graph adjacency matrix, thus pruning the erroneous matches. We train the network using a reconstruction loss on the similarity matrix with the noisy adjacency matrix, and thus do not need ground truth matches. In addition, we can use geometric consistency information, such as epipolar constraints, to assist training the network. \relax }{figure.caption.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Feature Matching}{2}{subsection.2.1}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Multi-image Matching}{2}{subsection.2.2}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Related Work}{2}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Feature Matching}{2}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Multi-image Matching}{2}{subsection.2.2}\protected@file@percent }
 \citation{zagoruyko2015learning}
 \citation{yi2016lift}
 \citation{brachmann2017dsac}
@@ -52,6 +54,8 @@
 \citation{yi2018learning}
 \citation{zhu2017unpaired}
 \citation{hartmann2017learned}
+\citation{zhou2015flowweb}
+\citation{suwajanakorn2018discovery}
 \citation{bronstein2017geometric,defferrard2016convolutional,kipf2017semi,scarselli2009graph,gama2018mimo,gama2018convolutional,battaglia2018relational}
 \citation{bruna2013spectral}
 \citation{bronstein2017geometric,kipf2017semi,scarselli2009graph}
@@ -60,14 +64,9 @@
 \citation{battaglia2018relational}
 \citation{kipf2016variational}
 \citation{suh2015subgraph,yi2018learning}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Deep Learning for Matching}{3}{subsection.2.3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Graph Neural Networks}{3}{subsection.2.4}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{3}{section.3}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Correspondence Graph}{3}{subsection.3.1}}
-\newlabel{sec:corrgraph}{{3.1}{3}{Correspondence Graph}{subsection.3.1}{}}
-\citation{bruna2013spectral}
-\citation{kipf2017semi,defferrard2016convolutional,gama2018mimo,gama2018convolutional}
-\citation{gama2019convolutional}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Deep Learning for Matching}{3}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Graph Neural Networks}{3}{subsection.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Method}{3}{section.3}\protected@file@percent }
 \newlabel{fig:1a}{{2a}{4}{\relax }{figure.caption.2}{}}
 \newlabel{sub@fig:1a}{{a}{4}{\relax }{figure.caption.2}{}}
 \newlabel{fig:universefeatures}{{2a}{4}{\relax }{figure.caption.2}{}}
@@ -76,16 +75,22 @@
 \newlabel{sub@fig:1b}{{b}{4}{\relax }{figure.caption.2}{}}
 \newlabel{fig:embeddingsviz}{{2b}{4}{\relax }{figure.caption.2}{}}
 \newlabel{sub@fig:embeddingsviz}{{b}{4}{\relax }{figure.caption.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces  \textbf  {(a)} An illustration of the idea of the universe of features. Each feature in each image corresponds to a 3D point in the scene. We can construct cycle consistent embeddings of the features by mapping each one to the one-hot vector of its corresponding 3D point. While there can be many features, there are fewer 3D points and thus this corresponds to a low rank factorization of the correspondence matrix. Best viewed in color. \textbf  {(b)} Visualization of the learned embeddings. On the left we have the raw outputs, which are difficult to interpret. In the center, we rotated the features to best match the ground truth for a more interpretable visualization (see the end of Section \ref  {sec:cycconsist}). On the right, we have the ground truth embeddings, given as indicator vectors for which feature in the world the points correspond to. For the optimally rotated embedding we can see that the true embedding structure is recovered (with some noise). \relax }}{4}{figure.caption.2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces  \textbf  {(a)} An illustration of the idea of the universe of features. Each feature in each image corresponds to a 3D point in the scene. We can construct cycle consistent embeddings of the features by mapping each one to the one-hot vector of its corresponding 3D point. While there can be many features, there are fewer 3D points and thus this corresponds to a low rank factorization of the correspondence matrix. Best viewed in color. \textbf  {(b)} Visualization of the learned embeddings. On the left we have the raw outputs, which are difficult to interpret. In the center, we rotated the features to best match the ground truth for a more interpretable visualization (see the end of Section \ref  {sec:cycconsist}). On the right, we have the ground truth embeddings, given as indicator vectors for which feature in the world the points correspond to. For the optimally rotated embedding we can see that the true embedding structure is recovered (with some noise). \relax }}{4}{figure.caption.2}\protected@file@percent }
 \newlabel{fig:1}{{2}{4}{\textbf {(a)} An illustration of the idea of the universe of features. Each feature in each image corresponds to a 3D point in the scene. We can construct cycle consistent embeddings of the features by mapping each one to the one-hot vector of its corresponding 3D point. While there can be many features, there are fewer 3D points and thus this corresponds to a low rank factorization of the correspondence matrix. Best viewed in color. \textbf {(b)} Visualization of the learned embeddings. On the left we have the raw outputs, which are difficult to interpret. In the center, we rotated the features to best match the ground truth for a more interpretable visualization (see the end of Section \ref {sec:cycconsist}). On the right, we have the ground truth embeddings, given as indicator vectors for which feature in the world the points correspond to. For the optimally rotated embedding we can see that the true embedding structure is recovered (with some noise). \relax }{figure.caption.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Graph Neural Networks for Feature Matching}{4}{subsection.3.2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Correspondence Graph}{4}{subsection.3.1}\protected@file@percent }
+\newlabel{sec:corrgraph}{{3.1}{4}{Correspondence Graph}{subsection.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Graph Neural Networks for Feature Matching}{4}{subsection.3.2}\protected@file@percent }
 \newlabel{sec:gnns}{{3.2}{4}{Graph Neural Networks for Feature Matching}{subsection.3.2}{}}
+\citation{bruna2013spectral}
+\citation{kipf2017semi,defferrard2016convolutional,gama2018mimo,gama2018convolutional}
+\citation{gama2019convolutional}
 \citation{scarselli2009graph}
 \citation{battaglia2018relational}
 \citation{battaglia2018relational}
 \citation{battaglia2018relational}
 \citation{zhou2015multi,wang2017multi,leonardos2016distributed}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Cycle Consistency}{5}{subsection.3.3}}
+\citation{huang2013consistent}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Cycle Consistency}{5}{subsection.3.3}\protected@file@percent }
 \newlabel{sec:cycconsist}{{3.3}{5}{Cycle Consistency}{subsection.3.3}{}}
 \newlabel{eq:cycconsist1}{{3}{5}{Cycle Consistency}{equation.3.3}{}}
 \newlabel{eq:cycconsist2}{{4}{5}{Cycle Consistency}{equation.3.4}{}}
@@ -98,43 +103,43 @@
 \newlabel{sub@fig:3b}{{b}{6}{\relax }{figure.caption.3}{}}
 \newlabel{fig:geomloss}{{3b}{6}{\relax }{figure.caption.3}{}}
 \newlabel{sub@fig:geomloss}{{b}{6}{\relax }{figure.caption.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces  \textbf  {(a)} Errors are computed via absolute distance from the epipolar line, as expressed by Equation \ref  {eq:essential_constraint} via the epipolar constraint. The epipolar line is the line of projection of the feature in the first image, projected into to the second. The distance to this line on the second image indicates how likely that point is to correspond geometrically to the original feature. There can be false positives along the projected line, as shown by the square feature in the figure, but other points will be eliminated, such as the hexagonal feature. \textbf  {(b)} Training curves with and without Geometric Training loss, described in \ref  {eq:geom_cost2}. The geometric training loss improves testing performance. Note how training with geometric consistency losses decreases the convergence time of the network. Best viewed in color. \relax }}{6}{figure.caption.3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces  \textbf  {(a)} Errors are computed via absolute distance from the epipolar line, as expressed by Equation \ref  {eq:essential_constraint} via the epipolar constraint. The epipolar line is the line of projection of the feature in the first image, projected into to the second. The distance to this line on the second image indicates how likely that point is to correspond geometrically to the original feature. There can be false positives along the projected line, as shown by the square feature in the figure, but other points will be eliminated, such as the hexagonal feature. \textbf  {(b)} Training curves with and without Geometric Training loss, described in \ref  {eq:geom_cost2}. The geometric training loss improves testing performance. Note how training with geometric consistency losses decreases the convergence time of the network. Best viewed in color. \relax }}{6}{figure.caption.3}\protected@file@percent }
 \newlabel{fig:1}{{3}{6}{\textbf {(a)} Errors are computed via absolute distance from the epipolar line, as expressed by Equation \ref {eq:essential_constraint} via the epipolar constraint. The epipolar line is the line of projection of the feature in the first image, projected into to the second. The distance to this line on the second image indicates how likely that point is to correspond geometrically to the original feature. There can be false positives along the projected line, as shown by the square feature in the figure, but other points will be eliminated, such as the hexagonal feature. \textbf {(b)} Training curves with and without Geometric Training loss, described in \ref {eq:geom_cost2}. The geometric training loss improves testing performance. Note how training with geometric consistency losses decreases the convergence time of the network. Best viewed in color. \relax }{figure.caption.3}{}}
 \newlabel{eq:rotinvar}{{3.3}{6}{Cycle Consistency}{equation.3.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Geometric Consistency Loss}{6}{subsection.3.4}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Geometric Consistency Loss}{6}{subsection.3.4}\protected@file@percent }
 \newlabel{eq:essential_constraint}{{6}{6}{Geometric Consistency Loss}{equation.3.6}{}}
-\newlabel{eq:geom_cost}{{7}{6}{Geometric Consistency Loss}{equation.3.7}{}}
 \citation{kipf2017semi}
 \citation{zhou2015multi}
 \citation{pachauri2013solving}
 \citation{zhou2015multi}
 \citation{pachauri2013solving}
 \citation{li2010location}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces  Results for unsupervised training on synthetic data under various noise conditions. The table plots out the weights (mean and standard deviation) of the edges reconstructed by our model, for true positive matches and true negative ones. This shows under various noise conditions that our architecture can still recover the original connectivity structure of the matching graph. \relax }}{7}{table.caption.4}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces  Results for unsupervised training on synthetic data under various noise conditions. The table plots out the weights (mean and standard deviation) of the edges reconstructed by our model, for true positive matches and true negative ones. This shows under various noise conditions that our architecture can still recover the original connectivity structure of the matching graph. \relax }}{7}{table.caption.4}\protected@file@percent }
 \newlabel{fig:synthtable}{{1}{7}{Results for unsupervised training on synthetic data under various noise conditions. The table plots out the weights (mean and standard deviation) of the edges reconstructed by our model, for true positive matches and true negative ones. This shows under various noise conditions that our architecture can still recover the original connectivity structure of the matching graph. \relax }{table.caption.4}{}}
+\newlabel{eq:geom_cost}{{7}{7}{Geometric Consistency Loss}{equation.3.7}{}}
 \newlabel{eq:geom_cost2}{{8}{7}{Geometric Consistency Loss}{equation.3.8}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{7}{section.4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Synthetic Graph Dataset}{7}{subsection.4.1}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Rome 16K Graph Dataset}{7}{subsection.4.2}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Experiments}{7}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Synthetic Graph Dataset}{7}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Rome 16K Graph Dataset}{7}{subsection.4.2}\protected@file@percent }
 \citation{battaglia2018relational}
 \citation{tensorflow2015}
 \citation{kingma2014adam}
 \citation{zhou2015multi}
 \citation{leonardos2016distributed}
 \citation{leonardos2016distributed,zhou2015multi}
-\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces  Plot of the losses of the baselines at different iteration numbers. The line shows the mean of the graph while the translucent coloring shows the $25^{th}$ to $75^{th}$ percentiles. The ROC AUC curves remain fairly consistent while the L1 loss goes noticibly down after more iterations. Our method compares to 35-45 iterations of MatchALS, while only having 8 message passes. PGDDS performs better than us in $L_1$ but we perform similarly in the ROC AUC metric. These results still hold even when we change domains to the Graffiti dataset (see \ref  {sec:graffiti}). \relax }}{8}{figure.caption.5}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces  Plot of the losses of the baselines at different iteration numbers. The line shows the mean of the graph while the translucent coloring shows the $25^{th}$ to $75^{th}$ percentiles. The ROC AUC curves remain fairly consistent while the L1 loss goes noticibly down after more iterations. Our method compares to 35-45 iterations of MatchALS, while only having 8 message passes. PGDDS performs better than us in $L_1$ but we perform similarly in the ROC AUC metric. These results still hold even when we change domains to the Graffiti dataset (see \ref  {sec:graffiti}). \relax }}{8}{figure.caption.5}\protected@file@percent }
 \newlabel{fig:3}{{4}{8}{Plot of the losses of the baselines at different iteration numbers. The line shows the mean of the graph while the translucent coloring shows the $25^{th}$ to $75^{th}$ percentiles. The ROC AUC curves remain fairly consistent while the L1 loss goes noticibly down after more iterations. Our method compares to 35-45 iterations of MatchALS, while only having 8 message passes. PGDDS performs better than us in $L_1$ but we perform similarly in the ROC AUC metric. These results still hold even when we change domains to the Graffiti dataset (see \ref {sec:graffiti}). \relax }{figure.caption.5}{}}
 \newlabel{fig:errorlines}{{4}{8}{Plot of the losses of the baselines at different iteration numbers. The line shows the mean of the graph while the translucent coloring shows the $25^{th}$ to $75^{th}$ percentiles. The ROC AUC curves remain fairly consistent while the L1 loss goes noticibly down after more iterations. Our method compares to 35-45 iterations of MatchALS, while only having 8 message passes. PGDDS performs better than us in $L_1$ but we perform similarly in the ROC AUC metric. These results still hold even when we change domains to the Graffiti dataset (see \ref {sec:graffiti}). \relax }{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Graffiti Dataset}{8}{subsubsection.4.2.1}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Graffiti Dataset}{8}{subsubsection.4.2.1}\protected@file@percent }
 \newlabel{sec:graffiti}{{4.2.1}{8}{Graffiti Dataset}{subsubsection.4.2.1}{}}
 \bibstyle{iclr2020_conference}
 \bibdata{egbib}
 \bibcite{tensorflow2015}{{1}{2015}{{Abadi et~al.}}{{Abadi, Agarwal, Barham, Brevdo, Chen, Citro, Corrado, Davis, Dean, Devin, Ghemawat, Goodfellow, Harp, Irving, Isard, Jia, Jozefowicz, Kaiser, Kudlur, Levenberg, Man\'{e}, Monga, Moore, Murray, Olah, Schuster, Shlens, Steiner, Sutskever, Talwar, Tucker, Vanhoucke, Vasudevan, Vi\'{e}gas, Vinyals, Warden, Wattenberg, Wicke, Yu, and Zheng}}}
 \bibcite{arrigoni2017synchronization}{{2}{2017}{{Arrigoni et~al.}}{{Arrigoni, Maset, and Fusiello}}}
 \bibcite{battaglia2018relational}{{3}{2018}{{Battaglia et~al.}}{{Battaglia, Hamrick, Bapst, Sanchez-Gonzalez, Zambaldi, Malinowski, Tacchetti, Raposo, Santoro, Faulkner, et~al.}}}
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces  Results on Rome16K Correspondence graphs, showing the mean and standard deviation of the $L_1$ and $L_2$. Our method was not trained on ground truth correspondences but using unsupervised methods and geometric side losses. Thus we test against ground truth correspondence graph adjacency matrices computed from the bundle adjustment output. Our method performs better than 35 iteration of the MatchALS \citep  {zhou2015multi} method, but does not perform as well as 50 iterations. We perform better than a simple eigenvalue based method \citep  {pachauri2013solving}. Note that we perform much better in $L_1$ performance rather than $L_2$, as we optimized the network weights using an $L_1$ loss. \relax }}{9}{table.caption.6}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces  Results on Rome16K Correspondence graphs, showing the mean and standard deviation of the $L_1$ and $L_2$. Our method was not trained on ground truth correspondences but using unsupervised methods and geometric side losses. Thus we test against ground truth correspondence graph adjacency matrices computed from the bundle adjustment output. Our method performs better than 35 iteration of the MatchALS \citep  {zhou2015multi} method, but does not perform as well as 50 iterations. We perform better than a simple eigenvalue based method \citep  {pachauri2013solving}. Note that we perform much better in $L_1$ performance rather than $L_2$, as we optimized the network weights using an $L_1$ loss. \relax }}{9}{table.caption.6}\protected@file@percent }
 \newlabel{tab:rome16ktab}{{2}{9}{Results on Rome16K Correspondence graphs, showing the mean and standard deviation of the $L_1$ and $L_2$. Our method was not trained on ground truth correspondences but using unsupervised methods and geometric side losses. Thus we test against ground truth correspondence graph adjacency matrices computed from the bundle adjustment output. Our method performs better than 35 iteration of the MatchALS \citep {zhou2015multi} method, but does not perform as well as 50 iterations. We perform better than a simple eigenvalue based method \citep {pachauri2013solving}. Note that we perform much better in $L_1$ performance rather than $L_2$, as we optimized the network weights using an $L_1$ loss. \relax }{table.caption.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{9}{section.5}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{9}{section.5}\protected@file@percent }
 \bibcite{bay2006surf}{{4}{2006}{{Bay et~al.}}{{Bay, Tuytelaars, and Van~Gool}}}
 \bibcite{brachmann2017dsac}{{5}{2017}{{Brachmann et~al.}}{{Brachmann, Krull, Nowozin, Shotton, Michel, Gumhold, and Rother}}}
 \bibcite{bronstein2017geometric}{{6}{2017}{{Bronstein et~al.}}{{Bronstein, Bruna, LeCun, Szlam, and Vandergheynst}}}
@@ -148,25 +153,30 @@
 \bibcite{gama2018mimo}{{14}{2018{b}}{{Gama et~al.}}{{Gama, Marques, Ribeiro, and Leus}}}
 \bibcite{hartmann2017learned}{{15}{2017}{{Hartmann et~al.}}{{Hartmann, Galliani, Havlena, Van~Gool, and Schindler}}}
 \bibcite{hu2016distributable}{{16}{2016}{{Hu et~al.}}{{Hu, Thibert, and Guibas}}}
-\bibcite{kingma2014adam}{{17}{2014}{{Kingma \& Ba}}{{Kingma and Ba}}}
-\bibcite{kipf2016variational}{{18}{2016}{{Kipf \& Welling}}{{Kipf and Welling}}}
-\bibcite{kipf2017semi}{{19}{2017}{{Kipf \& Welling}}{{Kipf and Welling}}}
-\bibcite{leonardos2016distributed}{{20}{2016}{{Leonardos et~al.}}{{Leonardos, Zhou, and Daniilidis}}}
-\bibcite{li2010location}{{21}{2010}{{Li et~al.}}{{Li, Snavely, and Huttenlocher}}}
-\bibcite{lowe2004distinctive}{{22}{2004}{{Lowe}}{{}}}
-\bibcite{mur2015orb}{{23}{2015}{{Mur-Artal et~al.}}{{Mur-Artal, Montiel, and Tardos}}}
-\bibcite{pachauri2013solving}{{24}{2013}{{Pachauri et~al.}}{{Pachauri, Kondor, and Singh}}}
-\bibcite{scarselli2009graph}{{25}{2009}{{Scarselli et~al.}}{{Scarselli, Gori, Tsoi, Hagenbuchner, and Monfardini}}}
-\bibcite{suh2015subgraph}{{26}{2015}{{Suh et~al.}}{{Suh, Adamczewski, and Mu~Lee}}}
-\bibcite{tron2014quotient}{{27}{2014}{{Tron \& Daniilidis}}{{Tron and Daniilidis}}}
-\bibcite{tron2017fast}{{28}{2017}{{Tron et~al.}}{{Tron, Zhou, Esteves, and Daniilidis}}}
-\bibcite{wang2017multi}{{29}{2017}{{Wang et~al.}}{{Wang, Zhou, and Daniilidis}}}
-\bibcite{yi2016lift}{{30}{2016}{{Yi et~al.}}{{Yi, Trulls, Lepetit, and Fua}}}
-\bibcite{yi2018learning}{{31}{2018}{{Yi et~al.}}{{Yi, Trulls, Ono, Lepetit, Salzmann, and Fua}}}
-\bibcite{zach2010disambiguating}{{32}{2010}{{Zach et~al.}}{{Zach, Klopschitz, and Pollefeys}}}
-\bibcite{zagoruyko2015learning}{{33}{2015}{{Zagoruyko \& Komodakis}}{{Zagoruyko and Komodakis}}}
-\bibcite{zhou2015multi}{{34}{2015}{{Zhou et~al.}}{{Zhou, Zhu, and Daniilidis}}}
-\bibcite{zhu2017unpaired}{{35}{2017}{{Zhu et~al.}}{{Zhu, Park, Isola, and Efros}}}
+\bibcite{huang2013consistent}{{17}{2013}{{Huang \& Guibas}}{{Huang and Guibas}}}
+\bibcite{kingma2014adam}{{18}{2014}{{Kingma \& Ba}}{{Kingma and Ba}}}
+\bibcite{kipf2016variational}{{19}{2016}{{Kipf \& Welling}}{{Kipf and Welling}}}
+\bibcite{kipf2017semi}{{20}{2017}{{Kipf \& Welling}}{{Kipf and Welling}}}
+\bibcite{leonardos2016distributed}{{21}{2016}{{Leonardos et~al.}}{{Leonardos, Zhou, and Daniilidis}}}
+\bibcite{li2010location}{{22}{2010}{{Li et~al.}}{{Li, Snavely, and Huttenlocher}}}
+\bibcite{lowe2004distinctive}{{23}{2004}{{Lowe}}{{}}}
+\bibcite{mur2015orb}{{24}{2015}{{Mur-Artal et~al.}}{{Mur-Artal, Montiel, and Tardos}}}
+\bibcite{pachauri2013solving}{{25}{2013}{{Pachauri et~al.}}{{Pachauri, Kondor, and Singh}}}
+\bibcite{scarselli2009graph}{{26}{2009}{{Scarselli et~al.}}{{Scarselli, Gori, Tsoi, Hagenbuchner, and Monfardini}}}
+\bibcite{shi2016tensor}{{27}{2016}{{Shi et~al.}}{{Shi, Ling, Hu, Xing, and Zhang}}}
+\bibcite{suh2015subgraph}{{28}{2015}{{Suh et~al.}}{{Suh, Adamczewski, and Mu~Lee}}}
+\bibcite{suwajanakorn2018discovery}{{29}{2018}{{Suwajanakorn et~al.}}{{Suwajanakorn, Snavely, Tompson, and Norouzi}}}
+\bibcite{swoboda2019convex}{{30}{2019}{{Swoboda et~al.}}{{Swoboda, Mokarian, Theobalt, Bernard, et~al.}}}
+\bibcite{tron2014quotient}{{31}{2014}{{Tron \& Daniilidis}}{{Tron and Daniilidis}}}
+\bibcite{tron2017fast}{{32}{2017}{{Tron et~al.}}{{Tron, Zhou, Esteves, and Daniilidis}}}
+\bibcite{wang2017multi}{{33}{2017}{{Wang et~al.}}{{Wang, Zhou, and Daniilidis}}}
+\bibcite{yi2016lift}{{34}{2016}{{Yi et~al.}}{{Yi, Trulls, Lepetit, and Fua}}}
+\bibcite{yi2018learning}{{35}{2018}{{Yi et~al.}}{{Yi, Trulls, Ono, Lepetit, Salzmann, and Fua}}}
+\bibcite{zach2010disambiguating}{{36}{2010}{{Zach et~al.}}{{Zach, Klopschitz, and Pollefeys}}}
+\bibcite{zagoruyko2015learning}{{37}{2015}{{Zagoruyko \& Komodakis}}{{Zagoruyko and Komodakis}}}
+\bibcite{zhou2015flowweb}{{38}{2015{a}}{{Zhou et~al.}}{{Zhou, Jae~Lee, Yu, and Efros}}}
+\bibcite{zhou2015multi}{{39}{2015{b}}{{Zhou et~al.}}{{Zhou, Zhu, and Daniilidis}}}
+\bibcite{zhu2017unpaired}{{40}{2017}{{Zhu et~al.}}{{Zhu, Park, Isola, and Efros}}}
 \citation{kingma2014adam}
 \citation{tensorflow2015}
-\@writefile{toc}{\contentsline {section}{\numberline {A}More Detail on GNN Architecture}{11}{appendix.A}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}More Detail on GNN Architecture}{12}{appendix.A}\protected@file@percent }

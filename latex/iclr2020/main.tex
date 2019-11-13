@@ -10,6 +10,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{url}
+\usepackage{xcolor}
 
 \newcommand{\cross}[1]{[#1]_{\times}}
 \setlength{\textfloatsep}{12pt plus 2pt minus 2pt}
@@ -126,6 +127,8 @@ Multi-image matching has traditionally been done using optimization based method
 However, the assumption of low Gaussian noise is not realistic.
 \cite{zhou2015multi} and \cite{wang2017multi} use more sophisticated optimization techniques on the matching matrix and thus produce more robust solutions.
 \cite{leonardos2016distributed} implement a distributed optimization scheme to solve for cycle consistency.
+\textcolor{red}{\cite{swoboda2019convex} implement a convex relaxation of the low dimensional embedding problem.}
+\textcolor{red}{\cite{shi2016tensor} use tensor power iterations to solve the matching problem, also taking into account the intra-image matching graph.}
 As an alternative to optimization based techniques, \cite{tron2017fast} used density based clustering techniques to compute multi-image correspondence.
 Moving away from feature matching, \cite{zach2010disambiguating} uses cycle-consistency-like constraints on pose graphs quite effectively.
 To the best of our knowledge, we are the first to use graph neural networks for multi-image matching.
@@ -138,6 +141,8 @@ Most similar to our work, \cite{yi2018learning} attempts to improve corresponden
 Like us \cite{zhu2017unpaired} use cycle consistency in their loss; however their method is for image generation and is restricted to pairwise cycle consistency.
 Our method can be applied to 3 or more images. 
 \cite{hartmann2017learned} learns multi-image matching but requires heavy supervision from 3D object reconstructions, which can be difficult or expensive to obtain.
+\textcolor{red}{\cite{zhou2015flowweb}, unlike our method, uses dense correspondence, but uses cycle consistency to find semantic matches accross multiple views.}
+\textcolor{red}{\cite{suwajanakorn2018discovery} find 3 dimensional latent keypoints, trained using ground truth rotation and translation. However, their method is restricted to a limited number of object categories, which is different from the SfM setting we are considering here.}
 
 \subsection{Graph Neural Networks}
 Graph neural networks, true to their name, are deep neural networks operating in graph domains.
@@ -274,6 +279,7 @@ Then the cycle consistency constraint becomes:
 \end{equation}
 
 This reduces the number of our constraints from $O(n^3)$ to $O(n^2)$.
+\textcolor{red}{This was shown to be equivalent to the original definition of cycle consistency (equation \ref{eq:cycconsist1}) in \cite{huang2013consistent}.}
 We try to learn vertex embeddings $\mF_V$ to approximate $\mX$ - in other words the final embedding should be an encoding of the universe of features.
 As we do not have the ground truth matches $\mM$, we approximate it using the noisy adjacency matrix $\mA$ of our correspondence graph. Thus our loss would be 
 \begin{equation}
@@ -360,12 +366,12 @@ For our purposes, since we use low rank embeddings $\mF_{V}$, the loss would rea
 \hline
 Method & Same Point Similarities & Different Point Similarities  \\
 \hline\hline\hline
-Ideal                              & 1.00e+0 $\pm$ 0.00e+0 & 0.00e+0 $\pm$ 0.00e+0 \\ \hline
-Initialization Baseline            & 5.11e-1 $\pm$ 1.68e-2 & 2.56e-1 $\pm$ 2.06e-1 \\ \hline
-5 Views, Noiseless                 & 1.00e+0 $\pm$ 4.15e-4 & 1.22e-1 $\pm$ 1.67e-1 \\ \hline
-6 Views, Added Noise               & 9.84e-1 $\pm$ 3.16e-2 & 7.46e-2 $\pm$ 1.57e-1 \\ \hline
-3 Views, 5\% Outliers              & 9.29e-1 $\pm$ 1.79e-1 & 1.41e-1 $\pm$ 1.48e-1 \\ 
-3 Views, 10\% Outliers             & 9.27e-1 $\pm$ 1.79e-1 & 1.40e-1 $\pm$ 1.51e-1 \\ \hline
+Ideal                              & \textcolor{red}{1.000} $\pm$ \textcolor{red}{0.0000} & \textcolor{red}{0.0000} $\pm$ \textcolor{red}{0.0000} \\ \hline
+Initialization Baseline            & \textcolor{red}{0.511} $\pm$ \textcolor{red}{0.0168} & \textcolor{red}{0.2560} $\pm$ \textcolor{red}{0.2060} \\ \hline
+5 Views, Noiseless                 & \textcolor{red}{1.000} $\pm$ \textcolor{red}{0.0004} & \textcolor{red}{0.1220} $\pm$ \textcolor{red}{0.1670} \\ \hline
+6 Views, Added Noise               & \textcolor{red}{0.984} $\pm$ \textcolor{red}{0.0031} & \textcolor{red}{0.0746} $\pm$ \textcolor{red}{0.1570} \\ \hline
+3 Views, 5\% Outliers              & \textcolor{red}{0.929} $\pm$ \textcolor{red}{0.1790} & \textcolor{red}{0.1410} $\pm$ \textcolor{red}{0.1480} \\ 
+3 Views, 10\% Outliers             & \textcolor{red}{0.927} $\pm$ \textcolor{red}{0.1790} & \textcolor{red}{0.1400} $\pm$ \textcolor{red}{0.1510} \\ \hline
 
 \hline
 \end{tabular}
