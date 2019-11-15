@@ -130,6 +130,7 @@ However, the assumption of low Gaussian noise is not realistic.
 \textcolor{red}{\cite{swoboda2019convex} implement a convex relaxation of the low dimensional embedding problem.}
 \textcolor{red}{\cite{shi2016tensor} use tensor power iterations to solve the matching problem, also taking into account the intra-image matching graph.}
 As an alternative to optimization based techniques, \cite{tron2017fast} used density based clustering techniques to compute multi-image correspondence.
+\cite{fathian2019clear} use a similar technique but formulates it as a generalized Rayleigh quotient problem to achieve better results.
 Moving away from feature matching, \cite{zach2010disambiguating} uses cycle-consistency-like constraints on pose graphs quite effectively.
 To the best of our knowledge, we are the first to use graph neural networks for multi-image matching.
 
@@ -139,7 +140,8 @@ Previous attempts to improve image matching techniques using machine learning ha
 % This approach is limited if one does not have the ability to get the ground truth correspondences.
 
 There are other methods to build correspondences such as \cite{choy2016universal}, but they only handle two-view constraints and require dense correspondences.
-Most similar to our work, \cite{yi2018learning} attempts to improve correspondences by learning match probabilities for two-view RANSAC for greater robustness and speed.
+\textcolor{red}{Most similar to our work, \cite{zhang2019iccv} use graph neural networks to do intra-image feature processing before doing two image inter-image feature similarity. However, their work only trains for pairs of image, while ours is explicitly trained for multi-image matching.}
+Also similarly, \cite{yi2018learning} attempts to improve correspondences by learning match probabilities for two-view RANSAC for greater robustness and speed.
 Like us \cite{zhu2017unpaired} use cycle consistency in their loss; however their method is for image generation and is restricted to pairwise cycle consistency.
 Our method can be applied to 3 or more images. 
 \cite{hartmann2017learned} learns multi-image matching but requires heavy supervision from 3D object reconstructions, which can be difficult or expensive to obtain.

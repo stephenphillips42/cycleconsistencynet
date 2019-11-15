@@ -40,6 +40,7 @@
 \citation{swoboda2019convex}
 \citation{shi2016tensor}
 \citation{tron2017fast}
+\citation{fathian2019clear}
 \citation{zach2010disambiguating}
 \@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces  An illustration of the approach of this work. The Graph Neural Neural Network (GNN) \citep  {battaglia2018relational} takes as input the graph of matches and then outputs a low rank embedding of the adjacency matrix of the graph. The GNN operates on an embedding over the vertices of the graph. In the figure, the GNN vertex embeddings are represented by different colors. The final embedding is used to construct a pairwise similarity matrix, which we train to be a low dimensional cycle-consistent representation of the graph adjacency matrix, thus pruning the erroneous matches. We train the network using a reconstruction loss on the similarity matrix with the noisy adjacency matrix, and thus do not need ground truth matches. In addition, we can use geometric consistency information, such as epipolar constraints, to assist training the network. \relax }}{2}{figure.caption.1}}
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
@@ -53,6 +54,7 @@
 \citation{rocco2018neighbourhood}
 \citation{zhou2019learn}
 \citation{choy2016universal}
+\citation{zhang2019iccv}
 \citation{yi2018learning}
 \citation{zhu2017unpaired}
 \citation{hartmann2017learned}
@@ -132,13 +134,13 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces  Plot of the losses of the baselines at different iteration numbers. The line shows the mean of the graph while the translucent coloring shows the $25^{th}$ to $75^{th}$ percentiles. The ROC AUC curves remain fairly consistent while the L1 loss goes noticibly down after more iterations. Our method compares to 35-45 iterations of MatchALS, while only having 8 message passes. PGDDS performs better than us in $L_1$ but we perform similarly in the ROC AUC metric. These results still hold even when we change domains to the Graffiti dataset (see \ref  {sec:graffiti}). \relax }}{8}{figure.caption.5}}
 \newlabel{fig:3}{{4}{8}{Plot of the losses of the baselines at different iteration numbers. The line shows the mean of the graph while the translucent coloring shows the $25^{th}$ to $75^{th}$ percentiles. The ROC AUC curves remain fairly consistent while the L1 loss goes noticibly down after more iterations. Our method compares to 35-45 iterations of MatchALS, while only having 8 message passes. PGDDS performs better than us in $L_1$ but we perform similarly in the ROC AUC metric. These results still hold even when we change domains to the Graffiti dataset (see \ref {sec:graffiti}). \relax }{figure.caption.5}{}}
 \newlabel{fig:errorlines}{{4}{8}{Plot of the losses of the baselines at different iteration numbers. The line shows the mean of the graph while the translucent coloring shows the $25^{th}$ to $75^{th}$ percentiles. The ROC AUC curves remain fairly consistent while the L1 loss goes noticibly down after more iterations. Our method compares to 35-45 iterations of MatchALS, while only having 8 message passes. PGDDS performs better than us in $L_1$ but we perform similarly in the ROC AUC metric. These results still hold even when we change domains to the Graffiti dataset (see \ref {sec:graffiti}). \relax }{figure.caption.5}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Graffiti Dataset}{8}{subsubsection.4.2.1}}
-\newlabel{sec:graffiti}{{4.2.1}{8}{Graffiti Dataset}{subsubsection.4.2.1}{}}
 \bibstyle{iclr2020_conference}
 \bibdata{egbib}
 \bibcite{tensorflow2015}{{1}{2015}{{Abadi et~al.}}{{Abadi, Agarwal, Barham, Brevdo, Chen, Citro, Corrado, Davis, Dean, Devin, Ghemawat, Goodfellow, Harp, Irving, Isard, Jia, Jozefowicz, Kaiser, Kudlur, Levenberg, Man\'{e}, Monga, Moore, Murray, Olah, Schuster, Shlens, Steiner, Sutskever, Talwar, Tucker, Vanhoucke, Vasudevan, Vi\'{e}gas, Vinyals, Warden, Wattenberg, Wicke, Yu, and Zheng}}}
 \@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces  Results on Rome16K Correspondence graphs, showing the mean and standard deviation of the $L_1$ and $L_2$. Our method was not trained on ground truth correspondences but using unsupervised methods and geometric side losses. Thus we test against ground truth correspondence graph adjacency matrices computed from the bundle adjustment output. Our method performs better than 35 iteration of the MatchALS \citep  {zhou2015multi} method, but does not perform as well as 50 iterations. We perform better than a simple eigenvalue based method \citep  {pachauri2013solving}. Note that we perform much better in $L_1$ performance rather than $L_2$, as we optimized the network weights using an $L_1$ loss. \relax }}{9}{table.caption.6}}
 \newlabel{tab:rome16ktab}{{2}{9}{Results on Rome16K Correspondence graphs, showing the mean and standard deviation of the $L_1$ and $L_2$. Our method was not trained on ground truth correspondences but using unsupervised methods and geometric side losses. Thus we test against ground truth correspondence graph adjacency matrices computed from the bundle adjustment output. Our method performs better than 35 iteration of the MatchALS \citep {zhou2015multi} method, but does not perform as well as 50 iterations. We perform better than a simple eigenvalue based method \citep {pachauri2013solving}. Note that we perform much better in $L_1$ performance rather than $L_2$, as we optimized the network weights using an $L_1$ loss. \relax }{table.caption.6}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.1}Graffiti Dataset}{9}{subsubsection.4.2.1}}
+\newlabel{sec:graffiti}{{4.2.1}{9}{Graffiti Dataset}{subsubsection.4.2.1}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {5}Conclusion}{9}{section.5}}
 \bibcite{arrigoni2017synchronization}{{2}{2017}{{Arrigoni et~al.}}{{Arrigoni, Maset, and Fusiello}}}
 \bibcite{battaglia2018relational}{{3}{2018}{{Battaglia et~al.}}{{Battaglia, Hamrick, Bapst, Sanchez-Gonzalez, Zambaldi, Malinowski, Tacchetti, Raposo, Santoro, Faulkner, et~al.}}}
@@ -149,38 +151,40 @@
 \bibcite{calonder2012brief}{{8}{2012}{{Calonder et~al.}}{{Calonder, Lepetit, Ozuysal, Trzcinski, Strecha, and Fua}}}
 \bibcite{choy2016universal}{{9}{2016}{{Choy et~al.}}{{Choy, Gwak, Savarese, and Chandraker}}}
 \bibcite{defferrard2016convolutional}{{10}{2016}{{Defferrard et~al.}}{{Defferrard, Bresson, and Vandergheynst}}}
-\bibcite{fischler1981random}{{11}{1981}{{Fischler \& Bolles}}{{Fischler and Bolles}}}
-\bibcite{gama2019convolutional}{{12}{}{{Gama et~al.}}{{Gama, Marques, Leus, and Ribeiro}}}
-\bibcite{gama2018convolutional}{{13}{2018{a}}{{Gama et~al.}}{{Gama, Leus, Marques, and Ribeiro}}}
-\bibcite{gama2018mimo}{{14}{2018{b}}{{Gama et~al.}}{{Gama, Marques, Ribeiro, and Leus}}}
-\bibcite{hartmann2017learned}{{15}{2017}{{Hartmann et~al.}}{{Hartmann, Galliani, Havlena, Van~Gool, and Schindler}}}
-\bibcite{hu2016distributable}{{16}{2016}{{Hu et~al.}}{{Hu, Thibert, and Guibas}}}
-\bibcite{huang2013consistent}{{17}{2013}{{Huang \& Guibas}}{{Huang and Guibas}}}
-\bibcite{kingma2014adam}{{18}{2014}{{Kingma \& Ba}}{{Kingma and Ba}}}
-\bibcite{kipf2016variational}{{19}{2016}{{Kipf \& Welling}}{{Kipf and Welling}}}
-\bibcite{kipf2017semi}{{20}{2017}{{Kipf \& Welling}}{{Kipf and Welling}}}
-\bibcite{leonardos2017distributed}{{21}{2017}{{Leonardos et~al.}}{{Leonardos, Zhou, and Daniilidis}}}
-\bibcite{li2010location}{{22}{2010}{{Li et~al.}}{{Li, Snavely, and Huttenlocher}}}
-\bibcite{lowe2004distinctive}{{23}{2004}{{Lowe}}{{}}}
-\bibcite{mur2015orb}{{24}{2015}{{Mur-Artal et~al.}}{{Mur-Artal, Montiel, and Tardos}}}
-\bibcite{pachauri2013solving}{{25}{2013}{{Pachauri et~al.}}{{Pachauri, Kondor, and Singh}}}
-\bibcite{rocco2018neighbourhood}{{26}{2018}{{Rocco et~al.}}{{Rocco, Cimpoi, Arandjelovi{\'c}, Torii, Pajdla, and Sivic}}}
-\bibcite{scarselli2009graph}{{27}{2009}{{Scarselli et~al.}}{{Scarselli, Gori, Tsoi, Hagenbuchner, and Monfardini}}}
-\bibcite{shi2016tensor}{{28}{2016}{{Shi et~al.}}{{Shi, Ling, Hu, Xing, and Zhang}}}
-\bibcite{suh2015subgraph}{{29}{2015}{{Suh et~al.}}{{Suh, Adamczewski, and Mu~Lee}}}
-\bibcite{suwajanakorn2018discovery}{{30}{2018}{{Suwajanakorn et~al.}}{{Suwajanakorn, Snavely, Tompson, and Norouzi}}}
-\bibcite{swoboda2019convex}{{31}{2019}{{Swoboda et~al.}}{{Swoboda, Mokarian, Theobalt, Bernard, et~al.}}}
-\bibcite{tron2014quotient}{{32}{2014}{{Tron \& Daniilidis}}{{Tron and Daniilidis}}}
-\bibcite{tron2017fast}{{33}{2017}{{Tron et~al.}}{{Tron, Zhou, Esteves, and Daniilidis}}}
-\bibcite{wang2018multi}{{34}{2018}{{Wang et~al.}}{{Wang, Zhou, and Daniilidis}}}
-\bibcite{yi2016lift}{{35}{2016}{{Yi et~al.}}{{Yi, Trulls, Lepetit, and Fua}}}
-\bibcite{yi2018learning}{{36}{2018}{{Yi et~al.}}{{Yi, Trulls, Ono, Lepetit, Salzmann, and Fua}}}
-\bibcite{zach2010disambiguating}{{37}{2010}{{Zach et~al.}}{{Zach, Klopschitz, and Pollefeys}}}
-\bibcite{zagoruyko2015learning}{{38}{2015}{{Zagoruyko \& Komodakis}}{{Zagoruyko and Komodakis}}}
-\bibcite{zhou2019learn}{{39}{2019}{{Zhou et~al.}}{{Zhou, Sattler, Pollefeys, and Leal-Taixe}}}
-\bibcite{zhou2015flowweb}{{40}{2015{a}}{{Zhou et~al.}}{{Zhou, Jae~Lee, Yu, and Efros}}}
-\bibcite{zhou2015multi}{{41}{2015{b}}{{Zhou et~al.}}{{Zhou, Zhu, and Daniilidis}}}
-\bibcite{zhu2017unpaired}{{42}{2017}{{Zhu et~al.}}{{Zhu, Park, Isola, and Efros}}}
+\bibcite{fathian2019clear}{{11}{2019}{{Fathian et~al.}}{{Fathian, Khosoussi, Lusk, Tian, and How}}}
+\bibcite{fischler1981random}{{12}{1981}{{Fischler \& Bolles}}{{Fischler and Bolles}}}
+\bibcite{gama2019convolutional}{{13}{}{{Gama et~al.}}{{Gama, Marques, Leus, and Ribeiro}}}
+\bibcite{gama2018convolutional}{{14}{2018{a}}{{Gama et~al.}}{{Gama, Leus, Marques, and Ribeiro}}}
+\bibcite{gama2018mimo}{{15}{2018{b}}{{Gama et~al.}}{{Gama, Marques, Ribeiro, and Leus}}}
+\bibcite{hartmann2017learned}{{16}{2017}{{Hartmann et~al.}}{{Hartmann, Galliani, Havlena, Van~Gool, and Schindler}}}
+\bibcite{hu2016distributable}{{17}{2016}{{Hu et~al.}}{{Hu, Thibert, and Guibas}}}
+\bibcite{huang2013consistent}{{18}{2013}{{Huang \& Guibas}}{{Huang and Guibas}}}
+\bibcite{kingma2014adam}{{19}{2014}{{Kingma \& Ba}}{{Kingma and Ba}}}
+\bibcite{kipf2016variational}{{20}{2016}{{Kipf \& Welling}}{{Kipf and Welling}}}
+\bibcite{kipf2017semi}{{21}{2017}{{Kipf \& Welling}}{{Kipf and Welling}}}
+\bibcite{leonardos2017distributed}{{22}{2017}{{Leonardos et~al.}}{{Leonardos, Zhou, and Daniilidis}}}
+\bibcite{li2010location}{{23}{2010}{{Li et~al.}}{{Li, Snavely, and Huttenlocher}}}
+\bibcite{lowe2004distinctive}{{24}{2004}{{Lowe}}{{}}}
+\bibcite{mur2015orb}{{25}{2015}{{Mur-Artal et~al.}}{{Mur-Artal, Montiel, and Tardos}}}
+\bibcite{pachauri2013solving}{{26}{2013}{{Pachauri et~al.}}{{Pachauri, Kondor, and Singh}}}
+\bibcite{rocco2018neighbourhood}{{27}{2018}{{Rocco et~al.}}{{Rocco, Cimpoi, Arandjelovi{\'c}, Torii, Pajdla, and Sivic}}}
+\bibcite{scarselli2009graph}{{28}{2009}{{Scarselli et~al.}}{{Scarselli, Gori, Tsoi, Hagenbuchner, and Monfardini}}}
+\bibcite{shi2016tensor}{{29}{2016}{{Shi et~al.}}{{Shi, Ling, Hu, Xing, and Zhang}}}
+\bibcite{suh2015subgraph}{{30}{2015}{{Suh et~al.}}{{Suh, Adamczewski, and Mu~Lee}}}
+\bibcite{suwajanakorn2018discovery}{{31}{2018}{{Suwajanakorn et~al.}}{{Suwajanakorn, Snavely, Tompson, and Norouzi}}}
+\bibcite{swoboda2019convex}{{32}{2019}{{Swoboda et~al.}}{{Swoboda, Mokarian, Theobalt, Bernard, et~al.}}}
+\bibcite{tron2014quotient}{{33}{2014}{{Tron \& Daniilidis}}{{Tron and Daniilidis}}}
+\bibcite{tron2017fast}{{34}{2017}{{Tron et~al.}}{{Tron, Zhou, Esteves, and Daniilidis}}}
+\bibcite{wang2018multi}{{35}{2018}{{Wang et~al.}}{{Wang, Zhou, and Daniilidis}}}
+\bibcite{yi2016lift}{{36}{2016}{{Yi et~al.}}{{Yi, Trulls, Lepetit, and Fua}}}
+\bibcite{yi2018learning}{{37}{2018}{{Yi et~al.}}{{Yi, Trulls, Ono, Lepetit, Salzmann, and Fua}}}
+\bibcite{zach2010disambiguating}{{38}{2010}{{Zach et~al.}}{{Zach, Klopschitz, and Pollefeys}}}
+\bibcite{zagoruyko2015learning}{{39}{2015}{{Zagoruyko \& Komodakis}}{{Zagoruyko and Komodakis}}}
+\bibcite{zhang2019iccv}{{40}{2019}{{Zhang \& Lee}}{{Zhang and Lee}}}
+\bibcite{zhou2019learn}{{41}{2019}{{Zhou et~al.}}{{Zhou, Sattler, Pollefeys, and Leal-Taixe}}}
+\bibcite{zhou2015flowweb}{{42}{2015{a}}{{Zhou et~al.}}{{Zhou, Jae~Lee, Yu, and Efros}}}
+\bibcite{zhou2015multi}{{43}{2015{b}}{{Zhou et~al.}}{{Zhou, Zhu, and Daniilidis}}}
+\bibcite{zhu2017unpaired}{{44}{2017}{{Zhu et~al.}}{{Zhu, Park, Isola, and Efros}}}
 \citation{kingma2014adam}
 \citation{tensorflow2015}
 \@writefile{toc}{\contentsline {section}{\numberline {A}More Detail on GNN Architecture}{12}{appendix.A}}
