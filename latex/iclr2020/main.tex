@@ -90,7 +90,7 @@ Unfortunately, there are obstacles to applying multi-view constraints directly t
 Multi-view constraints are formulated in terms of sparse features, which traditional convolutional neural nets are not designed to handle.
 Thus we will need a new architecture to handle such constraints.
 More fundamentally, deep neural networks need large amounts of labeled data to train.
-In the case of multi-image feature matching, one would need hand-labeled point correspondences between images, which can be difficult and expensive to obtain.
+% In the case of multi-image feature matching, one would need hand-labeled point correspondences between images, which can be difficult and expensive to obtain.
 Consequently unsupervised training is a more practical approach.
 In the absence of direct supervision, the additional signal of geometric constraints can help disambiguate visually similar features and reject outliers.
 Thus incorporating such constraints is important in training a network to solve this task.
@@ -98,7 +98,7 @@ Thus incorporating such constraints is important in training a network to solve 
 In this work, we address these concerns using Graph Neural Networks (GNNs).
 The proposed method works directly on the graph of correspondences between the image features, which is agnostic to how the correspondences were computed, thus allowing the algorithm to work in a broad class of environments.
 To the best of our knowledge this work is the first to apply deep learning to the multi-view feature matching problem.
-We use an unsupervised loss, the cycle consistency loss, to train the network, thus avoiding the difficulty of expensive hand-labeling.
+We use an unsupervised loss, the cycle consistency loss, to train the network. %, thus avoiding the difficulty of expensive hand-labeling.
 We use geometric consistency losses to aid training, though no geometric information is used at inference time.
 Although our network is simple, it shows promising results compared to baselines which optimize for cycle-consistency without learned embeddings, using a matrix factorization loss \citep{zhou2015multi, leonardos2017distributed}.
 Furthermore, since inference requires only a single forward pass over the neural network, our approach is faster to achieve comparable accuracy than methods which must solve an optimization problem every time.
@@ -465,6 +465,7 @@ While not a standard dataset to test cycle consistency, most standard datasets h
 Rome16K is typically used to test bundle adjustment methods.
 Therefore, to use our method, we extract 6-tuples and 10-tuples of images with overlap of 80 points or more to test our algorithm, with the points established as corresponding in the given bundle adjustment output.
 For the initial embedding we use the original 128 dimensional SIFT descriptors, normalized to have unit $L_2$ norm, the calibrated x-y position, the orientation, and log scale of the SIFT feature.
+\textcolor{red}{To calibrate we use the focal lengths provided in Rome16K's data, and we assume the image center is in the center of the image (as none is provided by Rome16K).}
 To construct the graph, we take each feature as a vertex and create edges to the 5 nearest SIFT descriptors for the other images.
 
 For these experiments we train with the $L_1$ norm and geometric consistency losses.
@@ -521,6 +522,28 @@ All experiments were run with a 12 layer GNN with the ReLU nonlinearity and skip
 The feature vector lengths were 32, 64, 128, 256, 512, 512, 512, 512, 512, 512, 1024, 1024, with skip connections between layers 1 and 6, 6 and 12, and 1 and 12.
 All were trained with the Adam optimizer \citep{kingma2014adam} and a learning rate $10^{-4}$
 The network was implemented in Tensorflow \citep{tensorflow2015}, version 1.11.
+
+
+\section{\textcolor{red}{Computing Geometric Loss}}
+\textcolor{red}{
+To compute the Geometric Loss during training we use the given rotations and translations from Rome16K to compute the relative poses.
+In practice, one could just use the relative poses computed.
+We build up an intermediate Essential Matrix representations $P, Q \in \sR^{3pv \times 3}$, with $v$ being the number of views and $p$ being the number of points.
+The matrix $P$ is defined by the block matrix representation $P_i = [T_{c(i)}]_\times R_{c(i)} X_i$.
+The matrix $Q$ is defined by the block matrix representation $Q_i = R_{c(i)} X_i$.
+We build the Essential matrices using $E = Q^\top P + P^\top Q$, which has 3 by 3 blocks
+}
+\textcolor{red}{
+\begin{align*}
+E_{ij}
+=&\; (R_{c(i)} X_i)^\top [T_{c(j)}]_\times R_{c(j)} X_j + ([T_{c(i)}]_\times R_{c(i)} X_i)^\top R_{c(j)} X_j \\
+=&\;  X_i^\top R_{c(i)}^\top [T_{c(j)}]_\times R_{c(j)} X_j - X_i^\top R_{c(i)}^\top [T_{c(i)}]_\times R_{c(j)} X_j \\
+=&\;  X_i^\top R_{c(i)}^\top [T_{c(j)} - T_{c(i)}]_\times R_{c(j)} X_j
+\end{align*}
+}
+\textcolor{red}{
+Note that this is the same as equation \ref{eq:essential_constraint} and thus we have our relative pariwise constraints.
+}
 
 \end{document}
 
