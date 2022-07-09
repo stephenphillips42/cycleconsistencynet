@@ -1,0 +1,5 @@
+*.python linguist-detectable=true 
+*.tex linguist-detectable=false 
+*.bib linguist-detectable=false 
+*.bst linguist-detectable=false 
+*.sty linguist-detectable=false 
